@@ -1,0 +1,15 @@
+Tema di partenza
+  Tema:        Horizon (Shopify), tema ufficiale gratuito
+  Versione:    4.3.0 (config/settings_schema.json → theme_info.theme_version)
+  Sorgente:    https://github.com/Shopify/horizon (git clone --depth 1, branch predefinito)
+  Commit:      dfad90d87be2408de52636315069fc998da28c9e (2026-10-13, "Merge pull request #103 from Shopify/horizon-update-20261013-141552")
+  Copiato il:  2026-10-23
+  Copiate nella radice solo le cartelle del tema: assets, blocks, config, layout, locales, sections, snippets, templates.
+  Esclusi: .git, README.md, release-notes.md. LICENSE.md conservato in studio/licenses/horizon-LICENSE.md.
+
+Strumenti
+  Node:        v22.22.0
+  npm:         10.9.4
+  Python:      3.13.17
+  git:         2.43.0
+  Shopify CLI: 4.9.4 (npm install -g @shopify/cli@latest)
