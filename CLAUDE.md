@@ -40,7 +40,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 ## 3. Regole d'oro (valgono in ogni step)
 1. Non modificare, rinominare o cancellare NESSUN file esistente del tema. Crei solo file nuovi con il prefisso «luna-», più il template templates/product.luna.json. Uniche eccezioni: aggiungere righe a .gitignore, .shopifyignore e .theme-check.yml.
 2. Alla fine di ogni step `shopify theme check` (lanciato dalla radice) deve dare 0 errori nei file luna. Gli errori già presenti nei file originali non li tocchi: li segnali.
-3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato.
+3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato. L'ambiente può azzerarsi tra una sessione e l'altra: se mancano Shopify CLI o le dipendenze di studio/, reinstallale prima di cominciare.
 4. Mobile first: progetta a 390 px di larghezza, poi adatta a 768 e a 1280 e oltre.
 5. Ogni testo visibile è modificabile dall'editor del tema: setting con valore predefinito uguale al copy del §8.
 6. Niente dati finti: nessuna recensione inventata, nessun contatore di visitatori o vendite, nessun countdown che riparte, scorte mostrate solo se reali (§10).
@@ -168,7 +168,7 @@ moon3d
 benefits
 - occhiello: «Perché tutti la notano»
 - H2: «Un pezzo di cielo, sul tuo comodino.»
-- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria. Niente fili, niente trucchi: solo la Luna che galleggia sopra il tuo comodino.»
+- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.»
 - «Luce che scalda la stanza»: «Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.»
 - «Il regalo che non si dimentica»: «Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.»
 
