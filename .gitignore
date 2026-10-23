@@ -1,0 +1,3 @@
+node_modules/
+studio/.venv/
+studio/preview/out/

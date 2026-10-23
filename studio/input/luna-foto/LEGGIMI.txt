@@ -1,0 +1,39 @@
+PACCHETTO FOTO · LAMPADA LUNARE LEVITANTE
+
+La luna e la base sono foto vere del prodotto, scontornate e ripulite.
+Sfondi, luci ed effetti delle scene sono nostri, creati da zero.
+
+ritagli/  PNG trasparenti, 1377 × 1755 px, tutti della stessa misura: si sovrappongono a 0,0
+  lampada-accesa.png   lampada intera, accesa
+  lampada-spenta.png   lampada intera, spenta
+  luna-accesa.png      solo la luna accesa (per farla levitare da sola)
+  luna-spenta.png      solo la luna spenta
+  base-accesa.png      solo la base, illuminata dalla luna
+  base-spenta.png      solo la base, al buio
+  layout.json          posizioni di luna e base, centro e raggio della luna, misure reali
+
+scene/  JPG
+  01-notte.jpg           2000 × 2000  studio notturno, riflesso su nero lucido · prima foto del prodotto
+  02-caldo.jpg           1600 × 2000  studio caldo ambrato · beneficio «Luce che scalda la stanza»
+  03-misure.jpg          2000 × 2000  misure reali in italiano · sezione specifiche e foto del prodotto
+  04-orbita.jpg          1600 × 2000  spazio profondo con orbite di luce · beneficio «Levita davvero»
+  05-eclissi.jpg         1600 × 2000  eclissi con raggi di luce · beneficio «Il regalo che non si dimentica» e ads
+  06-natale.jpg          1600 × 2000  bokeh dorato e neve · sezione regalo e ads di Natale
+  og-condivisione.jpg    1200 × 630   anteprima per WhatsApp, Facebook e Google
+
+fornitore/  le foto originali del fornitore: SOLO riferimento, non vanno mai in pagina
+
+Misure, dalla scheda del fornitore
+  luna: Ø 85 mm, PLA stampato in 3D
+  base: ABS effetto legno, larga 108 mm, alta 22 mm
+
+Cosa è stato fatto
+  - Ritaglio dalla foto con l'astronauta (la più pulita): luna e base separate, risoluzione raddoppiata.
+  - Bordo della luna rifatto come cerchio perfetto, senza aloni del muro.
+  - Base: tolta l'ombra della luna e aggiunta la luce calda che la luna proietta da accesa.
+  - Luna alzata di circa 2,5 mm rispetto allo scatto, così lo stacco della levitazione si vede.
+  - Versione spenta ricavata da quella accesa: le due si sovrappongono perfettamente.
+
+Quando arriva il campione
+  Scatta due foto identiche, sul cavalletto: una accesa al buio e una spenta.
+  Claude Code rifà i ritagli dalle tue foto con gli stessi nomi, e le immagini diventano tue al 100%.

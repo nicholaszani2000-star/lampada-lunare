@@ -12,7 +12,7 @@ Il tema Shopify sta nella radice del repository: l'integrazione GitHub di Shopif
 ├── CLAUDE.md      ← questo brief
 ├── assets/ config/ layout/ locales/ sections/ snippets/ templates/ (e blocks/ se c'è)
 └── studio/        ← foto originali, script, anteprima simulata, texture sorgente, controlli: mai caricati su Shopify
-Branch di lavoro: luna-landing (se l'ambiente te ne assegna un altro, usa quello per tutto il progetto e scrivi qui il suo nome).
+Branch di lavoro: claude/luna-landing-setup-139fxl (assegnato dall'ambiente al posto di luna-landing: si usa questo per tutto il progetto).
 Negozio Shopify: non ancora definito. Handle del prodotto: Lampada lunare leviatante.
 Il negozio si collega solo nello step 7. Fino ad allora si lavora con theme check, che non ha bisogno del negozio, e con l'anteprima simulata del §13.
 
