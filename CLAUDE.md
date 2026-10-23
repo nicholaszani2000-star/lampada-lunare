@@ -1,8 +1,8 @@
-# Landing «Lampada lunare leviatante» · Shopify (Liquid)
+# Landing «Lampada Lunare Levitante» · Shopify (Liquid)
 
 ## 0. Chi sei e qual è l'obiettivo
 Lavori come un team in una persona sola: senior Shopify theme developer (Liquid, Online Store 2.0), creative technologist (Three.js, canvas, motion) e copywriter CRO.
-Costruisci la pagina prodotto della Lampada lunare leviatante per traffico freddo da Meta Ads: oltre l'80% arriva da smartphone, non conosce il brand e decide in pochi secondi. Il prezzo è €59,90, già scontato del 10% rispetto al prezzo barrato di €69,90.
+Costruisci la pagina prodotto della Lampada Lunare Levitante per traffico freddo da Meta Ads: oltre l'80% arriva da smartphone, non conosce il brand e decide in pochi secondi. Prezzo: deciso in Shopify (oggi €59,90). Prezzo barrato: deciso in Shopify. La pagina calcola da sola sconto, percentuale e risparmio: nessuna percentuale scritta a mano.
 Ogni scelta deve far comprare. Un effetto che rallenta la pagina o distrae dal bottone d'acquisto si taglia.
 Si lavora a step (§11): esegui solo lo step che ti chiedo, fai il report (§12) e FERMATI.
 
@@ -13,25 +13,28 @@ Il tema Shopify sta nella radice del repository: l'integrazione GitHub di Shopif
 ├── assets/ config/ layout/ locales/ sections/ snippets/ templates/ (e blocks/ se c'è)
 └── studio/        ← foto originali, script, anteprima simulata, texture sorgente, controlli: mai caricati su Shopify
 Branch di lavoro: claude/luna-landing-setup-139fxl (assegnato dall'ambiente al posto di luna-landing: si usa questo per tutto il progetto).
-Negozio Shopify: non ancora definito. Handle del prodotto: Lampada lunare leviatante.
+Negozio Shopify: non ancora definito. Handle del prodotto: lampada-lunare-levitante.
 Il negozio si collega solo nello step 7. Fino ad allora si lavora con theme check, che non ha bisogno del negozio, e con l'anteprima simulata del §13.
 
 ## 2. Dati del prodotto (l'unica fonte: non inventare nulla oltre questi)
 - Brand: Lunaria (se non è definito, in Liquid usa {{ shop.name }})
-- Nome in pagina: Lampada lunare leviatante
-- Diametro della luna: 8,5
-- Tonalità di luce: bianco caldo
-- Come si comanda: appoggiare la luna sulla base e si accende
+- Nome in pagina: Lampada Lunare Levitante
+- Diametro della luna: Ø 8,5 cm (scritto così ovunque)
+- Tonalità di luce: una sola, bianco caldo. Niente selettore di tonalità né nella hero né nella 3D: solo acceso e spento.
+- Accensione: si accende da sola appena la luna levita sopra la base. Nei testi non citare interruttori.
 - Ruota da sola: sì (se è «no», togli ogni riferimento alla rotazione da testi e animazioni)
-- Alimentazione: alimentatore incluso, la lampada si accende seenza fili
+- Alimentazione: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili
 - Materiale della luna: PLA stampato in 3D
-- Base: legno scuro
+- Base: ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm
 - Nella confezione: Luna, base, alimentatore e istruzioni
 - Spedizione: gratuita, consegna in 7–14 giorni lavorativi (se non è gratuita, scrivi ovunque «Spedizione tracciata» al posto di «Spedizione gratuita»)
 - Reso: entro 30 giorni dalla consegna
-- Fine della promo −10%: 2026-12-18 alle 23:59 (ora italiana)
-- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-18
+- Fine della promo: 2026-12-18 alle 23:59 (ora italiana)
+- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-03 (consegna fino a 14 giorni lavorativi)
 - Immagini: il pacchetto studio/input/luna-foto (leggi il suo LEGGIMI.txt): ritagli della lampada vera, accesa e spenta, con luna e base separate; sei scene pronte; le foto del fornitore, che servono solo come riferimento.
+- Scorte: il magazzino non tiene il conto dei pezzi, quindi niente riga delle scorte.
+- Recensioni: l'app non è ancora scelta; finché non c'è, la sezione reviews resta vuota e nascosta.
+- Negozio, ragione sociale, P.IVA e sede: arrivano più avanti; per ora restano segnaposto (setting vuoti).
 Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segnalalo nel report.
 
 ## 3. Regole d'oro (valgono in ogni step)
@@ -91,6 +94,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 
 ### 4.6 Prezzi e sconto (sconto già applicato, nessun codice sconto)
 - Prezzo: variant.price | money. Barrato: variant.compare_at_price | money, mostrato solo se compare_at_price è maggiore di price.
+- Prezzo e prezzo barrato si decidono in Shopify. Se il prezzo barrato manca o non è più alto del prezzo: niente badge, niente risparmio, niente riga Omnibus.
 - Percentuale: {%- assign luna_pct = variant.compare_at_price | minus: variant.price | times: 100.0 | divided_by: variant.compare_at_price | round -%} e poi «−{{ luna_pct }}%».
 - Risparmio: variant.compare_at_price | minus: variant.price | money.
 - Riga Omnibus, piccola, sotto il prezzo, solo quando c'è lo sconto: «Prezzo più basso degli ultimi 30 giorni: {{ variant.compare_at_price | money }}».
@@ -110,7 +114,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 
 ## 5. Design system «Notte lunare»
 - Atmosfera: lusso silenzioso, notte profonda, una sola luce calda. Riferimento: una pagina prodotto Apple, ma di notte. Niente neon, niente glitch, niente gradienti viola-blu: l'unico colore caldo forte è la luce della luna.
-- Colori (custom properties su :root): --luna-bg #05060B · --luna-bg-2 #0A0F1E · --luna-ink #F2EFE8 · --luna-muted #A5A2B4 · --luna-line rgba(242,239,232,.10) · --luna-glass rgba(255,255,255,.04) · --luna-light #FFD9A3 (il colore della luce: cambia con le tonalità) · --luna-amber #FFB866 · --luna-cta-top #FFE3AE · --luna-cta-bottom #FFB866 · --luna-cta-ink #1A1205 · --luna-cool #9FB4FF · --luna-ok #8FE3B5 · --luna-power 0 (0 spenta, 1 accesa).
+- Colori (custom properties su :root): --luna-bg #05060B · --luna-bg-2 #0A0F1E · --luna-ink #F2EFE8 · --luna-muted #A5A2B4 · --luna-line rgba(242,239,232,.10) · --luna-glass rgba(255,255,255,.04) · --luna-light #FFD9A3 (il colore della luce, bianco caldo) · --luna-amber #FFB866 · --luna-cta-top #FFE3AE · --luna-cta-bottom #FFB866 · --luna-cta-ink #1A1205 · --luna-cool #9FB4FF · --luna-ok #8FE3B5 · --luna-power 0 (0 spenta, 1 accesa).
 - Font self-hosted (licenza OFL, sottoinsieme latin, woff2): Fraunces variabile per i titoli (peso 300–500, letter-spacing −0,02em, asse opsz alto) e Inter variabile per i testi. Scala: H1 clamp(2.4rem, 7vw, 5.2rem) con line-height 1.02; H2 clamp(1.9rem, 4.6vw, 3.4rem); testo 1.0625rem con line-height 1.6; piccolo .875rem. Titoli con text-wrap: balance.
 - Spazi: sezioni con padding verticale clamp(72px, 12vw, 160px); contenitore massimo 1200 px; margine laterale 20 px su mobile.
 - CTA: pillola alta 56 px, larga il 100% su mobile, gradiente verticale da --luna-cta-top a --luna-cta-bottom, testo --luna-cta-ink, riflesso interno in alto, alone 0 10px 40px -10px rgba(255,184,102,.55). Hover: alone più intenso e translateY(−1px). Pressione: scale(.98). Focus sempre visibile.
@@ -130,7 +134,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 7. gift: l'angolo regalo e Natale, con la scadenza di consegna reale
 8. specs: specifiche e confronto con una lampada qualsiasi
 9. reviews: recensioni vere dall'app; la sezione sparisce se è vuota
-10. offer: la sezione sconto: −10%, riepilogo, garanzia, countdown solo se la promo ha una fine reale, CTA n. 2
+10. offer: la sezione sconto: percentuale calcolata dai prezzi di Shopify (solo se c'è il barrato), riepilogo, garanzia, countdown solo se la promo ha una fine reale, CTA n. 2
 11. faq: le obiezioni rimaste
 12. final: chiusura emotiva e CTA n. 3
 13. footer: dati legali, policy, icone di pagamento
@@ -144,34 +148,34 @@ La hero legge il parametro h dell'URL e sceglie il titolo; le varianti sono sett
 announcement: «Spedizione gratuita in tutta Italia · Reso entro 30 giorni»
 
 hero
-- occhiello: «Levitazione magnetica · Ø 8,5»
+- occhiello: «Levitazione magnetica · Ø 8,5 cm»
 - H1 magia: «La Luna. <em>Sospesa</em> nella tua stanza.»
 - H1 regalo: «Il regalo che fa dire <em>wow</em> appena si accende.»
 - H1 relax: «Spegni lo schermo. <em>Accendi</em> la Luna.»
 - sottotitolo: «Fluttua a pochi centimetri dalla base, senza toccare nulla. Ruota piano su se stessa e riempie la stanza di luce calda. Chi la vede fa sempre la stessa domanda: “Ma come fa a stare su?”»
-- suggerimento: «Tocca la luna per accenderla»
+- suggerimento: «Tocca la luna per vederla accesa e spenta»
 - CTA: «Acquista ora — {prezzo}» (prezzo da Liquid)
 - consegna: «Ordina oggi, la ricevi tra {data1} e {data2}»
-- scorte, solo se reali: «Solo {n} pezzi disponibili»
+- scorte: nessuna riga (il magazzino non tiene il conto dei pezzi)
 - fiducia: «Spedizione gratuita» · «Pagamenti protetti» · «Reso in 30 giorni»
 
 moon3d
 - occhiello: «Provala adesso»
-- H2: «Girala. Accendila. Scegli la tua luce.»
-- testo: «Trascina per farla ruotare e prova le tonalità: bianco caldo. Sulla lampada vera le cambi con appoggiare la luna sulla base e si accende.»
+- H2: «Girala. Accendila.»
+- testo: «Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.»
 - didascalia: «Anteprima 3D illustrativa»
 
 benefits
 - occhiello: «Perché tutti la notano»
 - H2: «Un pezzo di cielo, sul tuo comodino.»
 - «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria. Niente fili, niente trucchi: solo la Luna che galleggia sopra il tuo comodino.»
-- «Luce che scalda la stanza»: «Luce calda e morbida, in più tonalità, pensata per la sera: la accendi e la stanza cambia atmosfera.»
+- «Luce che scalda la stanza»: «Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.»
 - «Il regalo che non si dimentica»: «Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.»
 
 how
 - occhiello: «Facilissima»
 - H2: «Pronta in tre gesti.»
-- 1 «Collega la base»: «Inserisci l'alimentatore nella presa e accendi la base.»
+- 1 «Collega la base»: «Inserisci l'alimentatore nella presa: la base è pronta.»
 - 2 «Avvicina la Luna»: «Tienila sopra il centro della base: sentirai il campo magnetico che la aggancia.»
 - 3 «Lasciala andare»: «Apri piano le dita. La Luna resta sospesa e inizia a ruotare.»
 - nota: «La prima volta serve un minuto di pratica per trovare il punto di equilibrio. Poi diventa un gesto da due secondi.»
@@ -186,17 +190,17 @@ gift
 specs
 - occhiello: «Dettagli»
 - H2: «Tutto quello che c'è da sapere.»
-- righe: Diametro · Materiale · Luce · Comando · Alimentazione · Base · Nella confezione (valori dal §2)
-- confronto, titolo «Lampada lunare leviatante o una lampada qualsiasi?», righe: «Fluttua a mezz'aria» sì/no · «Ruota da sola» sì/no · «Luce calda in più tonalità» sì/«a volte» · «Fa parlare chi entra in casa» sì/no · «Effetto regalo» sì/no
+- righe: Diametro · Materiale · Luce · Accensione · Alimentazione · Base · Nella confezione (valori dal §2)
+- confronto, titolo «Lampada Lunare Levitante o una lampada qualsiasi?», righe: «Fluttua a mezz'aria» sì/no · «Ruota da sola» sì/no · «Luce calda e morbida» sì/«a volte» · «Fa parlare chi entra in casa» sì/no · «Effetto regalo» sì/no
 
 reviews
 - occhiello: «Recensioni»
 - H2: «Cosa dice chi l'ha già accesa.»
 
 offer (la sezione sconto)
-- badge: «Offerta di lancio −{pct}%» (pct calcolato in Liquid)
+- badge: «Offerta di lancio −{pct}%» (pct calcolato in Liquid dai prezzi di Shopify; niente badge se il barrato manca o non è più alto del prezzo)
 - H2: «La tua Luna a {prezzo}.»
-- riepilogo: «Lampada lunare leviatante Ø 8,5 con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita in 7–14 giorni lavorativi» · «Reso entro 30 giorni»
+- riepilogo: «Lampada Lunare Levitante Ø 8,5 cm con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita in 7–14 giorni lavorativi» · «Reso entro 30 giorni»
 - prezzo al giorno: «Meno di {c} centesimi a sera per tutto il primo anno.»
 - garanzia, solo se il reso supera i 14 giorni: titolo «30 notti di prova», testo «Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.»
 - countdown: «L'offerta termina tra» gg : hh : mm : ss
@@ -204,8 +208,8 @@ offer (la sezione sconto)
 faq (blocchi domanda/risposta)
 1 «Come fa a levitare?»: «Nella base c'è un sistema magnetico che tiene la luna in equilibrio a pochi centimetri, senza alcun contatto.»
 2 «È difficile posizionarla?»: «La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.»
-3 «Va collegata alla corrente?»: «Sì: alimentatore incluso, la lampada si accende seenza fili.»
-4 «Come la spengo senza farla cadere?»: «Prendi prima la luna in mano, poi spegni la base. In quest'ordine non cade mai.»
+3 «Va collegata alla corrente?»: «Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.»
+4 «Come la spengo senza farla cadere?»: «Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.»
 5 «Quando arriva?»: «Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.»
 6 «E se non mi piace?»: «Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.»
 7 «È adatta ai bambini?»: «È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.»
@@ -216,7 +220,7 @@ final
 - testo: «Spedizione gratuita, 30 notti di prova e un regalo che nessuno dimentica.»
 - CTA: «Acquista ora — {prezzo}»
 
-sticky: miniatura · «Lampada lunare leviatante» · prezzo · «Acquista»
+sticky: miniatura · «Lampada Lunare Levitante» · prezzo · «Acquista»
 footer: «© {anno} Lunaria» · ragione sociale, P.IVA e sede (setting vuoti da compilare dall'editor) · link alle policy · icone di pagamento
 
 ## 9. Performance e accessibilità
@@ -232,7 +236,8 @@ footer: «© {anno} Lunaria» · ragione sociale, P.IVA e sede (setting vuoti da
 - Recensioni solo dall'app recensioni installata: niente testimonianze, voti o numeri di clienti scritti a mano.
 - Scorte solo dal magazzino Shopify.
 - Niente promesse sulla salute (sonno, ansia, terapia) e niente «NASA», «certificato» o «brevettato» se non è documentato.
-- Le scene sono composizioni: la lampada è quella vera, sfondi ed effetti sono nostri. Le foto originali del fornitore non vanno mai in pagina. La misura reale (Ø 8,5) compare sempre vicino alle immagini grandi della lampada, nell'occhiello della hero e nella sezione specifiche, così nessuno la immagina più grande di com'è.
+- I materiali si scrivono come nella scheda del fornitore (luna in PLA stampato in 3D, base in ABS effetto legno chiaro): mai «legno» da solo.
+- Le scene sono composizioni: la lampada è quella vera, sfondi ed effetti sono nostri. Le foto originali del fornitore non vanno mai in pagina. La misura reale (Ø 8,5 cm) compare sempre vicino alle immagini grandi della lampada, nell'occhiello della hero e nella sezione specifiche, così nessuno la immagina più grande di com'è.
 - Se il reso è di 14 giorni o meno non presentarlo come garanzia o vantaggio: è il diritto di recesso previsto dalla legge. In quel caso togli «notti di prova» da offer e final.
 - Footer con ragione sociale, P.IVA e sede (setting) e link alle policy da shop.policies.
 - Il banner cookie deve comparire anche con questo layout: si verifica nello step 7, sul negozio.
@@ -243,7 +248,7 @@ footer: «© {anno} Lunaria» · ragione sociale, P.IVA e sede (setting vuoti da
 ## 12. Report alla fine di ogni step
 - File creati o modificati, con una riga ciascuno su cosa fanno
 - Esito di `shopify theme check`
-- Anteprima: esito di `npm --prefix studio run preview` e di `npm --prefix studio run check`, cosa hai visto negli screenshot e cosa hai corretto. Dopo il collegamento al negozio: /products/Lampada lunare leviatante?view=luna
+- Anteprima: esito di `npm --prefix studio run preview` e di `npm --prefix studio run check`, cosa hai visto negli screenshot e cosa hai corretto. Dopo il collegamento al negozio: /products/lampada-lunare-levitante?view=luna
 - Dati mancanti o dubbi
 Poi commit con il nome dello step, push, FERMATI e aspetta lo step successivo.
 
