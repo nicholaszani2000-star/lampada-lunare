@@ -206,6 +206,7 @@ html {
   letter-spacing: -0.01em;
 }
 
+/* Corsivo vero di Fraunces (luna-fraunces-italic.woff2, caricato solo quando serve) */
 .luna-h1 em,
 .luna-h2 em,
 .luna-h3 em {

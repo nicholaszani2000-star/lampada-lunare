@@ -1,5 +1,6 @@
 // Controlli automatici dell'anteprima simulata (CLAUDE.md §13). Crescono step dopo step.
-// Step 1: nessun errore di console, nessuno scroll orizzontale a 360, 390, 768 e 1440 px, font caricati.
+// Step 1: nessun errore di console, nessuno scroll orizzontale a 360, 390, 768 e 1440 px, font caricati
+// (anche il corsivo di Fraunces dove i titoli hanno <em>), primo caricamento entro il budget del §9.
 import { pathToFileURL } from 'node:url';
 import { launchBrowser, paths, serve } from './lib.mjs';
 import { render } from './render.mjs';
@@ -8,6 +9,10 @@ import { scrollThrough, watchProblems } from './shoot.mjs';
 const PAGES = ['index.html', 'styleguide.html'];
 const WIDTHS = [360, 390, 768, 1440];
 const FONTS = ['Luna Fraunces', 'Luna Inter'];
+// §9: primo caricamento senza la parte 3D ≤ 900 KB. Il server dell'anteprima non comprime:
+// la misura è prudente (su Shopify CSS, JS e HTML arrivano compressi).
+const BUDGET_KB = 900;
+const IS_3D = /luna-(moon3d|three|moon-)/;
 
 async function checkPage(browser, baseUrl, pageName, width) {
   const mobile = width < 768;
@@ -21,8 +26,14 @@ async function checkPage(browser, baseUrl, pageName, width) {
   const page = await context.newPage();
   const problems = [];
   watchProblems(page, '', problems);
+  // Peso del primo caricamento: tutto quello che arriva prima di scorrere, 3D escluso
+  const bodies = [];
+  page.on('response', (response) => {
+    if (!IS_3D.test(response.url())) bodies.push(response.body().then((body) => body.length, () => 0));
+  });
   await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  const firstLoadKb = (await Promise.all(bodies)).reduce((sum, size) => sum + size, 0) / 1024;
   await scrollThrough(page);
 
   const result = await page.evaluate(({ families, expected }) => {
@@ -43,11 +54,18 @@ async function checkPage(browser, baseUrl, pageName, width) {
         offenders.push(`${name} (${Math.round(rect.left)}→${Math.round(rect.right)})`);
       }
     }
-    const loaded = [...document.fonts].filter((font) => font.status === 'loaded').map((font) => font.family.replace(/["']/g, ''));
+    const faces = [...document.fonts].filter((font) => font.status === 'loaded');
+    const loaded = faces.map((font) => font.family.replace(/["']/g, ''));
+    const missingFonts = families.filter((family) => !loaded.includes(family));
+    // Gli <em> dei titoli devono usare il corsivo vero di Fraunces, non quello imitato dal browser
+    const needsItalic = document.querySelector('.luna-h1 em, .luna-h2 em, .luna-h3 em');
+    const hasItalic = faces.some((font) => font.family.includes('Luna Fraunces') && font.style === 'italic');
+    if (needsItalic && !hasItalic) missingFonts.push('Luna Fraunces corsivo');
     return {
       overflow,
       offenders: offenders.slice(0, 5),
-      missingFonts: families.filter((family) => !loaded.includes(family)),
+      missingFonts,
+      italic: Boolean(needsItalic && hasItalic),
     };
   }, { families: FONTS, expected: width });
   await context.close();
@@ -57,7 +75,10 @@ async function checkPage(browser, baseUrl, pageName, width) {
   if (result.overflow > 0) failures.push(`scroll orizzontale di ${result.overflow}px`);
   if (result.offenders.length) failures.push(`fuori dallo schermo: ${result.offenders.join(', ')}`);
   if (result.missingFonts.length) failures.push(`font non caricati: ${result.missingFonts.join(', ')}`);
-  return failures;
+  if (firstLoadKb > BUDGET_KB) {
+    failures.push(`primo caricamento di ${firstLoadKb.toFixed(0)} KB, oltre il budget di ${BUDGET_KB} KB`);
+  }
+  return { failures, firstLoadKb, italic: result.italic };
 }
 
 async function main() {
@@ -68,14 +89,17 @@ async function main() {
   try {
     for (const pageName of PAGES) {
       for (const width of WIDTHS) {
-        const failures = await checkPage(browser, server.url, pageName, width);
+        const { failures, firstLoadKb, italic } = await checkPage(browser, server.url, pageName, width);
         const label = `${pageName.padEnd(16)} ${String(width).padStart(4)}px`;
         if (failures.length) {
           failed += 1;
           console.log(`✗ ${label}`);
           failures.forEach((failure) => console.log(`    – ${failure}`));
         } else {
-          console.log(`✓ ${label}  console pulita · niente scroll orizzontale · font caricati`);
+          console.log(
+            `✓ ${label}  console pulita · niente scroll orizzontale · font caricati${italic ? ' (anche il corsivo)' : ''}` +
+              ` · primo caricamento ${firstLoadKb.toFixed(0)} KB / ${BUDGET_KB} KB`
+          );
         }
       }
     }

@@ -12,6 +12,8 @@ const MAX_BYTES = 120 * 1024;
 const fonts = [
   // Fraunces: il file «opsz» contiene gli assi opsz (9–144) e wght (100–900)
   { from: join(pkg('fraunces'), 'files', 'fraunces-latin-opsz-normal.woff2'), to: 'luna-fraunces.woff2' },
+  // Fraunces corsivo, stessi assi: serve agli <em> dei titoli (senza preload)
+  { from: join(pkg('fraunces'), 'files', 'fraunces-latin-opsz-italic.woff2'), to: 'luna-fraunces-italic.woff2' },
   // Inter: asse wght (100–900)
   { from: join(pkg('inter'), 'files', 'inter-latin-wght-normal.woff2'), to: 'luna-inter.woff2' },
 ];
