@@ -1,0 +1,1041 @@
+/* =====================================================================
+   Lampada Lunare Levitante · luna-landing.css
+   Design system «Notte lunare» (CLAUDE.md §5). Mobile first: 390 → 768 → 1024 → 1280.
+   Tutte le classi hanno il prefisso .luna-. Nessuna dipendenza esterna.
+   ===================================================================== */
+
+/* 1. Token ------------------------------------------------------------ */
+:root {
+  --luna-bg: #05060B;
+  --luna-bg-2: #0A0F1E;
+  --luna-ink: #F2EFE8;
+  --luna-muted: #A5A2B4;
+  --luna-line: rgba(242, 239, 232, .10);
+  --luna-glass: rgba(255, 255, 255, .04);
+  --luna-light: #FFD9A3;
+  --luna-amber: #FFB866;
+  --luna-cta-top: #FFE3AE;
+  --luna-cta-bottom: #FFB866;
+  --luna-cta-ink: #1A1205;
+  --luna-cool: #9FB4FF;
+  --luna-ok: #8FE3B5;
+  --luna-power: 0;
+
+  --luna-font-display: 'Luna Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --luna-font-body: 'Luna Inter', 'Luna Inter Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --luna-text-h1: clamp(2.4rem, 7vw, 5.2rem);
+  --luna-text-h2: clamp(1.9rem, 4.6vw, 3.4rem);
+  --luna-text-h3: clamp(1.1875rem, 2vw, 1.4375rem);
+  --luna-text-lead: clamp(1.0625rem, 1.5vw, 1.25rem);
+  --luna-text-body: 1.0625rem;
+  --luna-text-small: .875rem;
+  --luna-text-micro: .75rem;
+
+  --luna-ease: cubic-bezier(.22, 1, .36, 1);
+  --luna-reveal-duration: 700ms;
+  --luna-reveal-step: 80ms;
+
+  --luna-section-pad: clamp(72px, 12vw, 160px);
+  --luna-container: 1200px;
+  --luna-gutter: 20px;
+  --luna-gap: 16px;
+  --luna-radius-s: 12px;
+  --luna-radius: 20px;
+  --luna-radius-l: 28px;
+  --luna-pill: 999px;
+  --luna-cta-height: 56px;
+  --luna-header-height: 56px;
+  --luna-sticky-space: 0px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --luna-gutter: 32px;
+    --luna-gap: 24px;
+    --luna-header-height: 64px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --luna-gutter: 40px;
+    --luna-gap: 28px;
+  }
+}
+
+/* 2. Reset leggero ---------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background-color: var(--luna-bg);
+  color-scheme: dark;
+}
+
+.luna-body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--luna-bg);
+  color: var(--luna-ink);
+  font-family: var(--luna-font-body);
+  font-size: var(--luna-text-body);
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.luna-page {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.luna-page > * {
+  flex: none;
+}
+
+/* Su una pagina corta il footer resta in fondo: niente bordo netto sotto */
+.luna-page > .luna-section-footer {
+  margin-top: auto;
+}
+
+.luna-page :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, dd, figure, blockquote) {
+  margin: 0;
+}
+
+.luna-page :where(img, picture, video, canvas, svg) {
+  display: block;
+  max-width: 100%;
+}
+
+.luna-page :where(img, video) {
+  height: auto;
+}
+
+.luna-page :where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+.luna-page :where(button) {
+  cursor: pointer;
+}
+
+.luna-page :where(a) {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .2em;
+}
+
+.luna-body :focus-visible {
+  outline: 2px solid var(--luna-light);
+  outline-offset: 3px;
+}
+
+.luna-body ::selection {
+  background: rgba(255, 217, 163, .32);
+  color: var(--luna-ink);
+}
+
+.luna-list-reset {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.luna-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.no-js .luna-js-only,
+.js .luna-no-js-only {
+  display: none !important;
+}
+
+/* 3. Tipografia ------------------------------------------------------- */
+.luna-h1,
+.luna-h2,
+.luna-h3,
+.luna-display {
+  font-family: var(--luna-font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--luna-ink);
+  text-wrap: balance;
+}
+
+.luna-h1 {
+  font-size: var(--luna-text-h1);
+  line-height: 1.02;
+  font-weight: 340;
+  font-variation-settings: 'opsz' 144;
+}
+
+.luna-h2 {
+  font-size: var(--luna-text-h2);
+  line-height: 1.08;
+  font-weight: 360;
+  font-variation-settings: 'opsz' 144;
+}
+
+.luna-h3 {
+  font-size: var(--luna-text-h3);
+  line-height: 1.25;
+  font-weight: 460;
+  letter-spacing: -0.01em;
+}
+
+.luna-h1 em,
+.luna-h2 em,
+.luna-h3 em {
+  font-style: italic;
+  color: var(--luna-light);
+  text-shadow: 0 0 32px rgba(255, 217, 163, .28);
+}
+
+.luna-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--luna-text-micro);
+  font-weight: 560;
+  letter-spacing: .16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--luna-light);
+}
+
+.luna-lead {
+  font-size: var(--luna-text-lead);
+  line-height: 1.55;
+  color: var(--luna-muted);
+  text-wrap: pretty;
+}
+
+.luna-text {
+  font-size: var(--luna-text-body);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.luna-small {
+  font-size: var(--luna-text-small);
+  line-height: 1.5;
+}
+
+.luna-micro {
+  font-size: var(--luna-text-micro);
+  line-height: 1.45;
+}
+
+.luna-muted {
+  color: var(--luna-muted);
+}
+
+.luna-center {
+  text-align: center;
+}
+
+/* 4. Contenitori, sezioni e griglie ----------------------------------- */
+.luna-container {
+  width: 100%;
+  max-width: calc(var(--luna-container) + var(--luna-gutter) * 2);
+  margin-inline: auto;
+  padding-left: max(var(--luna-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--luna-gutter), env(safe-area-inset-right));
+}
+
+.luna-container--narrow {
+  max-width: calc(760px + var(--luna-gutter) * 2);
+}
+
+.luna-section {
+  position: relative;
+  isolation: isolate;
+  padding-block: var(--luna-section-pad);
+}
+
+.luna-section--tight {
+  padding-block: calc(var(--luna-section-pad) * .6);
+}
+
+/* Fondo leggermente più chiaro che sfuma in alto e in basso: mai linee nette */
+.luna-section--tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 30, 0) 0%,
+    rgba(10, 15, 30, .86) 18%,
+    rgba(10, 15, 30, .86) 82%,
+    rgba(10, 15, 30, 0) 100%
+  );
+}
+
+.luna-section__head {
+  display: grid;
+  gap: 14px;
+  max-width: 44rem;
+  margin-bottom: clamp(32px, 6vw, 64px);
+}
+
+.luna-section__head--center {
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+
+.luna-grid {
+  display: grid;
+  gap: var(--luna-gap);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.luna-split {
+  display: grid;
+  gap: clamp(32px, 6vw, 80px);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+.luna-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.luna-stack--s {
+  gap: 8px;
+}
+
+.luna-stack--l {
+  gap: 32px;
+}
+
+.luna-stack--xl {
+  gap: clamp(40px, 7vw, 64px);
+}
+
+.luna-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+@media (min-width: 768px) {
+  .luna-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .luna-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .luna-split {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  }
+
+  .luna-split--reverse > :first-child {
+    order: 2;
+  }
+}
+
+/* 5. Icone ------------------------------------------------------------ */
+.luna-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: -0.2em;
+}
+
+/* 6. CTA -------------------------------------------------------------- */
+.luna-cta {
+  --luna-cta-glow: 0 10px 40px -10px rgba(255, 184, 102, .55);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--luna-cta-height);
+  margin: 0;
+  padding: 0 28px;
+  border: 0;
+  border-radius: var(--luna-pill);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .42) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, var(--luna-cta-top), var(--luna-cta-bottom));
+  color: var(--luna-cta-ink);
+  font-family: var(--luna-font-body);
+  font-size: 1.0625rem;
+  font-weight: 620;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .8),
+    inset 0 -1px 0 rgba(122, 72, 12, .22),
+    var(--luna-cta-glow);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform .25s var(--luna-ease),
+    box-shadow .35s var(--luna-ease);
+}
+
+.luna-cta:active {
+  transform: scale(.98);
+}
+
+.luna-cta:focus-visible {
+  outline: 2px solid var(--luna-ink);
+  outline-offset: 3px;
+}
+
+.luna-cta__label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.luna-cta__price {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.luna-cta__spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: luna-spin .8s linear infinite;
+}
+
+.luna-cta[aria-busy='true'] {
+  cursor: progress;
+}
+
+.luna-cta[aria-busy='true'] .luna-cta__spinner {
+  display: block;
+}
+
+.luna-cta:disabled,
+.luna-cta[aria-disabled='true'] {
+  cursor: not-allowed;
+  background: rgba(242, 239, 232, .12);
+  color: var(--luna-muted);
+  box-shadow: inset 0 0 0 1px var(--luna-line);
+  transform: none;
+}
+
+.luna-cta--compact {
+  --luna-cta-height: 48px;
+  width: auto;
+  padding: 0 22px;
+  font-size: 1rem;
+}
+
+@media (hover: hover) {
+  .luna-cta:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .85),
+      inset 0 -1px 0 rgba(122, 72, 12, .22),
+      0 14px 52px -8px rgba(255, 184, 102, .78);
+  }
+
+  .luna-cta:not(:disabled):active {
+    transform: scale(.98);
+  }
+}
+
+@media (min-width: 768px) {
+  .luna-cta--primary {
+    width: auto;
+    min-width: 300px;
+    align-self: flex-start;
+  }
+
+  .luna-cta--block {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
+@media (forced-colors: active) {
+  .luna-cta {
+    border: 2px solid ButtonText;
+  }
+}
+
+/* 7. Chip, badge e card in vetro -------------------------------------- */
+.luna-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid var(--luna-line);
+  border-radius: var(--luna-pill);
+  background: var(--luna-glass);
+  color: var(--luna-ink);
+  font-size: var(--luna-text-small);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.luna-chip .luna-icon {
+  color: var(--luna-light);
+}
+
+.luna-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 184, 102, .38);
+  border-radius: var(--luna-pill);
+  background: rgba(255, 184, 102, .12);
+  color: var(--luna-amber);
+  font-size: .8125rem;
+  font-weight: 620;
+  letter-spacing: .01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.luna-badge--sale {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--luna-cta-top), var(--luna-cta-bottom));
+  color: var(--luna-cta-ink);
+}
+
+.luna-badge--ok {
+  border-color: rgba(143, 227, 181, .32);
+  background: rgba(143, 227, 181, .10);
+  color: var(--luna-ok);
+}
+
+.luna-card {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(24px, 4vw, 36px);
+  border-radius: var(--luna-radius);
+  background: var(--luna-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* Bordo di 1 px sfumato, disegnato con una maschera per non sporcare il vetro */
+.luna-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, .24),
+    rgba(255, 255, 255, .05) 38%,
+    rgba(255, 255, 255, .03) 64%,
+    rgba(255, 217, 163, .24)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 8. Prezzo (snippet luna-price) -------------------------------------- */
+.luna-price {
+  display: grid;
+  gap: 6px;
+}
+
+.luna-price__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.luna-price__now {
+  font-family: var(--luna-font-display);
+  font-size: clamp(2.1rem, 6vw, 2.75rem);
+  font-weight: 400;
+  font-variation-settings: 'opsz' 72;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--luna-ink);
+}
+
+.luna-price__was {
+  color: var(--luna-muted);
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.luna-price__was s {
+  text-decoration-thickness: 1px;
+}
+
+.luna-price__save {
+  color: var(--luna-ok);
+  font-size: var(--luna-text-small);
+  font-weight: 520;
+}
+
+.luna-price__omnibus,
+.luna-price__tax {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-micro);
+  line-height: 1.45;
+}
+
+.luna-price--compact {
+  gap: 0;
+}
+
+.luna-price--compact .luna-price__row {
+  gap: 2px 8px;
+}
+
+.luna-price--compact .luna-price__now {
+  font-family: var(--luna-font-body);
+  font-size: 1.0625rem;
+  font-weight: 640;
+  font-variation-settings: normal;
+  letter-spacing: 0;
+}
+
+.luna-price--compact .luna-price__was {
+  font-size: .8125rem;
+}
+
+.luna-price--compact .luna-price__omnibus {
+  font-size: .6875rem;
+  line-height: 1.3;
+}
+
+/* 9. Sfondi a strati -------------------------------------------------- */
+.luna-sky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100lvh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  background: radial-gradient(130% 85% at 50% 0%, #0E1630 0%, var(--luna-bg-2) 38%, var(--luna-bg) 78%);
+}
+
+.luna-sky__nebula {
+  position: absolute;
+  width: 95vmax;
+  height: 95vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.luna-sky__nebula--a {
+  top: -42vmax;
+  left: -38vmax;
+  background: radial-gradient(closest-side, rgba(40, 64, 140, .42), rgba(40, 64, 140, 0));
+  animation: luna-drift-a 52s ease-in-out infinite alternate;
+}
+
+.luna-sky__nebula--b {
+  bottom: -48vmax;
+  right: -42vmax;
+  background: radial-gradient(closest-side, rgba(22, 70, 108, .34), rgba(22, 70, 108, 0));
+  animation: luna-drift-b 60s ease-in-out infinite alternate;
+}
+
+.luna-sky__nebula--c {
+  top: 18%;
+  left: 30%;
+  width: 60vmax;
+  height: 60vmax;
+  background: radial-gradient(closest-side, rgba(255, 217, 163, .03), rgba(255, 217, 163, 0));
+  animation: luna-drift-c 44s ease-in-out infinite alternate;
+}
+
+/* Stelle statiche in CSS: due trame di misure diverse per non vedere la ripetizione */
+.luna-sky__stars,
+.luna-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.luna-sky__stars::before,
+.luna-sky__stars::after,
+.luna-stars::before,
+.luna-stars::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+}
+
+.luna-sky__stars::before,
+.luna-stars::before {
+  opacity: .7;
+  background-size: 317px 317px;
+  background-image:
+    radial-gradient(1.2px 1.2px at 23px 41px, #F2EFE8, transparent),
+    radial-gradient(1px 1px at 141px 18px, #F2EFE8, transparent),
+    radial-gradient(1.4px 1.4px at 268px 96px, #FFE9C9, transparent),
+    radial-gradient(1px 1px at 77px 152px, #F2EFE8, transparent),
+    radial-gradient(1.2px 1.2px at 199px 211px, #DCE4FF, transparent),
+    radial-gradient(1px 1px at 302px 262px, #F2EFE8, transparent),
+    radial-gradient(1.1px 1.1px at 36px 288px, #F2EFE8, transparent),
+    radial-gradient(1px 1px at 158px 301px, #FFE9C9, transparent);
+}
+
+.luna-sky__stars::after,
+.luna-stars::after {
+  opacity: .45;
+  background-size: 211px 211px;
+  background-image:
+    radial-gradient(1px 1px at 12px 97px, #F2EFE8, transparent),
+    radial-gradient(1px 1px at 88px 23px, #DCE4FF, transparent),
+    radial-gradient(1.3px 1.3px at 171px 133px, #F2EFE8, transparent),
+    radial-gradient(1px 1px at 61px 188px, #F2EFE8, transparent),
+    radial-gradient(1px 1px at 197px 52px, #FFE9C9, transparent);
+}
+
+.luna-stars {
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+}
+
+/* Luce calda che si allarga sullo sfondo quando la lampada è accesa (--luna-power) */
+.luna-sky__glow {
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(
+    55% 45% at 50% 34%,
+    rgba(255, 217, 163, .20),
+    rgba(255, 184, 102, .07) 48%,
+    rgba(255, 184, 102, 0) 72%
+  );
+  opacity: var(--luna-power);
+  transition: opacity 1.2s var(--luna-ease);
+}
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .luna-sky__glow {
+    background: radial-gradient(
+      55% 45% at 50% 34%,
+      color-mix(in srgb, var(--luna-light) 20%, transparent),
+      color-mix(in srgb, var(--luna-light) 7%, transparent) 48%,
+      transparent 72%
+    );
+  }
+}
+
+.luna-sky__grain {
+  position: absolute;
+  inset: 0;
+  opacity: .035;
+  background-size: 180px 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* 10. Movimento ------------------------------------------------------- */
+/* Comparsa: luna-landing.js mette is-pending solo sotto la piega e poi is-in.
+   Senza JavaScript nessuna delle due classi esiste: il contenuto è già visibile. */
+.luna-reveal.is-pending {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+}
+
+.luna-reveal.is-in {
+  transition:
+    opacity var(--luna-reveal-duration) var(--luna-ease) var(--luna-reveal-delay, 0ms),
+    transform var(--luna-reveal-duration) var(--luna-ease) var(--luna-reveal-delay, 0ms);
+}
+
+/* Levitazione (usata dalla hero nello step 3) */
+.luna-levitate {
+  animation: luna-levitate 6s ease-in-out infinite;
+}
+
+.luna-levitate-shadow {
+  transform-origin: 50% 50%;
+  animation: luna-levitate-shadow 6s ease-in-out infinite;
+}
+
+@keyframes luna-levitate {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+
+@keyframes luna-levitate-shadow {
+  0%, 100% { transform: scaleX(1); opacity: .6; }
+  50% { transform: scaleX(.8); opacity: .32; }
+}
+
+@keyframes luna-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(9vmax, 7vmax, 0) scale(1.12); }
+}
+
+@keyframes luna-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.08); }
+  to { transform: translate3d(-10vmax, -6vmax, 0) scale(.96); }
+}
+
+@keyframes luna-drift-c {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-8vmax, 10vmax, 0); }
+}
+
+@keyframes luna-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 11. Annuncio -------------------------------------------------------- */
+.luna-announcement {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 217, 163, .10), rgba(255, 217, 163, 0));
+  color: var(--luna-ink);
+  font-size: .8125rem;
+  line-height: 1.35;
+}
+
+.luna-announcement__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding-block: 9px;
+  text-align: center;
+}
+
+.luna-announcement__inner p {
+  text-wrap: balance;
+}
+
+.luna-announcement__icon {
+  color: var(--luna-light);
+}
+
+/* 12. Header e luna-progresso ----------------------------------------- */
+.luna-header {
+  position: relative;
+  isolation: isolate;
+}
+
+.luna-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(5, 6, 11, .64);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: 0 12px 32px -24px rgba(0, 0, 0, .9);
+  opacity: 0;
+  transition: opacity .4s var(--luna-ease);
+}
+
+.luna-header.is-scrolled::before {
+  opacity: 1;
+}
+
+.luna-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--luna-header-height);
+}
+
+.luna-header__brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--luna-ink);
+}
+
+.luna-header__wordmark {
+  font-family: var(--luna-font-display);
+  font-size: 1.375rem;
+  font-weight: 420;
+  font-variation-settings: 'opsz' 72;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* La larghezza arriva dall'attributo width (setting «Larghezza del logo») */
+.luna-header__logo {
+  height: auto;
+}
+
+.luna-moonprogress {
+  --luna-moon-glow: 0;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  overflow: visible;
+  filter: drop-shadow(0 0 calc(2px + var(--luna-moon-glow) * 9px) rgba(255, 217, 163, calc(.15 + var(--luna-moon-glow) * .5)));
+}
+
+.luna-moonprogress__base {
+  fill: rgba(242, 239, 232, .06);
+  stroke: rgba(242, 239, 232, .32);
+  stroke-width: .75;
+}
+
+/* 13. Footer ---------------------------------------------------------- */
+.luna-footer {
+  padding-top: clamp(48px, 8vw, 80px);
+  padding-bottom: calc(40px + var(--luna-sticky-space) + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(10, 15, 30, 0), rgba(10, 15, 30, .78) 40%);
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+  line-height: 1.5;
+}
+
+.luna-footer__inner {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  text-align: center;
+}
+
+.luna-footer__brand {
+  font-family: var(--luna-font-display);
+  font-size: 1.125rem;
+  font-variation-settings: 'opsz' 72;
+  color: var(--luna-ink);
+}
+
+.luna-footer__legal {
+  font-size: .8125rem;
+}
+
+.luna-footer__legal span + span::before {
+  content: ' · ';
+}
+
+.luna-footer__policies {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 22px;
+}
+
+.luna-footer__policies a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--luna-muted);
+  text-decoration: none;
+}
+
+.luna-footer__policies a:hover {
+  color: var(--luna-ink);
+  text-decoration: underline;
+}
+
+.luna-footer__payments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.luna-footer__pay {
+  display: block;
+  width: 38px;
+  height: 24px;
+}
+
+@media (min-width: 768px) {
+  .luna-footer__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand payments'
+      'legal policies';
+    align-items: center;
+    justify-items: start;
+    gap: 12px 32px;
+    text-align: left;
+  }
+
+  .luna-footer__brand { grid-area: brand; }
+  .luna-footer__legal { grid-area: legal; }
+  .luna-footer__nav { grid-area: policies; justify-self: end; }
+  .luna-footer__payments { grid-area: payments; justify-self: end; }
+}
+
+/* 14. Editor del tema ------------------------------------------------- */
+.luna-is-editor .luna-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* 15. Movimento ridotto: gli stati restano, cambiano senza animazione -- */
+@media (prefers-reduced-motion: reduce) {
+  .luna-sky__nebula,
+  .luna-levitate,
+  .luna-levitate-shadow,
+  .luna-cta__spinner {
+    animation: none;
+  }
+
+  .luna-reveal.is-pending {
+    opacity: 1;
+    transform: none;
+  }
+
+  .luna-reveal.is-in,
+  .luna-cta,
+  .luna-sky__glow,
+  .luna-header::before {
+    transition: none;
+  }
+}

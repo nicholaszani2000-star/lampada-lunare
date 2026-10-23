@@ -1,0 +1,33 @@
+{
+  "layout": "luna-landing",
+  "sections": {
+    "announcement": {
+      "type": "luna-announcement",
+      "settings": {
+        "text": "Spedizione gratuita in tutta Italia · Reso entro 30 giorni",
+        "icon": "camion"
+      }
+    },
+    "header": {
+      "type": "luna-header",
+      "settings": {
+        "brand_name": "Lunaria",
+        "logo_width": 120,
+        "show_moon": true,
+        "sticky": true
+      }
+    },
+    "footer": {
+      "type": "luna-footer",
+      "settings": {
+        "copyright": "© {anno} Lunaria",
+        "vat_label": "P.IVA",
+        "show_policies": true,
+        "policies_label": "Informazioni legali",
+        "show_payment_icons": true,
+        "payments_label": "Metodi di pagamento accettati"
+      }
+    }
+  },
+  "order": ["announcement", "header", "footer"]
+}

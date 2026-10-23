@@ -1,0 +1,106 @@
+{%- comment -%}
+  Catalogo dei componenti per l'anteprima simulata. Non fa parte del tema: serve a guardare
+  CSS e snippet (luna-cta, luna-price, luna-icon) prima che le sezioni li usino.
+{%- endcomment -%}
+<section class="luna-section">
+  <div class="luna-container luna-stack luna-stack--xl">
+    <header class="luna-section__head">
+      <p class="luna-eyebrow">{% render 'luna-icon', name: 'scintilla', size: 14 %} Catalogo dei componenti · solo anteprima</p>
+      <h1 class="luna-h1">La Luna. <em>Sospesa</em> nella tua stanza.</h1>
+      <p class="luna-lead">
+        Fluttua a pochi centimetri dalla base, senza toccare nulla. Ruota piano su se stessa e riempie la stanza di
+        luce calda.
+      </p>
+    </header>
+
+    <div class="luna-stack">
+      <p class="luna-eyebrow">Tipografia</p>
+      <h2 class="luna-h2">Un pezzo di cielo, sul tuo comodino.</h2>
+      <h3 class="luna-h3">Luce che scalda la stanza</h3>
+      <p class="luna-text">
+        Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.
+      </p>
+      <p class="luna-small luna-muted">Testo piccolo: Ø 8,5 cm · PLA stampato in 3D · ABS effetto legno chiaro</p>
+    </div>
+
+    <div class="luna-stack">
+      <p class="luna-eyebrow">CTA</p>
+      {% render 'luna-cta', product: product, text: 'Acquista ora — {prezzo}' %}
+      <div class="luna-cluster">
+        {% render 'luna-cta', product: product, text: 'Acquista', style: 'compact' %}
+        <span data-styleguide-busy>
+          {%- render 'luna-cta', product: product, text: 'Acquista', style: 'compact' -%}
+        </span>
+      </div>
+      {% render 'luna-cta', product: product_sold_out, text: 'Acquista ora — {prezzo}' %}
+    </div>
+
+    <div class="luna-grid luna-grid--2">
+      <div class="luna-stack">
+        <p class="luna-eyebrow">Prezzo grande, con barrato</p>
+        {% render 'luna-price', product: product, badge_text: 'Offerta di lancio −{pct}%' %}
+      </div>
+      <div class="luna-stack">
+        <p class="luna-eyebrow">Prezzo grande, senza barrato</p>
+        {% render 'luna-price', product: product_full_price %}
+      </div>
+      <div class="luna-stack">
+        <p class="luna-eyebrow">Prezzo compatto (barra sticky)</p>
+        {% render 'luna-price', product: product, layout: 'compact' %}
+      </div>
+    </div>
+
+    <div class="luna-stack">
+      <p class="luna-eyebrow">Chip e badge</p>
+      <div class="luna-cluster">
+        <span class="luna-chip">{% render 'luna-icon', name: 'regalo', size: 16 %} Per lei</span>
+        <span class="luna-chip">Per lui</span>
+        <span class="luna-chip">Per la coppia</span>
+        <span class="luna-chip">Per chi ha già tutto</span>
+      </div>
+      <div class="luna-cluster">
+        <span class="luna-badge">Badge</span>
+        <span class="luna-badge luna-badge--sale">Offerta di lancio</span>
+        <span class="luna-badge luna-badge--ok">{% render 'luna-icon', name: 'spunta', size: 14 %} Disponibile</span>
+      </div>
+    </div>
+
+    <div class="luna-grid luna-grid--3">
+      <article class="luna-card luna-stack luna-reveal">
+        {% render 'luna-icon', name: 'luna', size: 28 %}
+        <h3 class="luna-h3">Levita davvero</h3>
+        <p class="luna-small luna-muted">
+          Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga.
+        </p>
+      </article>
+      <article class="luna-card luna-stack luna-reveal">
+        {% render 'luna-icon', name: 'scintilla', size: 28 %}
+        <h3 class="luna-h3">Luce che scalda la stanza</h3>
+        <p class="luna-small luna-muted">Luce calda e morbida, pensata per la sera.</p>
+      </article>
+      <article class="luna-card luna-stack luna-reveal">
+        {% render 'luna-icon', name: 'regalo', size: 28 %}
+        <h3 class="luna-h3">Il regalo che non si dimentica</h3>
+        <p class="luna-small luna-muted">Pochi regali fanno lo stesso effetto appena si accendono.</p>
+      </article>
+    </div>
+
+    <div class="luna-stack">
+      <p class="luna-eyebrow">Icone</p>
+      <ul class="luna-list-reset luna-cluster" style="gap: 12px">
+        {%- assign icon_names = 'luna,camion,scudo,reso,spunta,croce,scintilla,regalo,stella,tocco,accensione,freccia' | split: ',' -%}
+        {%- for icon_name in icon_names -%}
+          <li class="luna-chip">{% render 'luna-icon', name: icon_name, size: 22 %} {{ icon_name }}</li>
+        {%- endfor -%}
+        <li class="luna-chip">{% render 'luna-icon', name: 'stella', size: 22, filled: true %} stella piena</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<script>
+  // Solo nel catalogo: mostra lo stato di caricamento di un bottone
+  document.querySelectorAll('[data-styleguide-busy] [data-luna-cta]').forEach(function (button) {
+    button.setAttribute('aria-busy', 'true');
+    button.querySelector('[data-luna-cta-label]').textContent = button.getAttribute('data-loading-text');
+  });
+</script>
