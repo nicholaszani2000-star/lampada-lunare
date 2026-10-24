@@ -209,7 +209,7 @@ export async function mount(stage, options) {
       map: wood,
       roughness: 0.58,
       metalness: 0,
-      // un minimo di luce propria: i lati in ombra restano legno chiaro, come nelle foto
+      // un minimo di luce propria: i lati in ombra restano effetto legno chiaro, come nelle foto
       emissive: 0x2c1b0d,
     });
     const base = new THREE.Mesh(baseGeometry, baseMaterial);

@@ -16,7 +16,11 @@
 //         niente «notti di prova» con 14 giorni di reso; FAQ che si aprono anche senza JavaScript; esattamente 3 CTA
 //         più la barra sticky su #luna-buy-form; barra sticky che sparisce davanti alla CTA finale. Le pagine di
 //         prova arrivano da studio/preview/overrides/*.json.
-import { readFileSync, readdirSync } from 'node:fs';
+// Step 7: consegna stimata per un ordine di venerdì, di sabato, dopo l'ora limite e prima di una festività;
+//         console e scroll orizzontale anche a 1280 px; ogni regola del §10, una per una; pesi reali di immagini
+//         e JavaScript, nessuna libreria esterna. L'esito, punto per punto, va in studio/qa/checklist.md.
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -25,7 +29,7 @@ import { buildData, render } from './render.mjs';
 import { scrollThrough, stretchSky, watchProblems } from './shoot.mjs';
 
 const PAGES = ['index.html', 'styleguide.html'];
-const WIDTHS = [360, 390, 768, 1440];
+const WIDTHS = [360, 390, 768, 1280, 1440];
 const FONTS = ['Luna Fraunces', 'Luna Inter'];
 // §9: primo caricamento senza la parte 3D ≤ 900 KB. Il server dell'anteprima non comprime:
 // la misura è prudente (su Shopify CSS, JS e HTML arrivano compressi).
@@ -765,12 +769,12 @@ async function persuasionChecks(browser, baseUrl) {
     const live = await read('index.html');
     const editor = await read('editor.html');
     record(
-      'recensioni senza blocchi: non stampa nulla',
+      '§10 · recensioni senza blocchi: la sezione non stampa nulla',
       live.html === '' && live.height === 0,
       `fuori dall'editor: ${live.html.length} caratteri di markup, altezza ${live.height} px`
     );
     record(
-      'recensioni nell\'editor: riquadro per l\'app',
+      '§10 · recensioni nell\'editor: riquadro per il blocco dell\'app',
       editor.placeholder.startsWith('Aggiungi qui il blocco della tua app recensioni') && editor.height > 0,
       `«${editor.placeholder}», altezza ${editor.height} px`
     );
@@ -1066,7 +1070,7 @@ async function offerChecks(browser, baseUrl) {
       lines.push(`senza JavaScript: ${now.visible ? 'visibile' : 'nascosto'}`);
       await ctx.close();
     }
-    record('countdown: spento, data passata, data futura', ok, lines.join(' · '));
+    record('§10 · countdown solo con una fine reale: spento, data passata, data futura', ok, lines.join(' · '));
   }
 
   // 4. Garanzia e «notti di prova» solo con il reso sopra i 14 giorni (§10)
@@ -1090,7 +1094,7 @@ async function offerChecks(browser, baseUrl) {
     const days30 = await read('index.html');
     const days14 = await read('reso-14.html');
     record(
-      'garanzia e «notti di prova» solo con il reso oltre 14 giorni',
+      '§10 · reso di 14 giorni: niente garanzia né «notti di prova»',
       days30.guarantee && /refund/.test(days30.link) && days30.trial >= 2 && !days14.guarantee && days14.trial === 0,
       `30 giorni: garanzia ${days30.guarantee ? 'sì' : 'no'} (link ${days30.link || '—'}), «notti di prova» ×${days30.trial} · ` +
         `14 giorni: garanzia ${days14.guarantee ? 'sì' : 'no'}, «notti di prova» ×${days14.trial}, chiusura «${days14.final}»`
@@ -1173,14 +1177,378 @@ async function offerChecks(browser, baseUrl) {
   return results;
 }
 
+/* ---------------------------------------------------------------- step 7 */
+const ROME_DAY = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'short', day: 'numeric', month: 'short' });
+const FIXED_HOLIDAYS = ['01-01', '01-06', '04-25', '05-01', '06-02', '08-15', '11-01', '12-08', '12-25', '12-26'];
+
+/** Pasqua (calendario gregoriano): serve per il lunedì dell'Angelo. Calcolo indipendente da luna-landing.js. */
+function easter(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const h = (19 * a + b - Math.floor(b / 4) - Math.floor((b - Math.floor((b + 8) / 25) + 1) / 3) + 15) % 30;
+  const l = (32 + 2 * (b % 4) + 2 * Math.floor(c / 4) - h - (c % 4)) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return Date.UTC(year, month - 1, day, 12);
+}
+
+function isBusinessDay(day) {
+  const date = new Date(day);
+  const weekday = date.getUTCDay();
+  if (weekday === 0 || weekday === 6) return false;
+  const key = `${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  return !FIXED_HOLIDAYS.includes(key) && day !== easter(date.getUTCFullYear()) + 86400000;
+}
+
+/** Finestra di consegna attesa: spedizione oggi se lavorativo e prima dell'ora limite, poi +min e +max lavorativi. */
+function expectedDelivery(romeDay, hour, minDays, maxDays, cutoff) {
+  let day = Date.parse(`${romeDay}T12:00:00Z`);
+  if (hour >= cutoff || !isBusinessDay(day)) {
+    do day += 86400000; while (!isBusinessDay(day));
+  }
+  const add = (start, amount) => {
+    let cursor = start;
+    for (let left = amount; left > 0; ) {
+      cursor += 86400000;
+      if (isBusinessDay(cursor)) left -= 1;
+    }
+    return cursor;
+  };
+  return { ship: ROME_DAY.format(day), from: ROME_DAY.format(add(day, minDays)), to: ROME_DAY.format(add(day, maxDays)) };
+}
+
+async function deliveryChecks(browser, baseUrl) {
+  const results = [];
+  const hero = heroSettings();
+  const min = hero.delivery_min ?? 7;
+  const max = hero.delivery_max ?? 14;
+  const cutoff = hero.cutoff_hour ?? 14;
+  const cases = [
+    ['ordine di venerdì prima dell\'ora limite', '2026-11-06', '10:00'],
+    ['ordine di venerdì dopo l\'ora limite', '2026-11-06', '15:30'],
+    ['ordine di sabato', '2026-11-07', '10:00'],
+    ['ordine di mercoledì dopo l\'ora limite', '2026-11-04', '15:30'],
+    ['ordine il giorno prima dell\'Immacolata, dopo l\'ora limite', '2026-12-07', '15:00'],
+  ];
+  for (const [label, day, time] of cases) {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.clock.setFixedTime(romeInstant(day, time));
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
+    const shown = await page.$eval('[data-luna-delivery]', (line) => ({
+      from: line.querySelector('[data-luna-date-from]')?.textContent.trim(),
+      to: line.querySelector('[data-luna-date-to]')?.textContent.trim(),
+      text: line.textContent.replace(/\s+/g, ' ').trim(),
+    }));
+    const hour = Number(time.split(':')[0]);
+    const want = expectedDelivery(day, hour, min, max, cutoff);
+    results.push({
+      name: `consegna stimata · ${label}`,
+      ok: shown.from === want.from && shown.to === want.to,
+      detail: `${ROME_DAY.format(Date.parse(`${day}T12:00:00Z`))} alle ${time}, spedizione ${want.ship}: «${shown.text}» ` +
+        `(attese ${want.from} e ${want.to}; ${min}–${max} giorni lavorativi, ora limite ${cutoff}:00)`,
+    });
+    await ctx.close();
+  }
+  return results;
+}
+
+/** Testo visibile e attributi letti dalle persone (alt, aria-label, title, meta) di una pagina. */
+const pageWords = (page) =>
+  page.evaluate(() => {
+    const parts = [document.body.innerText];
+    for (const element of document.querySelectorAll('[alt], [aria-label], [title], [placeholder]')) {
+      for (const name of ['alt', 'aria-label', 'title', 'placeholder']) {
+        if (element.hasAttribute(name)) parts.push(element.getAttribute(name));
+      }
+    }
+    for (const meta of document.querySelectorAll('meta[name="description"], meta[property^="og:"], title')) {
+      parts.push(meta.getAttribute('content') || meta.textContent);
+    }
+    return parts.join('\n');
+  });
+
+async function legalChecks(browser, baseUrl) {
+  const results = [];
+  const record = (name, ok, detail = '') => results.push({ name: `§10 · ${name}`, ok, detail });
+  const open = async (pageName, options = mobileOptions) => {
+    const ctx = await context(browser, options);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'networkidle' });
+    return { ctx, page };
+  };
+  const testPages = ['index.html', ...readdirSync(join(paths.preview, 'overrides')).filter((file) => file.endsWith('.json')).map((file) => file.replace(/\.json$/, '.html'))];
+
+  // 1. Prezzo barrato: sempre con la riga Omnibus accanto (hero, offerta, barra sticky); senza barrato nessuna delle due
+  {
+    const { ctx, page } = await open('index.html');
+    const blocks = await page.$$eval('[data-luna-price-block]', (list) =>
+      list.map((block) => {
+        const shown = (element) => Boolean(element && !element.closest('[hidden]'));
+        return {
+          where: block.closest('.shopify-section')?.id.split('__').pop() || '?',
+          compare: shown(block.querySelector('.luna-price__was')) ? block.querySelector('.luna-price__was s').textContent.trim() : '',
+          omnibus: shown(block.querySelector('.luna-price__omnibus')) ? block.querySelector('[data-luna-omnibus]').textContent.trim() : '',
+        };
+      })
+    );
+    await ctx.close();
+    const plain = await open('senza-barrato.html');
+    const leftovers = await plain.page.$$eval('[data-luna-sale-part]', (list) => list.filter((part) => !part.closest('[hidden]')).length);
+    await plain.ctx.close();
+    const paired = blocks.filter((block) => block.compare);
+    record(
+      'prezzo barrato sempre con la riga Omnibus',
+      paired.length >= 3 && paired.every((block) => block.omnibus === block.compare) && leftovers === 0,
+      `${paired.map((block) => `${block.where}: barrato ${block.compare}, Omnibus ${block.omnibus}`).join(' · ')}; ` +
+        `senza barrato: ${leftovers} parti dello sconto visibili`
+    );
+  }
+
+  // 2. Recensioni: niente testimonianze, voti o numeri di clienti scritti a mano (in nessuna pagina di prova)
+  {
+    const pattern = /★|☆|\b\d+(?:[.,]\d+)?\s*\/\s*5\b|\b\d[\d.]*\s*(?:recensioni|clienti|ordini|pezzi venduti|persone soddisfatte)\b|clienti soddisfatti|testimonianz|stelle su 5/gi;
+    const found = [];
+    for (const pageName of testPages) {
+      const { ctx, page } = await open(pageName);
+      for (const match of (await pageWords(page)).match(pattern) || []) found.push(`${pageName}: «${match}»`);
+      await ctx.close();
+    }
+    record(
+      'niente recensioni, voti o numeri di clienti scritti a mano',
+      found.length === 0,
+      found.length ? found.join(' · ') : `${testPages.length} pagine lette: nessuna stella, voto, numero di clienti o testimonianza`
+    );
+  }
+
+  // 3. Scorte: solo dal magazzino Shopify. Senza conteggio dei pezzi nessuna riga; con 3 pezzi veri la riga c'è
+  {
+    const read = async (pageName) => {
+      const { ctx, page } = await open(pageName);
+      const state = await page.$eval('[data-luna-stock]', (line) => ({ visible: !line.hidden, text: line.textContent.trim() }));
+      await ctx.close();
+      return state;
+    };
+    const untracked = await read('index.html');
+    const tracked = await read('scorte-reali.html');
+    record(
+      'scorte solo dal magazzino Shopify',
+      !untracked.visible && untracked.text === '' && tracked.visible && tracked.text.includes('3'),
+      `magazzino senza conteggio: ${untracked.visible ? `«${untracked.text}»` : 'nessuna riga'} · ` +
+        `3 pezzi nel magazzino Shopify: ${tracked.visible ? `«${tracked.text}»` : 'nessuna riga'}`
+    );
+  }
+
+  // 4. Niente promesse sulla salute, niente «NASA», «certificato», «brevettato»
+  {
+    const pattern = /\b(sonno|dormire meglio|insonnia|ansia|stress|terapi\w*|curativ\w*|benessere psicofisico|NASA|certificat\w*|brevettat\w*)\b/gi;
+    const found = [];
+    for (const pageName of testPages) {
+      const { ctx, page } = await open(pageName);
+      for (const match of (await pageWords(page)).match(pattern) || []) found.push(`${pageName}: «${match}»`);
+      await ctx.close();
+    }
+    record(
+      'niente promesse sulla salute né «NASA», «certificato», «brevettato»',
+      found.length === 0,
+      found.length ? found.join(' · ') : `${testPages.length} pagine lette, testi visibili e attributi alt, aria-label e title`
+    );
+  }
+
+  // 5. Materiali come nella scheda del fornitore: mai «legno» da solo
+  {
+    const { ctx, page } = await open('index.html');
+    const words = await pageWords(page);
+    await ctx.close();
+    const bare = (words.match(/.{0,24}\blegno\b.{0,12}/gi) || []).filter((match) => !/effetto legno/i.test(match));
+    record(
+      'materiali come nella scheda: mai «legno» da solo',
+      bare.length === 0 && /PLA stampato in 3D/.test(words) && /ABS effetto legno chiaro/.test(words),
+      bare.length
+        ? bare.map((match) => `«${match.trim()}»`).join(' · ')
+        : `«legno» compare ${(words.match(/\blegno\b/gi) || []).length} volte, sempre come «effetto legno»; ` +
+          '«PLA stampato in 3D» e «ABS effetto legno chiaro» presenti'
+    );
+  }
+
+  // 6. Scene nostre, mai le foto originali del fornitore
+  {
+    const hash = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
+    const supplierDir = join(paths.studio, 'input', 'luna-foto', 'fornitore');
+    const supplier = new Set(readdirSync(supplierDir).filter((file) => statSync(join(supplierDir, file)).isFile()).map((file) => hash(join(supplierDir, file))));
+    const copies = readdirSync(join(paths.theme, 'assets')).filter((file) => supplier.has(hash(join(paths.theme, 'assets', file))));
+    const { ctx, page } = await open('index.html');
+    await scrollThrough(page);
+    const sources = await page.evaluate(() =>
+      [...document.querySelectorAll('img, source')]
+        .flatMap((element) => [element.currentSrc || element.getAttribute('src') || '', ...(element.getAttribute('srcset') || '').split(',').map((part) => part.trim().split(/\s+/)[0])])
+        .filter((url) => url && !url.startsWith('data:'))
+        .map((url) => new URL(url, document.baseURI).pathname)
+    );
+    await ctx.close();
+    const unknown = [...new Set(sources)].filter((url) => !/\/assets\/luna-[\w.-]+\.(webp|jpg|png)$/.test(url));
+    record(
+      'scene nostre, mai le foto originali del fornitore',
+      copies.length === 0 && unknown.length === 0,
+      `${supplier.size} foto del fornitore confrontate con gli asset del tema: ${copies.length ? `copie ${copies.join(', ')}` : 'nessuna copia'}; ` +
+        `${new Set(sources).size} immagini in pagina, ${unknown.length ? `non nostre: ${unknown.join(', ')}` : 'tutte esportate da noi (luna-*)'}`
+    );
+  }
+
+  // 7. Misura reale Ø 8,5 cm: occhiello della hero, specifiche e vicino a ogni immagine grande della lampada
+  {
+    const { ctx, page } = await open('index.html');
+    await scrollThrough(page);
+    const state = await page.evaluate(() => {
+      const size = 'Ø 8,5 cm';
+      const sections = [...document.querySelectorAll('.shopify-section')].map((section) => {
+        const big = [...section.querySelectorAll('img, canvas')].filter((element) => {
+          const rect = element.getBoundingClientRect();
+          const source = element.currentSrc || '';
+          return rect.width >= 200 && (element.tagName === 'CANVAS' || /luna-(lamp|moon|base|scene)/.test(source));
+        }).length;
+        return { id: section.id.split('__').pop(), big, size: section.innerText.includes(size) };
+      });
+      return {
+        eyebrow: document.querySelector('.luna-hero .luna-eyebrow')?.textContent.includes(size) || false,
+        specs: document.querySelector('.luna-specs')?.innerText.includes(size) || false,
+        sections: sections.filter((section) => section.big > 0),
+      };
+    });
+    await ctx.close();
+    const missing = state.sections.filter((section) => !section.size).map((section) => section.id);
+    record(
+      'misura reale Ø 8,5 cm accanto alle immagini grandi',
+      state.eyebrow && state.specs && missing.length === 0,
+      `occhiello della hero: ${state.eyebrow ? 'sì' : 'no'}, specifiche: ${state.specs ? 'sì' : 'no'}; ` +
+        `sezioni con immagini grandi della lampada: ${state.sections.map((section) => `${section.id} ${section.size ? '✓' : '✗'}`).join(', ')}`
+    );
+  }
+
+  // 8. Footer: ragione sociale, P.IVA e sede dai setting; link alle policy da shop.policies
+  {
+    const { globals } = buildData(new Set());
+    const policies = globals.shop.policies.map((policy) => policy.url);
+    const read = async (pageName) => {
+      const { ctx, page } = await open(pageName);
+      const state = await page.$eval('.luna-footer', (footer) => ({
+        legal: footer.querySelector('.luna-footer__legal')?.textContent.replace(/\s+/g, ' ').trim() || '',
+        links: [...footer.querySelectorAll('a')].map((link) => link.getAttribute('href')),
+      }));
+      await ctx.close();
+      return state;
+    };
+    const empty = await read('index.html');
+    const filled = await read('dati-legali.html');
+    record(
+      'footer con dati legali dai setting e policy da shop.policies',
+      policies.every((url) => empty.links.includes(url)) && empty.legal === '' &&
+        /Esempio Srl/.test(filled.legal) && /P\.IVA 00000000000/.test(filled.legal) && /Via di Prova 1/.test(filled.legal),
+      `policy: ${policies.map((url) => `${url} ${empty.links.includes(url) ? '✓' : '✗'}`).join(', ')}; ` +
+        `setting vuoti: ${empty.legal ? `«${empty.legal}»` : 'nessuna riga'}; setting compilati: «${filled.legal}»`
+    );
+  }
+
+  // 9. Banner dei cookie: content_for_header nel <head>, così com'è (il banner vero si prova sul negozio)
+  {
+    const layout = readFileSync(join(paths.theme, 'layout', 'luna-landing.liquid'), 'utf8');
+    const head = layout.slice(0, layout.indexOf('</head>'));
+    const uses = layout.match(/content_for_header[^}]*\}\}/g) || [];
+    const plain = uses.length === 1 && /\{\{\s*content_for_header\s*\}\}/.test(head);
+    const afterCss = head.indexOf('content_for_header') > head.indexOf("'luna-landing.css'");
+    record(
+      'banner dei cookie: content_for_header nel <head> così com\'è',
+      plain && afterCss,
+      `${uses.length} uso, ${plain ? 'senza filtri, if o capture' : 'non pulito'}, ${afterCss ? 'dopo il CSS' : 'prima del CSS'}; ` +
+        'il banner si vede solo sul negozio (step 7, sul telefono)'
+    );
+  }
+
+  return results;
+}
+
+async function weightChecks(browser, baseUrl) {
+  const results = [];
+  const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
+  const ctx = await context(browser, mobileOptions);
+  const page = await ctx.newPage();
+  const responses = [];
+  page.on('response', (response) =>
+    responses.push(response.body().then((body) => ({ url: new URL(response.url()).pathname.split('/').pop(), type: response.headers()['content-type'] || '', body }), () => null))
+  );
+  await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+  const external = await page.evaluate(() =>
+    [...document.querySelectorAll('script[src], link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]')]
+      .map((element) => element.getAttribute('src') || element.getAttribute('href'))
+      .filter((url) => /^(https?:)?\/\//.test(url) && !url.includes(location.host))
+  );
+  await ctx.close();
+  const items = (await Promise.all(responses)).filter(Boolean);
+  const images = items.filter((item) => /image\//.test(item.type)).sort((a, b) => b.body.length - a.body.length);
+  const scripts = items.filter((item) => /javascript/.test(item.type));
+  const sum = (list) => list.reduce((total, item) => total + item.body.length, 0);
+  results.push({
+    name: 'pesi reali · immagini del primo caricamento (390 px, prima di scorrere)',
+    ok: sum(images) / 1024 <= BUDGET_KB,
+    detail: `${images.length} immagini, ${kb(sum(images))}: ${images.map((item) => `${item.url} ${kb(item.body.length)}`).join(', ')}`,
+  });
+  const landing = readFileSync(join(paths.theme, 'assets', 'luna-landing.js'));
+  const staticImports = (landing.toString().match(/^\s*import\s[^(]/gm) || []).length;
+  const three = ['luna-moon3d.js', 'luna-three.module.min.js'].map((file) => {
+    const body = readFileSync(join(paths.theme, 'assets', file));
+    return `${file} ${kb(body.length)} (${kb(gzipSync(body, { level: 9 }).length)} gzip)`;
+  });
+  results.push({
+    name: 'pesi reali · JavaScript, senza librerie esterne né CDN',
+    ok: staticImports === 0 && external.length === 0 && scripts.every((item) => item.url.startsWith('luna-')),
+    detail: `primo caricamento: ${scripts.map((item) => `${item.url} ${kb(item.body.length)} (${kb(gzipSync(item.body, { level: 9 }).length)} gzip)`).join(', ')}; ` +
+      `${staticImports} import statici; solo vicino alla 3D: ${three.join(', ')}; ` +
+      `script o fogli esterni: ${external.length ? external.join(', ') : 'nessuno'}`,
+  });
+  return results;
+}
+
 /* ---------------------------------------------------------------- avvio */
+/** Esito punto per punto in studio/qa/checklist.md (lo riscrive ogni giro). */
+function writeChecklist(sections, total, failed) {
+  const lines = [
+    '# Checklist dei controlli automatici',
+    '',
+    `Generata da \`npm --prefix studio run check\` (studio/preview/check.mjs) il ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}, ` +
+      'sull\'anteprima simulata (§13): LiquidJS, dati finti, Chromium di Playwright.',
+    '',
+    failed ? `**${failed} controlli falliti su ${total}.**` : `**Tutti i ${total} controlli superati.**`,
+    '',
+  ];
+  for (const { title, results } of sections) {
+    lines.push(`## ${title}`, '');
+    for (const result of results) lines.push(`- ${result.ok ? '✅' : '❌'} **${result.name}** — ${result.detail}`);
+    lines.push('');
+  }
+  lines.push(
+    '## Da verificare sul negozio (non si provano nell\'anteprima)',
+    '',
+    '- ⏳ Checkout con 1 pezzo al prezzo giusto da ogni CTA (hero, offerta, chiusura, barra sticky).',
+    '- ⏳ Pagamenti rapidi visibili accanto alla CTA della hero e coerenti con lo stile della pagina.',
+    '- ⏳ Banner dei cookie presente con il layout luna-landing.',
+    '- ⏳ Eventi del pixel Meta (PageView, ViewContent, AddToCart / InitiateCheckout) senza bloccare l\'invio del form.',
+    '- ⏳ Lighthouse mobile sul negozio vero, con gli script di Shopify.',
+    ''
+  );
+  writeFileSync(join(paths.qa, 'checklist.md'), lines.join('\n'));
+}
+
 async function main() {
   await render();
   const server = await serve(paths.out);
   const browser = await launchBrowser();
   let failed = 0;
   let total = 0;
+  const sections = [];
   try {
+    const pages = [];
     for (const pageName of PAGES) {
       for (const width of WIDTHS) {
         total += 1;
@@ -1196,23 +1564,43 @@ async function main() {
               ` · primo caricamento ${firstLoadKb.toFixed(0)} KB / ${BUDGET_KB} KB`
           );
         }
+        pages.push({
+          name: `${pageName} a ${width} px`,
+          ok: failures.length === 0,
+          detail: failures.length
+            ? failures.join(' · ')
+            : `console pulita, niente scroll orizzontale, font caricati${italic ? ' (anche il corsivo)' : ''}, ` +
+              `primo caricamento ${firstLoadKb.toFixed(0)} KB su ${BUDGET_KB}`,
+        });
       }
     }
+    sections.push({ title: 'Pagine: console, scroll orizzontale, font e budget (360, 390, 768, 1280, 1440 px)', results: pages });
     console.log('');
     // In sequenza: alcuni controlli misurano tempi e caricamenti, in parallelo si disturberebbero
-    const results = [];
-    for (const group of [heroChecks, moon3dChecks, persuasionChecks, offerChecks]) {
-      results.push(...(await group(browser, server.url)));
-    }
-    for (const result of results) {
-      total += 1;
-      if (!result.ok) failed += 1;
-      console.log(`${result.ok ? '✓' : '✗'} ${result.name}  ·  ${result.detail}`);
+    const groups = [
+      ['Hero, acquisto e barra sticky (step 3)', heroChecks],
+      ['Luna 3D (step 4)', moon3dChecks],
+      ['Sezioni che convincono (step 5)', persuasionChecks],
+      ['Offerta, FAQ e chiusura (step 6)', offerChecks],
+      ['Consegna stimata (step 7)', deliveryChecks],
+      ['Regole legali, una per una (§10)', legalChecks],
+      ['Pesi reali di immagini e JavaScript (§9)', weightChecks],
+    ];
+    for (const [title, group] of groups) {
+      const results = await group(browser, server.url);
+      sections.push({ title, results });
+      for (const result of results) {
+        total += 1;
+        if (!result.ok) failed += 1;
+        console.log(`${result.ok ? '✓' : '✗'} ${result.name}  ·  ${result.detail}`);
+      }
     }
   } finally {
     await browser.close();
     await server.close();
   }
+  writeChecklist(sections, total, failed);
+  console.log('\n✓ studio/qa/checklist.md');
   if (failed) {
     console.log(`\n${failed} controlli falliti su ${total}`);
     process.exit(1);

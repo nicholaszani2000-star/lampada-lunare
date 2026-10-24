@@ -35,6 +35,7 @@ const TYPES = {
  * Serve una cartella su una porta libera di localhost.
  * options.compress: gzip per HTML, CSS, JS, JSON e SVG, come il CDN di Shopify (per Lighthouse); spento di
  * default, così i controlli misurano i byte senza compressione (stima prudente del §9).
+ * options.port: porta fissa (predefinita: una libera).
  */
 export function serve(dir, options = {}) {
   const server = createServer((request, response) => {
@@ -62,7 +63,7 @@ export function serve(dir, options = {}) {
     response.end(request.method === 'HEAD' ? undefined : body);
   });
   return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(options.port || 0, '127.0.0.1', () => {
       const { port } = server.address();
       resolve({ url: `http://127.0.0.1:${port}`, close: () => new Promise((done) => server.close(done)) });
     });

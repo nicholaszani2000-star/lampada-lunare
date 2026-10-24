@@ -1,0 +1,12 @@
+{
+  "descrizione": "Footer con ragione sociale, P.IVA e sede compilate dall'editor (§10). I valori sono finti, solo per la prova.",
+  "sezioni": {
+    "footer": {
+      "settings": {
+        "company_name": "Esempio Srl (prova)",
+        "vat_number": "00000000000",
+        "address": "Via di Prova 1, 00100 Roma (RM)"
+      }
+    }
+  }
+}

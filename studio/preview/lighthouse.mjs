@@ -1,7 +1,9 @@
 // Lighthouse sull'anteprima simulata (CLAUDE.md §9): mobile, con la simulazione di Lighthouse (Moto G Power,
 // 4G lento, CPU rallentata 4×), sulla pagina servita compressa come dal CDN di Shopify.
 // Obiettivi: Performance ≥ 85, Accessibilità ≥ 95, SEO ≥ 95; LCP < 2,5 s, CLS < 0,1.
-// Uscita: studio/qa/lighthouse-mobile.html (report completo) e lighthouse-mobile.txt (riassunto).
+// Uscita: studio/qa/lighthouse.txt (riassunto dei giri); i report completi del giro mediano restano in
+// studio/preview/out (lighthouse-mobile.html e .json, non vanno su git). Il report HTML in studio/qa/lighthouse.html
+// lo produce il comando dello step 7 (npx lighthouse … --output-path=studio/qa/lighthouse.html).
 // Il punteggio vero si misura sul negozio (step 7): qui mancano il CDN di Shopify, content_for_header, i pixel e
 // il banner cookie, che pesano a parte.
 // Lighthouse varia un po' da un giro all'altro: fa 3 giri (LUNA_LH_RUNS per cambiarli) e tiene quello mediano
@@ -56,7 +58,7 @@ try {
   };
   const [html, json] = result.report;
   const { categories, audits } = result.lhr;
-  writeFileSync(join(paths.qa, 'lighthouse-mobile.html'), html);
+  writeFileSync(join(paths.out, 'lighthouse-mobile.html'), html);
   writeFileSync(join(paths.out, 'lighthouse-mobile.json'), json); // completo, solo in locale (out/ non va su git)
 
   const lines = [
@@ -116,9 +118,9 @@ try {
   const errors = audits['errors-in-console']?.details?.items || [];
   for (const item of errors) lines.push(`  errore di console: ${item.description} (${item.source || ''})`);
   const summary = lines.join('\n');
-  writeFileSync(join(paths.qa, 'lighthouse-mobile.txt'), summary + '\n');
+  writeFileSync(join(paths.qa, 'lighthouse.txt'), summary + '\n');
   console.log(summary);
-  console.log('\n✓ studio/qa/lighthouse-mobile.html e lighthouse-mobile.txt');
+  console.log('\n✓ studio/qa/lighthouse.txt (report completi in studio/preview/out)');
 } finally {
   await chrome.kill();
   await server.close();

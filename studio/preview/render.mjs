@@ -138,7 +138,8 @@ export function buildData(options = args) {
     title: 'Default Title',
     name: 'Lampada Lunare Levitante',
     price: 5990,
-    compare_at_price: onSale ? 6990 : null,
+    // Prezzi previsti per il negozio (step 7): €59,90, barrato €66,56 (prezzo più basso degli ultimi 30 giorni)
+    compare_at_price: onSale ? 6656 : null,
     available,
     inventory_management: null,
     inventory_policy: 'deny',
