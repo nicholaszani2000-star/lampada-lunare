@@ -347,6 +347,152 @@
         "eyebrow": "Recensioni",
         "heading": "Cosa dice chi l'ha già accesa."
       }
+    },
+    "offer": {
+      "type": "luna-offer",
+      "blocks": {
+        "item1": {
+          "type": "item",
+          "settings": {
+            "text": "Lampada Lunare Levitante Ø 8,5 cm con base magnetica"
+          }
+        },
+        "item2": {
+          "type": "item",
+          "settings": {
+            "text": "Nella confezione: Luna, base, alimentatore e istruzioni"
+          }
+        },
+        "item3": {
+          "type": "item",
+          "settings": {
+            "text": "Spedizione gratuita in 7–14 giorni lavorativi"
+          }
+        },
+        "item4": {
+          "type": "item",
+          "settings": {
+            "text": "Reso entro 30 giorni"
+          }
+        }
+      },
+      "block_order": [
+        "item1",
+        "item2",
+        "item3",
+        "item4"
+      ],
+      "settings": {
+        "badge_text": "Offerta di lancio −{pct}%",
+        "heading": "La tua Luna a {prezzo}.",
+        "savings_text": "Risparmi {importo}",
+        "omnibus_text": "Prezzo più basso degli ultimi 30 giorni:",
+        "tax_text": "IVA inclusa",
+        "per_day_text": "Meno di {c} centesimi a sera per tutto il primo anno.",
+        "end_time": "23:59",
+        "countdown_label": "L'offerta termina tra",
+        "label_days": "giorni",
+        "label_hours": "ore",
+        "label_minutes": "minuti",
+        "label_seconds": "secondi",
+        "cta_text": "Acquista ora — {prezzo}",
+        "loading_text": "Ti porto al checkout…",
+        "sold_out_text": "Esaurita",
+        "return_days": 30,
+        "guarantee_title": "30 notti di prova",
+        "guarantee_text": "Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.",
+        "policy_link_text": "politica di rimborso",
+        "end_date": "2026-12-18"
+      }
+    },
+    "faq": {
+      "type": "luna-faq",
+      "blocks": {
+        "question1": {
+          "type": "question",
+          "settings": {
+            "question": "Come fa a levitare?",
+            "answer": "<p>Nella base c'è un sistema magnetico che tiene la luna in equilibrio a pochi centimetri, senza alcun contatto.</p>"
+          }
+        },
+        "question2": {
+          "type": "question",
+          "settings": {
+            "question": "È difficile posizionarla?",
+            "answer": "<p>La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.</p>"
+          }
+        },
+        "question3": {
+          "type": "question",
+          "settings": {
+            "question": "Va collegata alla corrente?",
+            "answer": "<p>Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.</p>"
+          }
+        },
+        "question4": {
+          "type": "question",
+          "settings": {
+            "question": "Come la spengo senza farla cadere?",
+            "answer": "<p>Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.</p>"
+          }
+        },
+        "question5": {
+          "type": "question",
+          "settings": {
+            "question": "Quando arriva?",
+            "answer": "<p>Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.</p>"
+          }
+        },
+        "question6": {
+          "type": "question",
+          "settings": {
+            "question": "E se non mi piace?",
+            "answer": "<p>Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.</p>"
+          }
+        },
+        "question7": {
+          "type": "question",
+          "settings": {
+            "question": "È adatta ai bambini?",
+            "answer": "<p>È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.</p>"
+          }
+        },
+        "question8": {
+          "type": "question",
+          "settings": {
+            "question": "Il pagamento è sicuro?",
+            "answer": "<p>Il checkout è gestito da Shopify su connessione cifrata. Puoi pagare con i metodi che vedi in fondo alla pagina, anche con il pagamento rapido dallo smartphone.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "question1",
+        "question2",
+        "question3",
+        "question4",
+        "question5",
+        "question6",
+        "question7",
+        "question8"
+      ],
+      "settings": {
+        "heading": "Domande frequenti",
+        "policy_link_text": "politica di rimborso"
+      }
+    },
+    "final": {
+      "type": "luna-final",
+      "settings": {
+        "heading": "Stasera, accendi la Luna.",
+        "text": "Spedizione gratuita, 30 notti di prova e un regalo che nessuno dimentica.",
+        "return_days": 30,
+        "text_short_return": "Spedizione gratuita e un regalo che nessuno dimentica.",
+        "cta_text": "Acquista ora — {prezzo}",
+        "loading_text": "Ti porto al checkout…",
+        "sold_out_text": "Esaurita",
+        "image_alt": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base",
+        "size_label": "Ø 8,5 cm"
+      }
     }
   },
   "order": [
@@ -359,6 +505,9 @@
     "gift",
     "specs",
     "reviews",
+    "offer",
+    "faq",
+    "final",
     "footer",
     "sticky"
   ]

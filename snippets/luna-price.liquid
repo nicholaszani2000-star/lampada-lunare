@@ -9,6 +9,9 @@
   @param {object} [variant] - La variante da mostrare (predefinita: selezionata o prima disponibile)
   @param {string} [layout] - 'large' oppure 'compact' (predefinito 'large')
   @param {string} [badge_text] - Testo del badge, {pct} diventa la percentuale (predefinito «−{pct}%»)
+  @param {boolean} [show_price] - Mostra il prezzo attuale (predefinito sì; l'offerta lo ha già nel titolo, subito sopra)
+  @param {boolean} [show_badge] - Mostra il badge della percentuale nel layout large (predefinito sì; l'offerta
+    lo mette in cima alla sezione)
   @param {boolean} [show_savings] - Mostra il risparmio nel layout large (predefinito sì)
   @param {string} [savings_text] - Testo del risparmio, {importo} diventa la cifra (predefinito «Risparmi {importo}»)
   @param {string} [omnibus_text] - Testo prima del prezzo più basso degli ultimi 30 giorni
@@ -19,6 +22,8 @@
 {%- liquid
   assign luna_variant = variant | default: product.selected_or_first_available_variant
   assign luna_layout = layout | default: 'large'
+  assign luna_show_price = show_price | default: true, allow_false: true
+  assign luna_show_badge = show_badge | default: true, allow_false: true
   assign luna_show_savings = show_savings | default: true, allow_false: true
   assign luna_badge_text = badge_text | default: '−{pct}%'
   assign luna_savings_text = savings_text | default: 'Risparmi {importo}'
@@ -44,13 +49,15 @@
   data-luna-price-block
 >
   <p class="luna-price__row">
-    <span class="luna-visually-hidden">{{ luna_sale_label | escape }}</span>
-    <span class="luna-price__now" data-luna-price>{{ luna_variant.price | money }}</span>
+    {%- if luna_show_price %}
+      <span class="luna-visually-hidden">{{ luna_sale_label | escape }}</span>
+      <span class="luna-price__now" data-luna-price>{{ luna_variant.price | money }}</span>
+    {%- endif %}
     <span class="luna-price__was" data-luna-sale-part{% unless luna_on_sale %} hidden{% endunless %}>
       <span class="luna-visually-hidden">{{ luna_regular_label | escape }}</span>
       <s data-luna-compare>{{ luna_compare }}</s>
     </span>
-    {%- if luna_layout == 'large' %}
+    {%- if luna_layout == 'large' and luna_show_badge %}
       <span
         class="luna-badge luna-badge--sale"
         data-luna-sale-part

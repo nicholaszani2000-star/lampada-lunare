@@ -208,6 +208,7 @@
                   "available": {{ v.available | json }},
                   "options": {{ v.options | json }},
                   "price": {{ v.price | money | json }},
+                  "cents": {{ v.price }},
                   "compare": {% if luna_v_sale %}{{ v.compare_at_price | money | json }}{% else %}null{% endif %},
                   "pct": {% if luna_v_sale %}{{ luna_v_pct }}{% else %}null{% endif %},
                   "save": {% if luna_v_sale %}{{ v.compare_at_price | minus: v.price | money | json }}{% else %}null{% endif %},

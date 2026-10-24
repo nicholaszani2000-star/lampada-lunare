@@ -1,0 +1,150 @@
+{%- comment -%}
+  Chiusura emotiva e CTA n. 3 (§6.12): la lampada accesa che levita (gli stessi ritagli della hero, già in cache),
+  titolo, testo e bottone che invia il form della hero. Con il reso di 14 giorni o meno si usa il testo senza
+  «notti di prova» (§10). La CTA ha data-luna-final-cta: quando è sullo schermo la barra sticky si nasconde.
+{%- endcomment -%}
+{%- liquid
+  assign luna_variant = product.selected_or_first_available_variant
+  assign luna_sizes = '(min-width: 1024px) 320px, min(58vw, 320px)'
+  if section.settings.return_days > 14
+    assign luna_text = section.settings.text
+  else
+    assign luna_text = section.settings.text_short_return
+  endif
+-%}
+<section class="luna-section luna-final" aria-labelledby="luna-final-title-{{ section.id }}">
+  <div class="luna-container luna-final__inner">
+    <figure class="luna-final__visual">
+      {%- if section.settings.image != blank -%}
+        {{
+          section.settings.image
+          | image_url: width: 800
+          | image_tag:
+            widths: '320, 480, 640, 800',
+            sizes: luna_sizes,
+            alt: section.settings.image_alt,
+            class: 'luna-final__photo',
+            loading: 'lazy',
+            decoding: 'async'
+        }}
+      {%- else -%}
+        <div class="luna-final__lamp" role="img" aria-label="{{ section.settings.image_alt | escape }}">
+          <div class="luna-final__glow" aria-hidden="true"></div>
+          {%- render 'luna-cutout', file: 'luna-base-on', sizes: luna_sizes, class: 'luna-final__layer' -%}
+          <div class="luna-final__baselight" aria-hidden="true"><span class="luna-final__pulse"></span></div>
+          <div class="luna-final__moon luna-levitate">
+            {%- render 'luna-cutout', file: 'luna-moon-on', sizes: luna_sizes, class: 'luna-final__layer' -%}
+          </div>
+        </div>
+      {%- endif -%}
+      {%- if section.settings.size_label != blank -%}
+        <figcaption class="luna-chip luna-final__size">{{ section.settings.size_label | escape }}</figcaption>
+      {%- endif -%}
+    </figure>
+
+    <div class="luna-final__text">
+      <h2 class="luna-h2 luna-reveal" id="luna-final-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      {%- if luna_text != blank -%}
+        <p class="luna-lead luna-reveal">{{ luna_text | escape }}</p>
+      {%- endif -%}
+      <div class="luna-final__cta luna-reveal">
+        {% render 'luna-cta',
+          product: product,
+          variant: luna_variant,
+          text: section.settings.cta_text,
+          loading_text: section.settings.loading_text,
+          sold_out_text: section.settings.sold_out_text,
+          class: 'luna-cta--block',
+          attributes: 'data-luna-final-cta'
+        %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Chiusura",
+  "class": "luna-section-final",
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Stasera, accendi la Luna."
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Testo",
+      "default": "Spedizione gratuita, 30 notti di prova e un regalo che nessuno dimentica."
+    },
+    {
+      "type": "number",
+      "id": "return_days",
+      "label": "Giorni per il reso",
+      "info": "Lo stesso numero della sezione Offerta. Fino a 14 giorni si usa il testo qui sotto, senza «notti di prova».",
+      "default": 30
+    },
+    {
+      "type": "textarea",
+      "id": "text_short_return",
+      "label": "Testo con il reso fino a 14 giorni",
+      "default": "Spedizione gratuita e un regalo che nessuno dimentica."
+    },
+    {
+      "type": "header",
+      "content": "Bottone d'acquisto"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Bottone",
+      "info": "{prezzo} diventa il prezzo di Shopify.",
+      "default": "Acquista ora — {prezzo}"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Bottone durante il caricamento",
+      "default": "Ti porto al checkout…"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Bottone con variante esaurita",
+      "default": "Esaurita"
+    },
+    {
+      "type": "header",
+      "content": "Immagine"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Immagine della lampada",
+      "info": "Facoltativa. Se resta vuota si vede la lampada accesa che levita."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Testo alternativo dell'immagine",
+      "default": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura sotto la lampada",
+      "default": "Ø 8,5 cm"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Chiusura"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

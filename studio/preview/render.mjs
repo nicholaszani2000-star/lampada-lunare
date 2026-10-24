@@ -8,7 +8,9 @@
 //           --varianti        due varianti finte (opzione «Confezione»), per provare il selettore
 // Pagine di prova per check.mjs: out/due-tonalita.html ha una seconda tonalità finta nelle sezioni con blocchi
 // «tone» (la lampada vera ne ha una sola), per provare il selettore e la sincronia hero ↔ 3D; out/editor.html
-// simula l'editor del tema (come --editor), per provare quello che si vede solo lì.
+// simula l'editor del tema (come --editor), per provare quello che si vede solo lì; out/senza-barrato.html è il
+// prodotto senza prezzo barrato (come --senza-barrato); out/reso-14.html ha il reso a 14 giorni in offerta e
+// chiusura, per provare che la garanzia e le «notti di prova» spariscono (§10).
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve as resolvePath, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -653,6 +655,14 @@ function blocksFrom(schema, entry, sectionId) {
 
 const TEST_TONE = { type: 'tone', settings: { name: 'Bianco freddo (prova)', color: '#CFE0FF' } };
 
+/** Reso a 14 giorni nelle sezioni che hanno il setting return_days (solo per reso-14.html). */
+function withShortReturn(template) {
+  for (const entry of Object.values(template.sections)) {
+    if (entry.settings && 'return_days' in entry.settings) entry.settings.return_days = 14;
+  }
+  return template;
+}
+
 /** Aggiunge la tonalità di prova a ogni sezione che ha blocchi «tone» (solo per due-tonalita.html). */
 function withTestTone(template) {
   for (const entry of Object.values(template.sections)) {
@@ -719,6 +729,12 @@ export async function render(options = args) {
   const editorEngine = createEngine(editorData.globals);
   const editorSections = await renderSections(editorEngine, editorData, join(THEME, 'templates', 'product.luna.json'));
   writeFileSync(join(paths.out, 'editor.html'), await renderPage(editorEngine, editorData, editorSections));
+  const fullPriceData = buildData(new Set([...options, '--senza-barrato']));
+  const fullPriceEngine = createEngine(fullPriceData.globals);
+  const fullPrice = await renderSections(fullPriceEngine, fullPriceData, join(THEME, 'templates', 'product.luna.json'));
+  writeFileSync(join(paths.out, 'senza-barrato.html'), await renderPage(fullPriceEngine, fullPriceData, fullPrice));
+  const shortReturn = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'), withShortReturn);
+  writeFileSync(join(paths.out, 'reso-14.html'), await renderPage(engine, data, shortReturn));
 
   // Catalogo dei componenti (snippet, CSS): non fa parte del tema
   const saleFree = buildData(new Set([...options, '--senza-barrato']));
@@ -730,7 +746,10 @@ export async function render(options = args) {
   writeFileSync(join(paths.out, 'styleguide.html'), await renderPage(engine, data, guide));
 
   const size = statSync(join(paths.out, 'index.html')).size;
-  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html; prove: due-tonalita.html, editor.html`);
+  console.log(
+    `✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html; ` +
+      'prove: due-tonalita.html, editor.html, senza-barrato.html, reso-14.html'
+  );
   return data;
 }
 

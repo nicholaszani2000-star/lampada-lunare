@@ -941,26 +941,39 @@
     });
   }
 
+  /** «Meno di {c} centesimi a sera per tutto il primo anno»: c è il primo intero sopra prezzo / 365 (in centesimi). */
+  Luna.perDayCents = function (cents) {
+    return Math.floor(Number(cents) / 365) + 1;
+  };
+
   Luna.applyVariant = function (variant) {
     var form = doc.getElementById('luna-buy-form');
     if (form && form.elements.id) form.elements.id.value = variant.id;
     var sale = Boolean(variant.compare);
 
+    // Tutto quello che dipende dallo sconto, anche fuori dai blocchi prezzo (il badge in cima all'offerta)
+    doc.querySelectorAll('[data-luna-sale-part]').forEach(function (part) {
+      part.hidden = !sale;
+    });
+    doc.querySelectorAll('[data-luna-pct]').forEach(function (badge) {
+      badge.textContent = sale ? (badge.getAttribute('data-template') || '').replace('{pct}', variant.pct) : '';
+    });
     doc.querySelectorAll('[data-luna-price-block]').forEach(function (block) {
       block.classList.toggle('is-on-sale', sale);
-      block.querySelectorAll('[data-luna-sale-part]').forEach(function (part) {
-        part.hidden = !sale;
-      });
       block.querySelectorAll('[data-luna-compare], [data-luna-omnibus]').forEach(function (element) {
         element.textContent = variant.compare || '';
       });
-      var badge = block.querySelector('[data-luna-pct]');
-      if (badge) badge.textContent = sale ? (badge.getAttribute('data-template') || '').replace('{pct}', variant.pct) : '';
       var save = block.querySelector('[data-luna-save-line]');
       if (save) {
         if (sale) fillTemplate(save, save.getAttribute('data-template') || '', '{importo}', variant.save, { attribute: 'data-luna-save' });
         else save.textContent = '';
       }
+    });
+    doc.querySelectorAll('[data-luna-per-day]').forEach(function (line) {
+      var cents = Luna.perDayCents(variant.cents);
+      var text = line.querySelector('[data-luna-per-day-text]') || line;
+      line.hidden = !(cents < 100);
+      text.textContent = (line.getAttribute('data-template') || '').replace('{c}', cents);
     });
     doc.querySelectorAll('[data-luna-price]').forEach(function (element) {
       element.textContent = variant.price;
@@ -1280,7 +1293,61 @@
     }
   });
 
-  /* 17. Recensioni: video dei clienti, muti e in loop solo quando si vedono --- */
+  /* 17. Offerta: countdown fino alla fine reale della promo, poi sparisce ------ */
+  // Niente countdown che riparte (§10): la fine è una data e un'ora italiane fisse. Prima parte nascosto;
+  // si mostra solo se la fine è nel futuro e allo zero sparisce. Nell'editor una nota spiega perché non si vede.
+  Luna.register('countdown', '[data-luna-countdown]', function (box, scope) {
+    var dateValue = box.getAttribute('data-end-date');
+    var timeValue = box.getAttribute('data-end-time') || '23:59';
+    var note = box.parentElement ? box.parentElement.querySelector('[data-luna-countdown-note]') : null;
+
+    function explain(reason) {
+      if (!note || !Luna.isDesignMode()) return;
+      note.textContent = note.getAttribute('data-' + reason) || '';
+      note.hidden = false;
+    }
+
+    var valid = dates.parseDay(dateValue) && /^([01]?\d|2[0-3]):[0-5]\d$/.test(timeValue.trim());
+    var end = valid ? dates.zonedDateTime(dateValue, timeValue) : null;
+    if (!end) {
+      box.hidden = true;
+      explain('invalid');
+      return;
+    }
+
+    var fields = ['days', 'hours', 'minutes', 'seconds'].map(function (key) {
+      return { key: key, element: box.querySelector('[data-luna-countdown-' + key + ']') };
+    });
+    var timer = 0;
+    var align = 0;
+
+    function render() {
+      var left = dates.countdown(end);
+      if (left.done) {
+        box.hidden = true;
+        clearInterval(timer);
+        explain('expired');
+        return false;
+      }
+      fields.forEach(function (field) {
+        if (field.element) field.element.textContent = dates.pad(left[field.key]);
+      });
+      return true;
+    }
+
+    if (!render()) return;
+    box.hidden = false;
+    // Un aggiornamento al secondo, allineato al cambio del secondo dell'orologio
+    align = setTimeout(function () {
+      if (render()) timer = setInterval(render, 1000);
+    }, 1000 - (Date.now() % 1000));
+    scope.add(function () {
+      clearTimeout(align);
+      clearInterval(timer);
+    });
+  });
+
+  /* 18. Recensioni: video dei clienti, muti e in loop solo quando si vedono --- */
   // preload="none" nel markup: il video si scarica solo quando arriva sullo schermo. I controlli restano
   // (si può fermare e togliere il muto); con movimento ridotto non parte da solo.
   Luna.register('review-video', '[data-luna-review-video]', function (video, scope) {

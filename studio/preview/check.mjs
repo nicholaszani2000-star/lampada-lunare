@@ -11,12 +11,16 @@
 //         riquadro nell'editor); riga di Natale prima e dopo la scadenza con la data simulata; lampada di «Come
 //         funziona» che si monta (view(), ripiego JavaScript, movimento ridotto); card dei benefici della stessa
 //         altezza su desktop; passaggi morbidi tra le sezioni, senza linee nette.
+// Step 6: offerta con percentuale e prezzo a sera calcolati dai prezzi di Shopify (e senza barrato niente badge,
+//         risparmio né riga Omnibus); countdown che si vede prima della fine e sparisce dopo, senza ripartire;
+//         garanzia e «notti di prova» solo con il reso sopra i 14 giorni; FAQ a fisarmonica anche con la tastiera e
+//         senza JavaScript; tre CTA in pagina più la barra sticky, che si nasconde davanti a offerta e chiusura.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { launchBrowser, paths, serve } from './lib.mjs';
-import { render } from './render.mjs';
+import { buildData, render } from './render.mjs';
 import { scrollThrough, stretchSky, watchProblems } from './shoot.mjs';
 
 const PAGES = ['index.html', 'styleguide.html'];
@@ -197,6 +201,7 @@ async function heroChecks(browser, baseUrl) {
   }
 
   // 3. Barra sticky: nascosta con la CTA della hero sullo schermo, visibile quando la CTA è fuori
+  //    (dallo step 6 si nasconde anche davanti alle CTA di offerta e chiusura, data-luna-final-cta)
   for (const height of [844, 560]) {
     const ctx = await context(browser, { ...mobileOptions, viewport: { width: 390, height } });
     const page = await ctx.newPage();
@@ -204,9 +209,13 @@ async function heroChecks(browser, baseUrl) {
     await page.waitForTimeout(500);
     const state = () =>
       page.evaluate(() => {
-        const rect = document.querySelector('[data-luna-hero-cta]').getBoundingClientRect();
+        const onScreen = (element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.bottom > 0 && rect.top < window.innerHeight;
+        };
         return {
-          ctaOnScreen: rect.bottom > 0 && rect.top < window.innerHeight,
+          ctaOnScreen: onScreen(document.querySelector('[data-luna-hero-cta]')),
+          finalOnScreen: [...document.querySelectorAll('[data-luna-final-cta]')].some(onScreen),
           visible: document.querySelector('[data-luna-sticky]').classList.contains('is-visible'),
         };
       });
@@ -217,12 +226,13 @@ async function heroChecks(browser, baseUrl) {
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(500);
     const atTop = await state();
-    const consistent = [atLoad, atEnd, atTop].every((item) => item.visible === !item.ctaOnScreen);
+    const consistent = [atLoad, atEnd, atTop].every((item) => item.visible === (!item.ctaOnScreen && !item.finalOnScreen));
     record(
       `barra sticky a 390×${height}`,
       consistent,
       `al caricamento ${atLoad.visible ? 'visibile' : 'nascosta'} (CTA ${atLoad.ctaOnScreen ? 'sullo schermo' : 'sotto la piega'}), ` +
-        `in fondo ${atEnd.visible ? 'visibile' : 'nascosta'} (CTA ${atEnd.ctaOnScreen ? 'sullo schermo' : 'superata'}), ` +
+        `in fondo ${atEnd.visible ? 'visibile' : 'nascosta'} (CTA ${atEnd.ctaOnScreen ? 'sullo schermo' : 'superata'}` +
+        `${atEnd.finalOnScreen ? ', CTA finale sullo schermo' : ''}), ` +
         `di nuovo in cima ${atTop.visible ? 'visibile' : 'nascosta'}`
     );
     await ctx.close();
@@ -942,6 +952,230 @@ async function persuasionChecks(browser, baseUrl) {
   return results;
 }
 
+/* ---------------------------------------------------------------- step 6 */
+async function offerChecks(browser, baseUrl) {
+  const results = [];
+  const record = (name, ok, detail = '') => results.push({ name, ok, detail });
+  const { variant } = buildData(new Set());
+  const expectedPct = Math.round(((variant.compare_at_price - variant.price) * 100) / variant.compare_at_price);
+  const expectedPerDay = Math.floor(variant.price / 365) + 1;
+  const [, offerEntry] = templateSection('luna-offer');
+  const offerSettings = offerEntry?.settings || {};
+
+  const readOffer = (page) =>
+    page.evaluate(() => {
+      const offer = document.querySelector('.luna-offer');
+      const shown = (element) => Boolean(element && !element.closest('[hidden]') && element.getClientRects().length);
+      const text = (selector) => offer.querySelector(selector)?.textContent.replace(/\s+/g, ' ').trim() || '';
+      return {
+        badge: shown(offer.querySelector('.luna-offer__badge')) ? text('.luna-offer__badge') : '',
+        title: text('h2'),
+        heroPrice: document.querySelector('.luna-price__now')?.textContent.trim() || '',
+        compare: shown(offer.querySelector('.luna-price__was')) ? text('.luna-price__was s') : '',
+        save: shown(offer.querySelector('.luna-price__save')) ? text('.luna-price__save') : '',
+        omnibus: shown(offer.querySelector('.luna-price__omnibus')) ? text('.luna-price__omnibus') : '',
+        perDay: shown(offer.querySelector('[data-luna-per-day]')) ? text('[data-luna-per-day]') : '',
+        bigPrice: offer.querySelectorAll('.luna-price__now').length,
+      };
+    });
+
+  // 1. Con il barrato: badge, risparmio, riga Omnibus e prezzo a sera calcolati dai prezzi di Shopify
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    const offer = await readOffer(page);
+    record(
+      'offerta: percentuale e prezzo a sera dai prezzi di Shopify',
+      offer.badge.endsWith(`−${expectedPct}%`) && offer.title.includes(offer.heroPrice) && offer.heroPrice !== '' &&
+        offer.compare !== '' && offer.save !== '' && offer.omnibus.endsWith(offer.compare) &&
+        offer.perDay.includes(`${expectedPerDay} centesimi`) && offer.bigPrice === 0,
+      `«${offer.badge}» (atteso −${expectedPct}%), «${offer.title}», barrato ${offer.compare}, «${offer.save}», ` +
+        `«${offer.omnibus}», «${offer.perDay}» (atteso ${expectedPerDay})`
+    );
+    await ctx.close();
+  }
+
+  // 2. Senza barrato: niente badge, niente risparmio, niente riga Omnibus
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/senza-barrato.html`, { waitUntil: 'networkidle' });
+    const offer = await readOffer(page);
+    record(
+      'offerta senza barrato: niente badge, risparmio né Omnibus',
+      !offer.badge && !offer.compare && !offer.save && !offer.omnibus && offer.title.includes(offer.heroPrice) && offer.perDay !== '',
+      `badge «${offer.badge}», barrato «${offer.compare}», risparmio «${offer.save}», Omnibus «${offer.omnibus}»; ` +
+        `restano «${offer.title}» e «${offer.perDay}»`
+    );
+    await ctx.close();
+  }
+
+  // 3. Countdown: si vede solo prima della fine reale, sparisce alla fine e non riparte
+  {
+    const end = offerSettings.end_date ? romeInstant(offerSettings.end_date, offerSettings.end_time || '23:59') : null;
+    const lines = [];
+    let ok = Boolean(end);
+    const state = (page) =>
+      page.$eval('[data-luna-countdown]', (box) => ({
+        visible: !box.hidden && box.getClientRects().length > 0,
+        clock: [...box.querySelectorAll('.luna-countdown__value')].map((value) => value.textContent).join(':'),
+      }));
+    if (end) {
+      // a. oggi (la fine è nel futuro)
+      {
+        const ctx = await context(browser, mobileOptions);
+        const page = await ctx.newPage();
+        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+        const now = await state(page);
+        const future = Date.now() < end.getTime();
+        if (now.visible !== future) ok = false;
+        lines.push(`oggi ${now.visible ? `visibile (${now.clock})` : 'nascosto'}`);
+        await ctx.close();
+      }
+      // b. 3 secondi prima della fine: si vede, arriva a zero, sparisce e un minuto dopo è ancora nascosto
+      {
+        const ctx = await context(browser, mobileOptions);
+        const page = await ctx.newPage();
+        await page.clock.install({ time: new Date(end.getTime() - 3000) });
+        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
+        const before = await state(page);
+        await page.clock.runFor(4000);
+        const after = await state(page);
+        await page.clock.runFor(60000);
+        const later = await state(page);
+        // Durante il caricamento l'orologio simulato avanza: restano 2 o 3 secondi
+        if (!(before.visible && /^00:00:00:0[23]$/.test(before.clock) && !after.visible && !later.visible)) ok = false;
+        lines.push(`3 s prima ${before.visible ? `visibile (${before.clock})` : 'nascosto'}, ` +
+          `alla fine ${after.visible ? 'visibile' : 'sparito'}, un minuto dopo ${later.visible ? 'ripartito' : 'ancora nascosto'}`);
+        await ctx.close();
+      }
+      // c. dopo la fine (pagina aperta il giorno dopo) e senza JavaScript: niente countdown
+      for (const [label, options, when] of [
+        ['il giorno dopo', mobileOptions, new Date(end.getTime() + 86400000)],
+        ['senza JavaScript', { ...mobileOptions, javaScriptEnabled: false }, null],
+      ]) {
+        const ctx = await context(browser, options);
+        const page = await ctx.newPage();
+        if (when) await page.clock.setFixedTime(when);
+        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
+        const now = await state(page);
+        if (now.visible) ok = false;
+        lines.push(`${label} ${now.visible ? 'visibile' : 'nascosto'}`);
+        await ctx.close();
+      }
+    }
+    record(
+      'countdown solo fino alla fine reale, poi mai più',
+      ok,
+      `fine ${offerSettings.end_date || 'non impostata'} ${offerSettings.end_time || ''} · ${lines.join(' · ')}`
+    );
+  }
+
+  // 4. Garanzia e «notti di prova» solo con il reso sopra i 14 giorni (§10)
+  {
+    const read = async (pageName) => {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'networkidle' });
+      const state = await page.evaluate(() => {
+        const guarantee = document.querySelector('.luna-offer__guarantee');
+        return {
+          guarantee: Boolean(guarantee),
+          link: guarantee?.querySelector('a')?.getAttribute('href') || '',
+          trial: (document.body.innerText.match(/notti di prova/gi) || []).length,
+          final: document.querySelector('.luna-final .luna-lead')?.textContent.trim() || '',
+        };
+      });
+      await ctx.close();
+      return state;
+    };
+    const days30 = await read('index.html');
+    const days14 = await read('reso-14.html');
+    record(
+      'garanzia e «notti di prova» solo con il reso oltre 14 giorni',
+      days30.guarantee && /refund/.test(days30.link) && days30.trial >= 2 && !days14.guarantee && days14.trial === 0,
+      `30 giorni: garanzia ${days30.guarantee ? 'sì' : 'no'} (link ${days30.link || '—'}), «notti di prova» ×${days30.trial} · ` +
+        `14 giorni: garanzia ${days14.guarantee ? 'sì' : 'no'}, «notti di prova» ×${days14.trial}, chiusura «${days14.final}»`
+    );
+  }
+
+  // 5. FAQ: tutte chiuse, una alla volta, con la tastiera e anche senza JavaScript
+  {
+    const openState = (page) => page.$$eval('.luna-faq__item', (items) => items.map((item) => (item.open ? 1 : 0)).join(''));
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    const count = await page.locator('.luna-faq__item').count();
+    const start = await openState(page);
+    await page.locator('.luna-faq__question').nth(0).click();
+    const first = await openState(page);
+    await page.locator('.luna-faq__question').nth(4).click();
+    const second = await openState(page);
+    await page.locator('.luna-faq__question').nth(4).focus();
+    await page.keyboard.press('Enter');
+    const keyboard = await openState(page);
+    await ctx.close();
+
+    const noJs = await context(browser, { ...mobileOptions, javaScriptEnabled: false });
+    const plain = await noJs.newPage();
+    await plain.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
+    await plain.locator('.luna-faq__question').nth(2).click();
+    const withoutJs = await openState(plain);
+    await noJs.close();
+
+    const closed = '0'.repeat(count);
+    record(
+      'FAQ: una alla volta, tastiera, senza JavaScript',
+      count === 8 && start === closed && first[0] === '1' && second === `0000${'1'.padEnd(count - 4, '0')}` &&
+        keyboard === closed && withoutJs[2] === '1',
+      `${count} domande; aperte all'inizio ${start}, dopo un clic ${first}, dopo un altro ${second}, ` +
+        `Invio sulla stessa ${keyboard}; senza JavaScript ${withoutJs}`
+    );
+  }
+
+  // 6. Tre CTA in pagina più la barra sticky, tutte sullo stesso form
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    const ctas = await page.$$eval('[data-luna-cta]', (buttons) =>
+      buttons.map((button) => ({
+        where: button.closest('[data-luna-sticky]') ? 'sticky' : button.closest('.shopify-section').id.split('__').pop(),
+        form: button.getAttribute('form'),
+        type: button.type,
+      }))
+    );
+    const inPage = ctas.filter((cta) => cta.where !== 'sticky').map((cta) => cta.where);
+    record(
+      'tre CTA in pagina più la barra sticky',
+      inPage.join(',') === 'hero,offer,final' && ctas.length === 4 &&
+        ctas.every((cta) => cta.form === 'luna-buy-form' && cta.type === 'submit'),
+      `${inPage.join(', ')} + ${ctas.filter((cta) => cta.where === 'sticky').length} sticky, tutte type=submit form=luna-buy-form`
+    );
+
+    // 7. La barra sticky si nasconde quando la CTA dell'offerta o quella finale sono sullo schermo
+    const visibleAt = async (selector) => {
+      await page.evaluate((s) => document.querySelector(s).scrollIntoView({ block: 'center' }), selector);
+      await page.waitForTimeout(500);
+      return page.$eval('[data-luna-sticky]', (bar) => bar.classList.contains('is-visible'));
+    };
+    const atSpecs = await visibleAt('.luna-specs');
+    const atOffer = await visibleAt('.luna-offer__cta');
+    const atFaq = await visibleAt('.luna-faq__item:nth-child(4)');
+    const atFinal = await visibleAt('.luna-final__cta');
+    record(
+      'barra sticky nascosta davanti alle CTA di offerta e chiusura',
+      atSpecs && !atOffer && atFaq && !atFinal,
+      `specifiche ${atSpecs ? 'visibile' : 'nascosta'}, CTA dell'offerta ${atOffer ? 'visibile' : 'nascosta'}, ` +
+        `FAQ ${atFaq ? 'visibile' : 'nascosta'}, CTA finale ${atFinal ? 'visibile' : 'nascosta'}`
+    );
+    await ctx.close();
+  }
+
+  return results;
+}
+
 /* ---------------------------------------------------------------- avvio */
 async function main() {
   await render();
@@ -970,7 +1204,9 @@ async function main() {
     console.log('');
     // In sequenza: alcuni controlli misurano tempi e caricamenti, in parallelo si disturberebbero
     const results = [];
-    for (const group of [heroChecks, moon3dChecks, persuasionChecks]) results.push(...(await group(browser, server.url)));
+    for (const group of [heroChecks, moon3dChecks, persuasionChecks, offerChecks]) {
+      results.push(...(await group(browser, server.url)));
+    }
     for (const result of results) {
       total += 1;
       if (!result.ok) failed += 1;

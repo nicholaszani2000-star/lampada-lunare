@@ -2618,6 +2618,382 @@ html {
   text-align: center;
 }
 
+/* 18h. Offerta: la sezione sconto -------------------------------------- */
+/* Alone caldo più largo dello schermo: si taglia solo ai lati */
+.luna-offer,
+.luna-final {
+  overflow-x: clip;
+}
+
+.luna-offer::before,
+.luna-final::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  z-index: -1;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.luna-offer::before {
+  top: 4%;
+  width: min(140vw, 1000px);
+  background: radial-gradient(circle closest-side, rgba(255, 184, 102, .10), rgba(255, 184, 102, 0));
+}
+
+.luna-nowrap {
+  white-space: nowrap;
+}
+
+.luna-offer__panel {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 24px;
+  padding: clamp(24px, 5vw, 48px);
+  border-radius: var(--luna-radius-l);
+  background: linear-gradient(180deg, rgba(255, 217, 163, .07), rgba(255, 217, 163, .02) 42%, rgba(10, 15, 30, .65));
+  box-shadow: 0 50px 120px -60px rgba(255, 184, 102, .35);
+}
+
+/* Bordo di 1 px sfumato, caldo in alto */
+.luna-offer__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 217, 163, .42), rgba(255, 217, 163, .08) 45%, rgba(255, 255, 255, .06));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.luna-offer__head {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.luna-offer__head .luna-price {
+  justify-items: center;
+}
+
+.luna-offer__head .luna-price__row {
+  justify-content: center;
+}
+
+/* Senza il prezzo grande (è nel titolo) il barrato si legge accanto al titolo; senza sconto la riga sparisce */
+.luna-offer__head .luna-price__was {
+  font-size: 1.125rem;
+}
+
+.luna-offer__head .luna-price:not(.is-on-sale) .luna-price__row {
+  display: none;
+}
+
+.luna-offer__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--luna-line);
+  list-style: none;
+}
+
+.luna-offer__list li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: var(--luna-ink);
+  font-size: .9375rem;
+  line-height: 1.5;
+}
+
+.luna-offer__list .luna-icon {
+  margin-top: 1px;
+  color: var(--luna-light);
+}
+
+.luna-offer__per-day {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Icona in linea con il testo: resta accanto alla prima parola anche quando la riga va a capo */
+.luna-offer__per-day .luna-icon {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: -4px;
+  color: var(--luna-light);
+}
+
+.luna-offer__per-day[hidden],
+.luna-countdown[hidden] {
+  display: none;
+}
+
+.luna-offer__guarantee {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 20px;
+}
+
+.luna-offer__guarantee-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(143, 227, 181, .28);
+  border-radius: 50%;
+  background: rgba(143, 227, 181, .08);
+  color: var(--luna-ok);
+}
+
+.luna-offer__guarantee a,
+.luna-faq__answer a {
+  color: var(--luna-light);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Countdown: solo con una fine reale, numeri a larghezza fissa (niente saltelli) */
+.luna-countdown {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px 12px;
+  border: 1px solid var(--luna-line);
+  border-radius: var(--luna-radius);
+  background: rgba(5, 6, 11, .45);
+}
+
+.luna-countdown__label {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+}
+
+.luna-countdown__clock {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.luna-countdown__unit {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 56px;
+}
+
+.luna-countdown__value {
+  color: var(--luna-ink);
+  font-family: var(--luna-font-display);
+  font-size: clamp(1.75rem, 7vw, 2.25rem);
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1;
+}
+
+.luna-countdown__sep {
+  color: var(--luna-muted);
+  font-family: var(--luna-font-display);
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  line-height: 1.05;
+  opacity: .6;
+}
+
+.luna-countdown__name {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-micro);
+  letter-spacing: .04em;
+}
+
+/* 18i. Domande frequenti ---------------------------------------------- */
+.luna-faq__list {
+  display: grid;
+  border-top: 1px solid var(--luna-line);
+}
+
+.luna-faq__item {
+  border-bottom: 1px solid var(--luna-line);
+}
+
+.luna-faq__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 60px;
+  padding: 16px 0;
+  color: var(--luna-ink);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.4;
+  list-style: none;
+  cursor: pointer;
+}
+
+.luna-faq__question::-webkit-details-marker {
+  display: none;
+}
+
+.luna-faq__toggle {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--luna-line);
+  border-radius: 50%;
+  color: var(--luna-light);
+}
+
+.luna-faq__toggle::before,
+.luna-faq__toggle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  translate: -50% -50%;
+  transition: transform .3s var(--luna-ease);
+}
+
+.luna-faq__toggle::after {
+  transform: rotate(90deg);
+}
+
+.luna-faq__item[open] .luna-faq__toggle::after {
+  transform: rotate(0deg);
+}
+
+.luna-faq__answer {
+  padding: 0 46px 22px 0;
+}
+
+/* Apertura morbida dove il browser sa animare l'altezza dei <details> */
+@supports (interpolate-size: allow-keywords) and selector(::details-content) {
+  .luna-faq__item {
+    interpolate-size: allow-keywords;
+  }
+
+  .luna-faq__item::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height .4s var(--luna-ease), content-visibility .4s allow-discrete;
+  }
+
+  .luna-faq__item[open]::details-content {
+    height: auto;
+  }
+}
+
+/* 18j. Chiusura ------------------------------------------------------- */
+.luna-final::before {
+  top: 0;
+  width: min(150vw, 1100px);
+  background: radial-gradient(circle closest-side, rgba(255, 217, 163, .14), rgba(255, 217, 163, 0));
+}
+
+.luna-final__inner {
+  display: grid;
+  justify-items: center;
+  gap: clamp(28px, 5vw, 48px);
+  text-align: center;
+}
+
+.luna-final__visual {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.luna-final__photo {
+  width: min(80vw, 420px);
+  height: auto;
+  border-radius: var(--luna-radius-l);
+}
+
+.luna-final__lamp {
+  position: relative;
+  width: min(58vw, 320px);
+  aspect-ratio: 1000 / 1275;
+}
+
+.luna-final__layer,
+.luna-final__layer img,
+.luna-final__moon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.luna-final__layer img {
+  object-fit: contain;
+}
+
+.luna-final__glow {
+  position: absolute;
+  left: 44%;
+  top: 33%;
+  width: 160%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 217, 163, .34), rgba(255, 217, 163, 0));
+  pointer-events: none;
+}
+
+.luna-final__baselight {
+  position: absolute;
+  left: 44.08%;
+  top: 74.51%;
+  width: 62%;
+  height: 13%;
+  translate: -50% -50%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.luna-final__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse closest-side, rgba(255, 217, 163, .55), rgba(255, 217, 163, 0));
+  transform-origin: 50% 50%;
+  animation: luna-levitate-shadow 6s ease-in-out infinite;
+}
+
+.luna-final__text {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 34rem;
+}
+
+.luna-final__cta {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
+
 /* 19. Editor del tema ------------------------------------------------- */
 .luna-is-editor .luna-reveal {
   opacity: 1 !important;
@@ -2638,8 +3014,15 @@ html {
   .luna-levitate-shadow,
   .luna-how__float,
   .luna-how__pulse,
+  .luna-final__pulse,
   .luna-cta__spinner {
     animation: none;
+  }
+
+  .luna-faq__item::details-content,
+  .luna-faq__toggle::before,
+  .luna-faq__toggle::after {
+    transition: none;
   }
 
   .luna-reveal.is-pending {
