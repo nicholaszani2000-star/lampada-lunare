@@ -67,28 +67,40 @@ const roundHalfAway = (n) => Math.sign(n) * Math.round(Math.abs(n));
 /* ------------------------------------------------------------------ */
 const args = new Set(process.argv.slice(2));
 
-function assetImages(pattern) {
+// Immagini del prodotto (§4.7: la prima è la scena notte). Come su Shopify, ogni immagine è
+// l'originale più grande; image_url sceglie l'esportazione più piccola che basta per la larghezza chiesta.
+const PRODUCT_IMAGES = [
+  { slug: 'notte', alt: 'Lampada Lunare Levitante accesa, Ø 8,5 cm, su un piano scuro' },
+  { slug: 'misure', alt: 'Misure della Lampada Lunare Levitante: luna Ø 8,5 cm, base 10,8 × 2,2 cm' },
+];
+
+function productImages() {
   if (!existsSync(ASSETS)) return [];
-  return readdirSync(ASSETS)
-    .filter((file) => pattern.test(file))
-    .sort()
-    .map((file, index) => {
-      const size = imageSize(readFileSync(join(ASSETS, file))) || { width: 1600, height: 1600 };
-      return {
-        id: 9000 + index,
-        src: `assets/${file}`,
-        alt: 'Lampada Lunare Levitante, Ø 8,5 cm',
-        width: size.width,
-        height: size.height,
-        aspect_ratio: new LiquidFloat(size.width / size.height),
-        media_type: 'image',
-        position: index + 1,
-      };
-    });
+  const files = readdirSync(ASSETS);
+  return PRODUCT_IMAGES.map(({ slug, alt }, index) => {
+    const variants = files
+      .filter((file) => new RegExp(`^luna-scene-${slug}-\\d+\\.webp$`).test(file))
+      .map((file) => ({ file, ...(imageSize(readFileSync(join(ASSETS, file))) || {}) }))
+      .filter((variant) => variant.width)
+      .sort((a, b) => a.width - b.width);
+    if (!variants.length) return null;
+    const original = variants[variants.length - 1];
+    return {
+      id: 9000 + index,
+      src: `assets/${original.file}`,
+      variants,
+      alt,
+      width: original.width,
+      height: original.height,
+      aspect_ratio: new LiquidFloat(original.width / original.height),
+      media_type: 'image',
+      position: index + 1,
+    };
+  }).filter(Boolean);
 }
 
 export function buildData(options = args) {
-  const images = assetImages(/^luna-lamp-.*\.(webp|jpe?g|png)$/i);
+  const images = productImages();
   const onSale = !options.has('--senza-barrato');
   const available = !options.has('--esaurito');
   const designMode = options.has('--editor');
@@ -234,7 +246,11 @@ class ImageUrl extends Drop {
   }
   url(width) {
     const w = width || this.width;
-    return w ? `${this.image.src}?width=${w}` : this.image.src;
+    if (!w) return this.image.src;
+    // Come il CDN di Shopify: il file esportato più piccolo che copre la larghezza chiesta
+    const variants = this.image.variants || [];
+    const match = variants.find((variant) => variant.width >= w) || variants[variants.length - 1];
+    return `${match ? `assets/${match.file}` : this.image.src}?width=${w}`;
   }
   valueOf() {
     return this.url();
@@ -670,7 +686,7 @@ export async function render(options = args) {
   return data;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   render().catch((error) => {
     console.error('✗ render fallito:', error.message);
     process.exit(1);
