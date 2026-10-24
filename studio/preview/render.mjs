@@ -6,6 +6,8 @@
 //           --esaurito        variante non disponibile
 //           --editor          simula l'editor del tema (request.design_mode e Shopify.designMode)
 //           --varianti        due varianti finte (opzione «Confezione»), per provare il selettore
+// Pagina di prova: out/due-tonalita.html ha una seconda tonalità finta nelle sezioni con blocchi «tone»
+// (la lampada vera ne ha una sola): serve a check.mjs per provare il selettore e la sincronia hero ↔ 3D.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve as resolvePath, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -648,8 +650,20 @@ function blocksFrom(schema, entry, sectionId) {
     });
 }
 
-async function renderSections(engine, data, templateFile) {
-  const template = readJson(templateFile);
+const TEST_TONE = { type: 'tone', settings: { name: 'Bianco freddo (prova)', color: '#CFE0FF' } };
+
+/** Aggiunge la tonalità di prova a ogni sezione che ha blocchi «tone» (solo per due-tonalita.html). */
+function withTestTone(template) {
+  for (const entry of Object.values(template.sections)) {
+    if (!entry.blocks || !Object.values(entry.blocks).some((block) => block.type === 'tone')) continue;
+    entry.blocks.tone_prova = TEST_TONE;
+    entry.block_order = [...(entry.block_order || Object.keys(entry.blocks)).filter((id) => id !== 'tone_prova'), 'tone_prova'];
+  }
+  return template;
+}
+
+async function renderSections(engine, data, templateFile, transform = (template) => template) {
+  const template = transform(readJson(templateFile));
   const order = template.order || Object.keys(template.sections);
   const seen = new Set();
   let html = '';
@@ -698,6 +712,8 @@ export async function render(options = args) {
 
   const sections = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'));
   writeFileSync(join(paths.out, 'index.html'), await renderPage(engine, data, sections));
+  const twoTones = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'), withTestTone);
+  writeFileSync(join(paths.out, 'due-tonalita.html'), await renderPage(engine, data, twoTones));
 
   // Catalogo dei componenti (snippet, CSS): non fa parte del tema
   const saleFree = buildData(new Set([...options, '--senza-barrato']));
@@ -709,7 +725,7 @@ export async function render(options = args) {
   writeFileSync(join(paths.out, 'styleguide.html'), await renderPage(engine, data, guide));
 
   const size = statSync(join(paths.out, 'index.html')).size;
-  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB) e styleguide.html`);
+  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html e due-tonalita.html (prova)`);
   return data;
 }
 

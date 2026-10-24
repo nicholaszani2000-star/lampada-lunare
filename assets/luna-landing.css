@@ -1667,6 +1667,269 @@ html {
   }
 }
 
+/* 18b. Luna 3D -------------------------------------------------------- */
+.luna-moon3d {
+  --luna-power: 0;
+}
+
+/* Senza JavaScript non c'è l'interruttore: la lampada resta accesa */
+.no-js .luna-moon3d {
+  --luna-power: 1;
+}
+
+.luna-moon3d__grid {
+  display: grid;
+  gap: clamp(28px, 6vw, 72px);
+  align-items: center;
+}
+
+.luna-moon3d__text {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
+}
+
+.luna-moon3d__text .luna-lead {
+  max-width: 30rem;
+}
+
+.luna-moon3d__figure {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  margin: 0;
+}
+
+.luna-moon3d__stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+}
+
+/* Ripiego: lampada accesa con l'alone CSS (anche prima che arrivi il 3D) */
+.luna-moon3d__glow {
+  position: absolute;
+  inset: 4% 10% 22%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle closest-side, rgba(255, 217, 163, .55), rgba(255, 217, 163, 0));
+  opacity: calc(var(--luna-power) * .65);
+  transition: opacity .9s var(--luna-ease), visibility 0s linear 0s;
+}
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .luna-moon3d__glow {
+    background: radial-gradient(circle closest-side, color-mix(in srgb, var(--luna-light) 55%, transparent), transparent);
+  }
+}
+
+.luna-moon3d__fallback,
+.luna-moon3d__fallback picture,
+.luna-moon3d__fallback img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.luna-moon3d__fallback {
+  inset: 5% 8%;
+  width: auto;
+  height: auto;
+  transition: opacity .6s var(--luna-ease), visibility 0s linear 0s;
+}
+
+.luna-moon3d__fallback img {
+  object-fit: contain;
+  /* Ripiego: l'interruttore spegne anche la foto (più scura e quasi senza colore), senza un'altra immagine da scaricare */
+  filter: brightness(calc(.42 + .58 * var(--luna-power))) saturate(calc(.25 + .75 * var(--luna-power)));
+  transition: filter .9s var(--luna-ease);
+}
+
+.luna-moon3d__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: grab;
+  /* Su mobile la pagina scorre sempre in verticale anche facendo swipe sul canvas */
+  touch-action: pan-y;
+  transition: opacity .6s var(--luna-ease);
+}
+
+.luna-moon3d__canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.luna-moon3d__stage.is-3d .luna-moon3d__canvas {
+  opacity: 1;
+}
+
+.luna-moon3d__stage.is-3d .luna-moon3d__fallback,
+.luna-moon3d__stage.is-3d .luna-moon3d__glow {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .6s var(--luna-ease), visibility 0s linear .6s;
+}
+
+.luna-moon3d__stage:not(.is-3d) .luna-moon3d__canvas {
+  pointer-events: none;
+}
+
+.luna-moon3d__size {
+  position: absolute;
+  z-index: 2;
+  top: 4px;
+  left: 0;
+  min-height: 28px;
+  padding: 4px 10px;
+  color: var(--luna-muted);
+  font-size: var(--luna-text-micro);
+}
+
+.luna-moon3d__hint {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 2%;
+  translate: -50% 0;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--luna-line);
+  border-radius: var(--luna-pill);
+  background: rgba(5, 6, 11, .55);
+  color: var(--luna-ink);
+  font-size: .8125rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity .5s var(--luna-ease);
+}
+
+.luna-moon3d__hint .luna-icon {
+  color: var(--luna-light);
+}
+
+.luna-moon3d__stage.is-3d .luna-moon3d__hint {
+  display: inline-flex;
+}
+
+.luna-moon3d__hint.is-hidden {
+  opacity: 0;
+}
+
+.luna-moon3d__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--luna-muted);
+  font-size: var(--luna-text-micro);
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* Su una riga sola con il separatore solo quando c'è spazio: su mobile didascalia e crediti vanno su due righe */
+@media (min-width: 600px) {
+  .luna-moon3d__caption {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 0;
+  }
+
+  .luna-moon3d__caption span + span::before {
+    content: ' · ';
+    white-space: pre;
+  }
+}
+
+/* Interruttore acceso/spento (role="switch") */
+.luna-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 18px 6px 8px;
+  border: 1px solid var(--luna-line);
+  border-radius: var(--luna-pill);
+  background: var(--luna-glass);
+  color: var(--luna-ink);
+  font-size: var(--luna-text-small);
+  font-weight: 560;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.luna-switch__track {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: var(--luna-pill);
+  background: rgba(242, 239, 232, .16);
+  transition: background .3s var(--luna-ease);
+}
+
+.luna-switch__knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--luna-ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+  transition: translate .3s var(--luna-ease), background .3s var(--luna-ease);
+}
+
+.luna-switch[aria-checked='true'] .luna-switch__track {
+  background: linear-gradient(180deg, var(--luna-cta-top), var(--luna-cta-bottom));
+  box-shadow: 0 0 18px -4px rgba(255, 184, 102, .7);
+}
+
+.luna-switch[aria-checked='true'] .luna-switch__knob {
+  translate: 18px 0;
+  background: #fff8ec;
+}
+
+.luna-switch:focus-visible {
+  outline: 2px solid var(--luna-light);
+  outline-offset: 3px;
+}
+
+@media (min-width: 990px) {
+  .luna-moon3d__grid {
+    grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  }
+
+  .luna-moon3d__text {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .luna-moon3d__text .luna-tones {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luna-moon3d__glow,
+  .luna-moon3d__fallback,
+  .luna-moon3d__fallback img,
+  .luna-moon3d__canvas,
+  .luna-switch__track,
+  .luna-switch__knob {
+    transition: none;
+  }
+}
+
 /* 19. Editor del tema ------------------------------------------------- */
 .luna-is-editor .luna-reveal {
   opacity: 1 !important;

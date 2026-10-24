@@ -49,6 +49,30 @@
         "trust_3": "Reso in 30 giorni"
       }
     },
+    "moon3d": {
+      "type": "luna-moon3d",
+      "blocks": {
+        "tone_bianco": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco"
+      ],
+      "settings": {
+        "eyebrow": "Provala adesso",
+        "heading": "Girala. Accendila.",
+        "text": "<p>Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.</p>",
+        "drag_hint": "Trascina per ruotarla",
+        "auto_rotate": true,
+        "caption": "Anteprima 3D illustrativa",
+        "credit": "Texture della Luna: Solar System Scope, CC BY 4.0"
+      }
+    },
     "footer": {
       "type": "luna-footer",
       "settings": {
@@ -72,6 +96,7 @@
     "announcement",
     "header",
     "hero",
+    "moon3d",
     "footer",
     "sticky"
   ]

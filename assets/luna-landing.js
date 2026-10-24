@@ -188,7 +188,8 @@
     var promise = new Promise(function (resolve, reject) {
       function load() {
         if (cancelled) return;
-        import(url).then(resolve, reject);
+        // import() vuole un URL assoluto (o che inizi con / ./ ../): asset_url di Shopify dà //cdn…
+        import(new URL(url, document.baseURI).href).then(resolve, reject);
       }
       if (!('IntersectionObserver' in window)) {
         load();
@@ -1037,6 +1038,118 @@
     }
     scope.add(function () {
       bar.classList.remove('is-visible');
+    });
+  });
+
+  /* 14. Luna 3D: interruttore, tonalità e caricamento pigro del modulo ------ */
+  function webglAvailable() {
+    try {
+      var probe = doc.createElement('canvas');
+      var gl = probe.getContext('webgl2') || probe.getContext('webgl');
+      if (!gl) return false;
+      var lose = gl.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  Luna.register('moon3d', '[data-luna-moon3d]', function (section, scope) {
+    var stage = section.querySelector('[data-luna-moon3d-stage]');
+    var toggle = section.querySelector('[data-luna-moon3d-switch]');
+    var tones = Array.prototype.slice.call(section.querySelectorAll('[data-luna-tone]'));
+    var colour = light.color || (tones[0] && tones[0].getAttribute('data-luna-tone')) || (stage && stage.getAttribute('data-light')) || '';
+    var power = light.power;
+    var view = null;
+    var destroyed = false;
+    if (!stage) return;
+
+    function apply(value, nextColour, silent) {
+      power = value;
+      if (nextColour) colour = nextColour;
+      section.style.setProperty('--luna-power', String(value));
+      if (colour) section.style.setProperty('--luna-light', colour);
+      if (toggle) toggle.setAttribute('aria-checked', value > 0 ? 'true' : 'false');
+      tones.forEach(function (tone) {
+        var selected = (tone.getAttribute('data-luna-tone') || '').toLowerCase() === (colour || '').toLowerCase();
+        tone.setAttribute('aria-checked', selected ? 'true' : 'false');
+        tone.tabIndex = selected ? 0 : -1;
+      });
+      if (!silent) Luna.setLight({ power: value, color: colour, source: 'moon3d' });
+    }
+
+    apply(power, colour, true);
+    if (toggle) {
+      scope.on(toggle, 'click', function () {
+        apply(power > 0 ? 0 : 1);
+      });
+    }
+    tones.forEach(function (tone, index) {
+      scope.on(tone, 'click', function () {
+        apply(1, tone.getAttribute('data-luna-tone'));
+      });
+      scope.on(tone, 'keydown', function (event) {
+        var step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        var next = tones[(index + step + tones.length) % tones.length];
+        next.focus();
+        apply(1, next.getAttribute('data-luna-tone'));
+      });
+    });
+    Luna.onLight(function (detail) {
+      if (detail.source === 'moon3d') return;
+      apply(detail.power, detail.color, true);
+    }, scope);
+
+    // Ripiego: senza WebGL o con ?luna3d=0 resta l'immagine con l'alone CSS
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('luna3d') === '0' || !webglAvailable() || !('IntersectionObserver' in window)) {
+      stage.classList.add('is-fallback');
+      return;
+    }
+
+    // Mai prima del primo paint; poi a 400 px dal viewport (§9)
+    afterFirstPaint(scope, function () {
+      var mobile = window.matchMedia('(max-width: 989px)').matches;
+      var handle = Luna.lazyImport(stage, stage.getAttribute('data-module-url'), { distance: 400, scope: scope });
+      handle.promise
+        .then(function (module) {
+          if (destroyed) return null;
+          return module.mount(stage, {
+            threeUrl: stage.getAttribute('data-three-url'),
+            textures: {
+              colour: stage.getAttribute(mobile ? 'data-colour-1k' : 'data-colour-2k'),
+              bump: stage.getAttribute('data-bump'),
+            },
+            power: power,
+            colour: colour,
+            autoRotate: stage.getAttribute('data-auto-rotate') === 'true',
+            reducedMotion: Luna.reducedMotion(),
+            mobile: mobile,
+          });
+        })
+        .then(function (instance) {
+          if (!instance) return;
+          if (destroyed) {
+            instance.destroy();
+            return;
+          }
+          view = instance;
+          stage.classList.add('is-3d');
+        })
+        .catch(function (error) {
+          console.warn('[Luna] luna 3D non disponibile, resta l\'immagine:', error && error.message);
+          stage.classList.add('is-fallback');
+        });
+    });
+
+    scope.add(function () {
+      destroyed = true;
+      if (view) view.destroy();
+      view = null;
+      stage.classList.remove('is-3d', 'is-fallback');
     });
   });
 

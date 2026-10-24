@@ -29,9 +29,13 @@ export async function scrollThrough(page) {
 }
 
 /** Registra errori di console, eccezioni, richieste fallite e risposte HTTP ≥ 400. */
+// Avvisi del renderer software di Chromium headless (SwiftShader) quando Playwright legge i pixel di un canvas WebGL
+// per lo screenshot: non vengono dal nostro codice e su un telefono vero non esistono.
+const HEADLESS_GL_NOISE = /GL Driver Message \(OpenGL, Performance,.*GPU stall due to ReadPixels/;
+
 export function watchProblems(page, label, list) {
   page.on('console', (message) => {
-    if (message.type() === 'error' || message.type() === 'warning') {
+    if ((message.type() === 'error' || message.type() === 'warning') && !HEADLESS_GL_NOISE.test(message.text())) {
       list.push(`${label}  console.${message.type()}: ${message.text()}`);
     }
   });

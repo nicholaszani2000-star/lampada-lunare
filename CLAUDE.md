@@ -166,6 +166,7 @@ moon3d
 - H2: «Girala. Accendila.»
 - testo: «Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.»
 - didascalia: «Anteprima 3D illustrativa»
+- crediti, obbligatori (licenza CC BY 4.0), nella stessa didascalia: «Texture della Luna: Solar System Scope, CC BY 4.0»
 
 benefits
 - occhiello: «Perché tutti la notano»

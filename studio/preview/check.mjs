@@ -3,6 +3,9 @@
 //         (anche il corsivo di Fraunces dove i titoli hanno <em>), primo caricamento entro il budget del §9.
 // Step 3: interruttore della luna, titoli per angolo (?h=), barra sticky, movimento ridotto, form d'acquisto,
 //         CTA collegate a #luna-buy-form, nessun prezzo scritto a mano, un solo H1, immagini della hero (LCP).
+// Step 4: Three.js non scaricato prima di avvicinarsi alla sezione 3D; poi un canvas WebGL disegnato davvero;
+//         con ?luna3d=0 l'immagine di ripiego; tonalità sincronizzate hero ↔ 3D; swipe sul canvas che fa scorrere
+//         la pagina; trascinamento che ruota la luna (anche con movimento ridotto); editor: unload smonta, load rimonta.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -113,6 +116,8 @@ function hardcodedPrices() {
   for (const dir of ['layout', 'sections', 'snippets', 'assets', 'templates']) {
     for (const name of readdirSync(join(paths.theme, dir))) {
       if (!/^(luna-|product\.luna\.json$)/.test(name) || !/\.(liquid|js|css|json)$/.test(name)) continue;
+      // Three.js è una libreria esterna minificata: le sue costanti numeriche non sono prezzi
+      if (name === 'luna-three.module.min.js') continue;
       files.push(join(dir, name));
     }
   }
@@ -301,6 +306,266 @@ async function heroChecks(browser, baseUrl) {
   return results;
 }
 
+/* ---------------------------------------------------------------- step 4 */
+const STAGE = '[data-luna-moon3d-stage]';
+
+/** Porta il palco 3D a `gap` px sotto il bordo inferiore della finestra (negativo: dentro lo schermo). */
+const scrollStageTo = (page, gap) =>
+  page.evaluate(({ selector, gap }) => {
+    const top = document.querySelector(selector).getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, Math.max(0, top - window.innerHeight - gap));
+  }, { selector: STAGE, gap });
+
+const centerStage = (page) =>
+  page.evaluate((selector) => document.querySelector(selector).scrollIntoView({ block: 'center' }), STAGE);
+
+/** Percentuale di pixel chiari (luminanza > 60) in uno screenshot PNG, decodificato nel browser. */
+const brightShare = (page, png) =>
+  page.evaluate(async (src) => {
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let bright = 0;
+    for (let index = 0; index < data.length; index += 4) {
+      if (0.2126 * data[index] + 0.7152 * data[index + 1] + 0.0722 * data[index + 2] > 60) bright += 1;
+    }
+    return (bright / (data.length / 4)) * 100;
+  }, `data:image/png;base64,${png.toString('base64')}`);
+
+async function moon3dChecks(browser, baseUrl) {
+  const results = [];
+  const record = (name, ok, detail = '') => results.push({ name, ok, detail });
+  const wait3d = (page) =>
+    page.waitForSelector(`${STAGE}.is-3d`, { timeout: 25000 }).then(() => true, () => false);
+
+  // 1 e 2. A 390×844: niente Three.js prima di avvicinarsi; a 400 px dal viewport parte, poi un canvas WebGL disegnato
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    const problems = [];
+    watchProblems(page, '', problems);
+    const requests = [];
+    page.on('request', (request) => IS_3D.test(request.url()) && requests.push(request.url().split('/').pop()));
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+    const distance = await page.evaluate(
+      (selector) => Math.round(document.querySelector(selector).getBoundingClientRect().top - window.innerHeight),
+      STAGE
+    );
+    const atLoad = requests.length;
+    await scrollStageTo(page, 700);
+    await page.waitForTimeout(1000);
+    const at700 = requests.length;
+    await scrollStageTo(page, 300);
+    await page.waitForTimeout(1000);
+    const at300 = [...requests];
+    record(
+      'Three.js non scaricato prima di avvicinarsi',
+      atLoad === 0 && at700 === 0 && at300.some((name) => name.startsWith('luna-moon3d.js')),
+      `palco a ${distance} px sotto lo schermo: ${atLoad} richieste 3D al caricamento, ${at700} a 700 px, ` +
+        `a 300 px: ${at300.join(', ') || 'nessuna'}`
+    );
+
+    await centerStage(page);
+    const ready = await wait3d(page);
+    await page.waitForTimeout(1500); // dissolvenza dell'immagine di ripiego
+    const state = await page.evaluate((selector) => {
+      const stage = document.querySelector(selector);
+      const canvas = stage.querySelector('canvas');
+      return {
+        renderer: stage.dataset.lunaRenderer || '',
+        size: `${canvas.width}×${canvas.height}`,
+        canvasOpacity: getComputedStyle(canvas).opacity,
+        fallbackOpacity: getComputedStyle(stage.querySelector('.luna-moon3d__fallback')).opacity,
+        threeModules: performance.getEntriesByType('resource').filter((entry) => /luna-three/.test(entry.name)).length,
+      };
+    }, STAGE);
+    const share = ready ? await brightShare(page, await page.locator(`${STAGE} canvas`).screenshot()) : 0;
+    record(
+      'avvicinandosi compare un canvas WebGL disegnato',
+      ready && /^webgl2?$/.test(state.renderer) && state.canvasOpacity === '1' && state.fallbackOpacity === '0' &&
+        state.threeModules === 1 && share > 8 && !problems.length,
+      `${ready ? 'is-3d' : '3D non pronto'}, renderer ${state.renderer || '—'}, canvas ${state.size}, ` +
+        `immagine di ripiego a opacità ${state.fallbackOpacity}, pixel chiari ${share.toFixed(1)}%` +
+        (problems.length ? ` · ${problems.join(' | ')}` : '')
+    );
+
+    // 5. Swipe verticale sul canvas: la pagina scorre (touch-action: pan-y). Tocchi veri via CDP:
+    //    Input.synthesizeScrollGesture in Chromium headless non fa scorrere nulla, nemmeno fuori dal canvas.
+    //    Prova del contrario fatta a mano: con touch-action: none lo stesso swipe lascia la pagina ferma.
+    const point = await page.evaluate((selector) => {
+      const canvas = document.querySelector(`${selector} canvas`);
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.round(rect.left + rect.width / 2);
+      const y = Math.round(rect.top + rect.height * 0.4);
+      return { x, y, onCanvas: document.elementFromPoint(x, y) === canvas, touchAction: getComputedStyle(canvas).touchAction };
+    }, STAGE);
+    const before = await page.evaluate(() => window.scrollY);
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: point.x, y: point.y }] });
+    for (let step = 1; step <= 12; step += 1) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: point.x, y: point.y - step * 25 }] });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(500);
+    const after = await page.evaluate(() => window.scrollY);
+    record(
+      'swipe sul canvas: la pagina scorre',
+      point.onCanvas && point.touchAction === 'pan-y' && after - before > 150,
+      `dito sul canvas: ${point.onCanvas}, touch-action ${point.touchAction}, scrollY ${Math.round(before)}→${Math.round(after)}`
+    );
+    await ctx.close();
+  }
+
+  // 3. Con ?luna3d=0: l'immagine della lampada accesa, nessun file 3D scaricato; l'interruttore la spegne
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    const requests = [];
+    page.on('request', (request) => IS_3D.test(request.url()) && requests.push(request.url().split('/').pop()));
+    await page.goto(`${baseUrl}/index.html?luna3d=0`, { waitUntil: 'networkidle' });
+    await centerStage(page);
+    await page.waitForTimeout(1500);
+    const state = await page.evaluate((selector) => {
+      const stage = document.querySelector(selector);
+      const image = stage.querySelector('.luna-moon3d__fallback img');
+      const rect = image.getBoundingClientRect();
+      return {
+        classes: stage.className,
+        loaded: image.complete && image.naturalWidth > 0,
+        opacity: getComputedStyle(stage.querySelector('.luna-moon3d__fallback')).opacity,
+        size: `${Math.round(rect.width)}×${Math.round(rect.height)}`,
+        alt: image.alt,
+        filter: getComputedStyle(image).filter,
+      };
+    }, STAGE);
+    await page.click('[data-luna-moon3d-switch]');
+    await page.waitForTimeout(1200);
+    const off = await page.evaluate((selector) => ({
+      checked: document.querySelector('[data-luna-moon3d-switch]').getAttribute('aria-checked'),
+      filter: getComputedStyle(document.querySelector(`${selector} .luna-moon3d__fallback img`)).filter,
+    }), STAGE);
+    record(
+      'con ?luna3d=0 resta l\'immagine',
+      /is-fallback/.test(state.classes) && !/is-3d/.test(state.classes) && state.loaded && state.opacity === '1' &&
+        Boolean(state.alt) && requests.length === 0 && off.checked === 'false' && off.filter !== state.filter,
+      `immagine caricata: ${state.loaded}, ${state.size}, opacità ${state.opacity}, richieste 3D: ${requests.length}; ` +
+        `interruttore spento: ${state.filter} → ${off.filter}`
+    );
+    await ctx.close();
+  }
+
+  // 4. Tonalità: cambiarla nella hero cambia anche la luna 3D (e viceversa). Pagina di prova con due tonalità
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/due-tonalita.html`, { waitUntil: 'networkidle' });
+    await centerStage(page);
+    const ready = await wait3d(page);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(300);
+    const heroTone = page.locator('[data-luna-tones] [data-luna-tone]').nth(1);
+    const expected = (await heroTone.getAttribute('data-luna-tone')).toLowerCase();
+    await heroTone.click();
+    await page.waitForTimeout(800);
+    const read = () =>
+      page.evaluate((selector) => {
+        const stage = document.querySelector(selector);
+        const section = stage.closest('[data-luna-moon3d]');
+        const checked = section.querySelector('[data-luna-tone][aria-checked="true"]');
+        const hero = document.querySelector('[data-luna-stage]');
+        return {
+          colour: (stage.dataset.lunaColour || '').toLowerCase(),
+          light: section.style.getPropertyValue('--luna-light').trim().toLowerCase(),
+          power: stage.dataset.lunaPower,
+          chip: checked ? checked.getAttribute('data-luna-tone').toLowerCase() : '',
+          heroLight: getComputedStyle(hero).getPropertyValue('--luna-light').trim().toLowerCase(),
+        };
+      }, STAGE);
+    const fromHero = await read();
+    await centerStage(page);
+    const firstTone = page.locator('[data-luna-moon3d] [data-luna-tone]').first();
+    const back = (await firstTone.getAttribute('data-luna-tone')).toLowerCase();
+    await firstTone.click();
+    await page.waitForTimeout(800);
+    const fromMoon = await read();
+    record(
+      'tonalità della hero → luna 3D (e ritorno)',
+      ready &&
+        fromHero.colour === expected && fromHero.light === expected && fromHero.chip === expected && fromHero.power === '1' &&
+        fromMoon.colour === back && fromMoon.heroLight === back,
+      `hero ${expected} → 3D ${fromHero.colour} (--luna-light ${fromHero.light}, chip ${fromHero.chip}); ` +
+        `3D ${back} → hero ${fromMoon.heroLight}`
+    );
+    await ctx.close();
+  }
+
+  // 6. Trascinamento con il mouse: la luna ruota, anche con movimento ridotto (che toglie solo la rotazione automatica)
+  {
+    const ctx = await context(browser, { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await centerStage(page);
+    const ready = await wait3d(page);
+    const box = await page.locator(`${STAGE} canvas`).boundingBox();
+    const rotation = () => page.$eval(STAGE, (stage) => Number(stage.dataset.lunaRotation));
+    const before = await rotation();
+    const hintBefore = await page.$eval(`${STAGE} [data-luna-moon3d-hint]`, (hint) => hint.classList.contains('is-hidden'));
+    await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.4);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.4 + 140, box.y + box.height * 0.4, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    const after = await rotation();
+    const hintAfter = await page.$eval(`${STAGE} [data-luna-moon3d-hint]`, (hint) => hint.classList.contains('is-hidden'));
+    record(
+      'trascinamento: la luna ruota (movimento ridotto)',
+      ready && after - before > 0.5 && !hintBefore && hintAfter,
+      `rotazione ${before.toFixed(2)} → ${after.toFixed(2)} rad, suggerimento nascosto: ${hintBefore} → ${hintAfter}`
+    );
+    await ctx.close();
+  }
+
+  // 7. Editor del tema: shopify:section:unload libera WebGL, shopify:section:load rimonta la luna 3D
+  {
+    const ctx = await context(browser, { viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    const problems = [];
+    watchProblems(page, '', problems);
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await centerStage(page);
+    const mounted = await wait3d(page);
+    const fire = (type) =>
+      page.evaluate((name) => {
+        const wrapper = document.querySelector('[data-luna-moon3d]').closest('.shopify-section');
+        const sectionId = wrapper.id.replace('shopify-section-', '');
+        wrapper.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: { sectionId } }));
+      }, type);
+    const read = () => page.$eval(STAGE, (stage) => `${stage.className.replace('luna-moon3d__stage', '').trim() || '—'} ${stage.dataset.lunaRenderer || ''}`.trim());
+    await fire('shopify:section:unload');
+    await page.waitForTimeout(300);
+    const unloaded = await read();
+    await fire('shopify:section:load');
+    const remounted = await wait3d(page);
+    const reloaded = await read();
+    record(
+      'editor: unload smonta, load rimonta',
+      mounted && unloaded === '—' && remounted && !problems.length,
+      `montata → unload «${unloaded}» → load «${reloaded}»${problems.length ? ` · ${problems.join(' | ')}` : ''}`
+    );
+    await ctx.close();
+  }
+
+  return results;
+}
+
 /* ---------------------------------------------------------------- avvio */
 async function main() {
   await render();
@@ -327,7 +592,7 @@ async function main() {
       }
     }
     console.log('');
-    for (const result of await heroChecks(browser, server.url)) {
+    for (const result of [...(await heroChecks(browser, server.url)), ...(await moon3dChecks(browser, server.url))]) {
       total += 1;
       if (!result.ok) failed += 1;
       console.log(`${result.ok ? '✓' : '✗'} ${result.name}  ·  ${result.detail}`);

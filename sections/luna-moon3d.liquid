@@ -1,0 +1,275 @@
+{%- comment -%}
+  Luna 3D da girare e accendere (§6.4). luna-landing.js carica assets/luna-moon3d.js con import() quando la sezione
+  è a 400 px dal viewport; il modulo carica Three.js con un secondo import() dall'URL in data-three-url.
+  Ripiego (senza WebGL, senza JavaScript o con ?luna3d=0 nell'indirizzo): la lampada accesa con l'alone CSS.
+  Interruttore e tonalità funzionano sempre e restano sincronizzati con la hero tramite 'luna:light'.
+{%- endcomment -%}
+{%- liquid
+  assign luna_tones = section.blocks | where: 'type', 'tone'
+  assign luna_light = luna_tones.first.settings.color
+  assign luna_fallback_sizes = '(min-width: 990px) 440px, 72vw'
+-%}
+<section
+  class="luna-section luna-moon3d"
+  data-luna-moon3d
+  aria-labelledby="luna-moon3d-title-{{ section.id }}"
+  {% if luna_light != blank %}
+    style="--luna-light: {{ luna_light }};"
+  {% endif %}
+>
+  <div class="luna-container luna-moon3d__grid">
+    <div class="luna-moon3d__text">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      <h2 class="luna-h2 luna-reveal" id="luna-moon3d-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      {%- if section.settings.text != blank -%}
+        <div class="luna-lead luna-reveal">{{ section.settings.text }}</div>
+      {%- endif -%}
+
+      {%- for block in luna_tones -%}
+        {%- if forloop.first -%}
+          <div
+            class="luna-tones luna-reveal"
+            role="radiogroup"
+            aria-label="{{ section.settings.tone_label | escape }}"
+            {% if luna_tones.size < 2 %}
+              hidden
+            {% endif %}
+          >
+        {%- endif -%}
+        <button
+          type="button"
+          class="luna-chip luna-tone"
+          role="radio"
+          aria-checked="{% if forloop.first %}true{% else %}false{% endif %}"
+          data-luna-tone="{{ block.settings.color }}"
+          style="--luna-tone: {{ block.settings.color }};"
+          {{ block.shopify_attributes }}
+        >
+          <span class="luna-tone__dot" aria-hidden="true"></span>
+          {{- block.settings.name | escape -}}
+        </button>
+        {%- if forloop.last -%}
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+
+      <button
+        type="button"
+        class="luna-switch luna-js-only luna-reveal"
+        role="switch"
+        aria-checked="false"
+        data-luna-moon3d-switch
+      >
+        <span class="luna-switch__track" aria-hidden="true"><span class="luna-switch__knob"></span></span>
+        <span class="luna-switch__label">{{ section.settings.switch_label | escape }}</span>
+      </button>
+    </div>
+
+    <figure class="luna-moon3d__figure">
+      <div
+        class="luna-moon3d__stage"
+        data-luna-moon3d-stage
+        data-module-url="{{ 'luna-moon3d.js' | asset_url }}"
+        data-three-url="{{ 'luna-three.module.min.js' | asset_url }}"
+        data-colour-2k="{{ 'luna-moon-color-2k.jpg' | asset_url }}"
+        data-colour-1k="{{ 'luna-moon-color-1k.jpg' | asset_url }}"
+        data-bump="{{ 'luna-moon-bump-1k.jpg' | asset_url }}"
+        data-light="{{ luna_light | default: '#FFD9A3' }}"
+        data-auto-rotate="{{ section.settings.auto_rotate }}"
+      >
+        <div class="luna-moon3d__glow" aria-hidden="true"></div>
+        <div class="luna-moon3d__fallback">
+          {%- if section.settings.fallback_image != blank -%}
+            {{
+              section.settings.fallback_image
+              | image_url: width: 1000
+              | image_tag:
+                widths: '480, 720, 1000, 1400',
+                sizes: luna_fallback_sizes,
+                alt: section.settings.fallback_alt,
+                loading: 'lazy',
+                decoding: 'async'
+            }}
+          {%- else -%}
+            <picture>
+              <img
+                src="{{ 'luna-lamp-on-1000.webp' | asset_url }}"
+                srcset="{{ 'luna-lamp-on-600.webp' | asset_url }} 600w, {{ 'luna-lamp-on-1000.webp' | asset_url }} 1000w, {{ 'luna-lamp-on-1377.webp' | asset_url }} 1377w"
+                sizes="{{ luna_fallback_sizes }}"
+                width="1000"
+                height="1275"
+                alt="{{ section.settings.fallback_alt | escape }}"
+                loading="lazy"
+                decoding="async"
+              >
+            </picture>
+          {%- endif -%}
+        </div>
+        <canvas
+          class="luna-moon3d__canvas"
+          data-luna-moon3d-canvas
+          role="img"
+          aria-label="{{ section.settings.canvas_label | escape }}"
+        ></canvas>
+        {%- if section.settings.size_label != blank -%}
+          <p class="luna-moon3d__size luna-chip">{{ section.settings.size_label | escape }}</p>
+        {%- endif -%}
+        {%- if section.settings.drag_hint != blank -%}
+          <p class="luna-moon3d__hint" data-luna-moon3d-hint>
+            {%- render 'luna-icon', name: 'tocco', size: 16 -%}
+            <span>{{ section.settings.drag_hint | escape }}</span>
+          </p>
+        {%- endif -%}
+      </div>
+      {%- if section.settings.caption != blank or section.settings.credit != blank -%}
+        <figcaption class="luna-moon3d__caption">
+          {%- if section.settings.caption != blank -%}
+            <span>{{ section.settings.caption | escape }}</span>
+          {%- endif -%}
+          {%- if section.settings.credit != blank -%}
+            <span>{{ section.settings.credit | escape }}</span>
+          {%- endif -%}
+        </figcaption>
+      {%- endif -%}
+    </figure>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Luna 3D",
+  "class": "luna-section-moon3d",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Provala adesso"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Girala. Accendila."
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Testo",
+      "default": "<p>Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.</p>"
+    },
+    {
+      "type": "text",
+      "id": "switch_label",
+      "label": "Pulsante acceso/spento",
+      "default": "Luce della lampada"
+    },
+    {
+      "type": "text",
+      "id": "tone_label",
+      "label": "Nome del selettore di tonalità",
+      "info": "Il selettore compare solo con almeno due blocchi «Tonalità».",
+      "default": "Tonalità della luce"
+    },
+    {
+      "type": "header",
+      "content": "Palco"
+    },
+    {
+      "type": "text",
+      "id": "drag_hint",
+      "label": "Suggerimento sul palco",
+      "info": "Compare solo quando la luna 3D è attiva e sparisce al primo trascinamento.",
+      "default": "Trascina per ruotarla"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura vicino alla luna",
+      "default": "Ø 8,5 cm"
+    },
+    {
+      "type": "text",
+      "id": "canvas_label",
+      "label": "Descrizione della luna 3D per i lettori di schermo",
+      "default": "Luna 3D da ruotare, con la sua base in ABS effetto legno chiaro"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_rotate",
+      "label": "Rotazione automatica lenta",
+      "info": "Lasciala attiva solo se la luna ruota da sola.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "caption",
+      "label": "Didascalia",
+      "default": "Anteprima 3D illustrativa"
+    },
+    {
+      "type": "text",
+      "id": "credit",
+      "label": "Crediti delle texture",
+      "info": "Obbligatori finché si usano le texture di Solar System Scope (licenza CC BY 4.0).",
+      "default": "Texture della Luna: Solar System Scope, CC BY 4.0"
+    },
+    {
+      "type": "header",
+      "content": "Ripiego senza 3D"
+    },
+    {
+      "type": "image_picker",
+      "id": "fallback_image",
+      "label": "Immagine della lampada accesa",
+      "info": "Si vede senza WebGL o con ?luna3d=0 nell'indirizzo. Se resta vuota si usa quella del tema."
+    },
+    {
+      "type": "text",
+      "id": "fallback_alt",
+      "label": "Testo alternativo dell'immagine",
+      "default": "Lampada Lunare Levitante accesa: luna di Ø 8,5 cm sospesa sopra la base"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tone",
+      "name": "Tonalità",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Nome",
+          "default": "Bianco caldo"
+        },
+        {
+          "type": "color",
+          "id": "color",
+          "label": "Colore della luce",
+          "default": "#FFD9A3"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Luna 3D",
+      "blocks": [
+        {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

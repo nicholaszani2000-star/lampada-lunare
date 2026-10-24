@@ -13,3 +13,9 @@ Strumenti
   Python:      3.13.17
   git:         2.43.0
   Shopify CLI: 4.9.4 (npm install -g @shopify/cli@latest)
+
+Three.js (step 4)
+  Versione:    0.186.1 (npm view three version, 2026-10-24), devDependency esatta in studio/package.json
+  Nel tema:    assets/luna-three.module.min.js, un unico modulo ES minificato con la licenza MIT in fondo
+  Perché un bundle: da r16x Three.js non pubblica più build/three.module.min.js; build/three.module.js importa
+               ./three.core.js. studio/scripts/build-three.mjs li unisce con esbuild 0.28.2 (npm --prefix studio run three).
