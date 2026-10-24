@@ -5,10 +5,12 @@
 //         CTA collegate a #luna-buy-form, nessun prezzo scritto a mano, un solo H1, immagini della hero (LCP).
 // Step 4: Three.js non scaricato prima di avvicinarsi alla sezione 3D; poi un canvas WebGL disegnato davvero;
 //         con ?luna3d=0 l'immagine di ripiego; tonalità sincronizzate hero ↔ 3D; swipe sul canvas che fa scorrere
-//         la pagina; trascinamento che ruota la luna (anche con movimento ridotto); editor: unload smonta, load rimonta.
+//         la pagina; trascinamento che ruota la luna (anche con movimento ridotto); editor: unload smonta, load rimonta;
+//         istruzioni nascoste senza JavaScript (e solo «Trascina…» senza WebGL); su desktop la 3D parte dopo la hero.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { gzipSync } from 'node:zlib';
 import { launchBrowser, paths, serve } from './lib.mjs';
 import { render } from './render.mjs';
 import { scrollThrough, watchProblems } from './shoot.mjs';
@@ -319,6 +321,22 @@ const scrollStageTo = (page, gap) =>
 const centerStage = (page) =>
   page.evaluate((selector) => document.querySelector(selector).scrollIntoView({ block: 'center' }), STAGE);
 
+/** Istruzioni della sezione 3D: quali parti si vedono (§8). */
+const instructions = (page) =>
+  page.evaluate(() => {
+    const paragraph = document.querySelector('[data-luna-moon3d] .luna-lead');
+    const shown = (element) => Boolean(element && element.getClientRects().length && getComputedStyle(element).display !== 'none');
+    return {
+      paragraph: shown(paragraph),
+      drag: shown(paragraph && paragraph.querySelector('.luna-moon3d__drag-text')),
+      button: shown(paragraph && paragraph.querySelector('span:not(.luna-moon3d__drag-text)')),
+      switchButton: shown(document.querySelector('[data-luna-moon3d-switch]')),
+    };
+  });
+const describe = (text) =>
+  `istruzioni: ${text.paragraph ? `${text.drag ? '«Trascina…» + ' : ''}${text.button ? '«Con il pulsante…»' : ''}` : 'nascoste'}` +
+  `, pulsante ${text.switchButton ? 'visibile' : 'nascosto'}`;
+
 /** Percentuale di pixel chiari (luminanza > 60) in uno screenshot PNG, decodificato nel browser. */
 const brightShare = (page, png) =>
   page.evaluate(async (src) => {
@@ -387,12 +405,13 @@ async function moon3dChecks(browser, baseUrl) {
       };
     }, STAGE);
     const share = ready ? await brightShare(page, await page.locator(`${STAGE} canvas`).screenshot()) : 0;
+    const text3d = await instructions(page);
     record(
       'avvicinandosi compare un canvas WebGL disegnato',
       ready && /^webgl2?$/.test(state.renderer) && state.canvasOpacity === '1' && state.fallbackOpacity === '0' &&
-        state.threeModules === 1 && share > 8 && !problems.length,
+        state.threeModules === 1 && share > 8 && text3d.drag && text3d.button && !problems.length,
       `${ready ? 'is-3d' : '3D non pronto'}, renderer ${state.renderer || '—'}, canvas ${state.size}, ` +
-        `immagine di ripiego a opacità ${state.fallbackOpacity}, pixel chiari ${share.toFixed(1)}%` +
+        `immagine di ripiego a opacità ${state.fallbackOpacity}, pixel chiari ${share.toFixed(1)}%, ${describe(text3d)}` +
         (problems.length ? ` · ${problems.join(' | ')}` : '')
     );
 
@@ -446,6 +465,7 @@ async function moon3dChecks(browser, baseUrl) {
         filter: getComputedStyle(image).filter,
       };
     }, STAGE);
+    const textFallback = await instructions(page);
     await page.click('[data-luna-moon3d-switch]');
     await page.waitForTimeout(1200);
     const off = await page.evaluate((selector) => ({
@@ -455,9 +475,29 @@ async function moon3dChecks(browser, baseUrl) {
     record(
       'con ?luna3d=0 resta l\'immagine',
       /is-fallback/.test(state.classes) && !/is-3d/.test(state.classes) && state.loaded && state.opacity === '1' &&
-        Boolean(state.alt) && requests.length === 0 && off.checked === 'false' && off.filter !== state.filter,
+        Boolean(state.alt) && requests.length === 0 && off.checked === 'false' && off.filter !== state.filter &&
+        textFallback.paragraph && !textFallback.drag && textFallback.button && textFallback.switchButton,
       `immagine caricata: ${state.loaded}, ${state.size}, opacità ${state.opacity}, richieste 3D: ${requests.length}; ` +
-        `interruttore spento: ${state.filter} → ${off.filter}`
+        `interruttore spento: ${state.filter} → ${off.filter}; ${describe(textFallback)}`
+    );
+    await ctx.close();
+  }
+
+  // 3b. Senza JavaScript: lampada accesa nella foto, istruzioni e pulsante nascosti, niente 3D
+  {
+    const ctx = await context(browser, { ...mobileOptions, javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    const requests = [];
+    page.on('request', (request) => IS_3D.test(request.url()) && requests.push(request.url().split('/').pop()));
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await centerStage(page);
+    await page.waitForTimeout(800);
+    const text = await instructions(page);
+    const filter = await page.$eval(`${STAGE} .luna-moon3d__fallback img`, (image) => getComputedStyle(image).filter);
+    record(
+      'senza JavaScript: foto accesa, istruzioni nascoste',
+      !text.paragraph && !text.switchButton && filter === 'brightness(1) saturate(1)' && requests.length === 0,
+      `${describe(text)}, foto ${filter}, richieste 3D: ${requests.length}`
     );
     await ctx.close();
   }
@@ -529,6 +569,68 @@ async function moon3dChecks(browser, baseUrl) {
       'trascinamento: la luna ruota (movimento ridotto)',
       ready && after - before > 0.5 && !hintBefore && hintAfter,
       `rotazione ${before.toFixed(2)} → ${after.toFixed(2)} rad, suggerimento nascosto: ${hintBefore} → ${hintAfter}`
+    );
+    await ctx.close();
+  }
+
+  // 8. Desktop: anche con la sezione già vicina, la 3D parte dopo la hero; peso del primo caricamento con la 3D
+  {
+    const ctx = await context(browser, { viewport: { width: 1440, height: 900 } });
+    await ctx.addInitScript(() => {
+      document.addEventListener('luna:hero-lit', () => {
+        window.__lunaHeroLit = performance.now();
+      });
+    });
+    const page = await ctx.newPage();
+    const responses = [];
+    page.on('response', (response) =>
+      responses.push(
+        response.body().then(
+          (body) => ({ url: response.url(), type: response.headers()['content-type'] || '', body }),
+          () => null
+        )
+      )
+    );
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    const ready = await wait3d(page);
+    await page.waitForLoadState('networkidle');
+    const timing = await page.evaluate((selector) => {
+      const resources = performance.getEntriesByType('resource');
+      const start = (pattern) => {
+        const found = resources.filter((entry) => pattern.test(entry.name));
+        return found.length ? Math.round(Math.min(...found.map((entry) => entry.startTime))) : null;
+      };
+      const lamp = resources.filter((entry) => /luna-(moon|base)-(on|off)-\d+\.webp/.test(entry.name));
+      const stage = document.querySelector(selector);
+      return {
+        near: Math.round(stage.getBoundingClientRect().top - window.innerHeight),
+        heroImages: lamp.length,
+        heroDone: lamp.length ? Math.round(Math.max(...lamp.map((entry) => entry.responseEnd))) : null,
+        lit: window.__lunaHeroLit ? Math.round(window.__lunaHeroLit) : null,
+        module: start(/luna-moon3d\.js/),
+        three: start(/luna-three/),
+        textures: start(/luna-moon-color/),
+      };
+    }, STAGE);
+    const items = (await Promise.all(responses)).filter(Boolean);
+    const textual = /javascript|css|html|json|svg|text/;
+    const sum = (list, packed) =>
+      list.reduce((total, item) => total + (packed && textual.test(item.type) ? gzipSync(item.body, { level: 9 }).length : item.body.length), 0) / 1024;
+    const threeD = items.filter((item) => IS_3D.test(item.url));
+    const afterHero = timing.module !== null && timing.heroDone !== null && timing.module >= timing.heroDone && timing.three >= timing.heroDone;
+    record(
+      'desktop: la 3D parte dopo la hero',
+      ready && timing.near < 400 && afterHero,
+      `palco a ${timing.near} px dallo schermo; ${timing.heroImages} immagini della lampada arrivate a ${timing.heroDone} ms, ` +
+        `lampada accesa a ${timing.lit ?? '—'} ms; luna-moon3d.js a ${timing.module} ms, Three.js a ${timing.three} ms, ` +
+        `texture a ${timing.textures} ms`
+    );
+    record(
+      'desktop: peso del primo caricamento con la 3D',
+      ready,
+      `${sum(items).toFixed(0)} KB come li serve l'anteprima (senza compressione), circa ${sum(items, true).toFixed(0)} KB ` +
+        `compressi con gzip come dal CDN di Shopify; di cui 3D ${sum(threeD).toFixed(0)} KB / ${sum(threeD, true).toFixed(0)} KB ` +
+        `(${threeD.map((item) => item.url.split('/').pop()).join(', ')})`
     );
     await ctx.close();
   }

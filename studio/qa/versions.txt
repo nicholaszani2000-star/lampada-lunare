@@ -16,6 +16,10 @@ Strumenti
 
 Three.js (step 4)
   Versione:    0.186.1 (npm view three version, 2026-10-24), devDependency esatta in studio/package.json
-  Nel tema:    assets/luna-three.module.min.js, un unico modulo ES minificato con la licenza MIT in fondo
+  Nel tema:    assets/luna-three.module.min.js, un unico modulo ES minificato con la licenza MIT in fondo,
+               ridotto alle 23 classi che usa assets/luna-moon3d.js (l'elenco lo ricava lo script dal modulo)
+  Peso:        561,9 KB · 142,6 KB compresso con gzip (livello 9) · 117,6 KB con brotli
+               (Three.js completo: 724,9 KB · 184,5 KB con gzip)
   Perché un bundle: da r16x Three.js non pubblica più build/three.module.min.js; build/three.module.js importa
-               ./three.core.js. studio/scripts/build-three.mjs li unisce con esbuild 0.28.2 (npm --prefix studio run three).
+               ./three.core.js. studio/scripts/build-three.mjs li unisce con esbuild 0.28.2 e toglie il resto
+               (npm --prefix studio run three). Se il modulo usa una classe nuova, basta rilanciarlo.

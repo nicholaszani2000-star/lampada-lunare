@@ -771,6 +771,13 @@
       hint.setAttribute('aria-hidden', 'true');
     }
 
+    // Segnale per la luna 3D, che aspetta la lampada accesa per non togliere banda alla hero (§9)
+    function markLit() {
+      if (destroyed || Luna.heroLit) return;
+      Luna.heroLit = true;
+      doc.dispatchEvent(new CustomEvent('luna:hero-lit'));
+    }
+
     function interact() {
       touched = true;
       hideHint();
@@ -794,19 +801,23 @@
     });
 
     // Accensione al caricamento: immagini accese decodificate e almeno 600 ms dall'apertura
+    var onImages = Array.prototype.slice.call(stage.querySelectorAll('img[data-luna-layer$="-on"]'));
     if (!reduced && !editor) {
-      var onImages = Array.prototype.slice.call(stage.querySelectorAll('img[data-luna-layer$="-on"]'));
       Promise.all(onImages.map(whenLoaded)).then(function () {
         if (destroyed || touched) return;
         later(function () {
           if (destroyed || touched) return;
           stage.classList.add('is-igniting');
           apply(1);
+          markLit();
           later(function () {
             stage.classList.remove('is-igniting');
           }, 1300);
         }, Math.max(0, 600 - performance.now()));
       });
+    } else {
+      // Accesa da subito (movimento ridotto, editor): conta come accesa quando le sue immagini sono arrivate
+      Promise.all(onImages.map(whenLoaded)).then(markLit);
     }
 
     if (switchButton) {
@@ -1055,6 +1066,41 @@
     }
   }
 
+  // Three.js e le texture partono solo dopo che la lampada della hero si è accesa, anche su desktop con la sezione
+  // già vicina, per non togliere banda all'immagine LCP. Ripiego (lampada toccata prima dell'accensione o hero
+  // assente): appena il browser è libero, entro 1,5 s, ma sempre dopo che le immagini della hero sono arrivate.
+  function afterHeroLight(scope, callback) {
+    var done = false;
+    var idle = 0;
+    var timer = 0;
+    function stop() {
+      doc.removeEventListener('luna:hero-lit', run);
+      if (idle && window.cancelIdleCallback) window.cancelIdleCallback(idle);
+      clearTimeout(timer);
+    }
+    function run() {
+      if (done) return;
+      done = true;
+      stop();
+      callback();
+    }
+    scope.add(function () {
+      done = true;
+      stop();
+    });
+    if (Luna.heroLit) {
+      run();
+      return;
+    }
+    doc.addEventListener('luna:hero-lit', run);
+    var images = Array.prototype.slice.call(doc.querySelectorAll('[data-luna-stage] img[data-luna-layer]'));
+    Promise.all(images.map(whenLoaded)).then(function () {
+      if (done) return;
+      if ('requestIdleCallback' in window) idle = window.requestIdleCallback(run, { timeout: 1500 });
+      else timer = setTimeout(run, 1500);
+    });
+  }
+
   Luna.register('moon3d', '[data-luna-moon3d]', function (section, scope) {
     var stage = section.querySelector('[data-luna-moon3d-stage]');
     var toggle = section.querySelector('[data-luna-moon3d-switch]');
@@ -1103,15 +1149,23 @@
       apply(detail.power, detail.color, true);
     }, scope);
 
-    // Ripiego: senza WebGL o con ?luna3d=0 resta l'immagine con l'alone CSS
+    // Ripiego: senza WebGL o con ?luna3d=0 resta l'immagine con l'alone CSS (e sparisce «Trascina per farla ruotare»)
+    function fallback() {
+      stage.classList.add('is-fallback');
+      section.classList.add('is-fallback');
+    }
     var params = new URLSearchParams(window.location.search);
     if (params.get('luna3d') === '0' || !webglAvailable() || !('IntersectionObserver' in window)) {
-      stage.classList.add('is-fallback');
+      fallback();
       return;
     }
 
-    // Mai prima del primo paint; poi a 400 px dal viewport (§9)
+    // Mai prima del primo paint né prima che la hero si accenda; poi a 400 px dal viewport (§9)
     afterFirstPaint(scope, function () {
+      afterHeroLight(scope, load);
+    });
+
+    function load() {
       var mobile = window.matchMedia('(max-width: 989px)').matches;
       var handle = Luna.lazyImport(stage, stage.getAttribute('data-module-url'), { distance: 400, scope: scope });
       handle.promise
@@ -1141,15 +1195,16 @@
         })
         .catch(function (error) {
           console.warn('[Luna] luna 3D non disponibile, resta l\'immagine:', error && error.message);
-          stage.classList.add('is-fallback');
+          fallback();
         });
-    });
+    }
 
     scope.add(function () {
       destroyed = true;
       if (view) view.destroy();
       view = null;
       stage.classList.remove('is-3d', 'is-fallback');
+      section.classList.remove('is-fallback');
     });
   });
 

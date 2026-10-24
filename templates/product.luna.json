@@ -66,7 +66,8 @@
       "settings": {
         "eyebrow": "Provala adesso",
         "heading": "Girala. Accendila.",
-        "text": "<p>Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.</p>",
+        "text_drag": "Trascina per farla ruotare.",
+        "text_switch": "Con il pulsante qui sotto la vedi accesa e spenta.",
         "drag_hint": "Trascina per ruotarla",
         "auto_rotate": true,
         "caption": "Anteprima 3D illustrativa",

@@ -1694,6 +1694,11 @@ html {
   max-width: 30rem;
 }
 
+/* Senza WebGL (o con ?luna3d=0) la luna non si trascina: resta solo l'istruzione del pulsante */
+.luna-moon3d.is-fallback .luna-moon3d__drag-text {
+  display: none;
+}
+
 .luna-moon3d__figure {
   display: grid;
   gap: 12px;

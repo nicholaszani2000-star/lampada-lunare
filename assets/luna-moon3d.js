@@ -419,6 +419,8 @@ export async function mount(stage, options) {
       frame = 0;
       stage.classList.remove('is-3d');
       stage.classList.add('is-fallback');
+      const section = stage.closest('[data-luna-moon3d]');
+      if (section) section.classList.add('is-fallback');
     });
 
     resize();

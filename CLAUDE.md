@@ -164,7 +164,7 @@ hero
 moon3d
 - occhiello: «Provala adesso»
 - H2: «Girala. Accendila.»
-- testo: «Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.»
+- testo, in due parti: «Trascina per farla ruotare.» · «Con il pulsante qui sotto la vedi accesa e spenta.» Senza JavaScript la frase intera non si mostra, perché non funzionano né il trascinamento né il pulsante. Senza WebGL ma con JavaScript si nasconde solo «Trascina per farla ruotare.», perché il pulsante sull'immagine di ripiego funziona.
 - didascalia: «Anteprima 3D illustrativa»
 - crediti, obbligatori (licenza CC BY 4.0), nella stessa didascalia: «Texture della Luna: Solar System Scope, CC BY 4.0»
 

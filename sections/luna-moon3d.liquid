@@ -3,6 +3,8 @@
   è a 400 px dal viewport; il modulo carica Three.js con un secondo import() dall'URL in data-three-url.
   Ripiego (senza WebGL, senza JavaScript o con ?luna3d=0 nell'indirizzo): la lampada accesa con l'alone CSS.
   Interruttore e tonalità funzionano sempre e restano sincronizzati con la hero tramite 'luna:light'.
+  Istruzioni (§8): senza JavaScript la frase intera sparisce (non funzionano né il trascinamento né il pulsante);
+  senza WebGL sparisce solo la prima parte, perché il pulsante sull'immagine di ripiego funziona.
 {%- endcomment -%}
 {%- liquid
   assign luna_tones = section.blocks | where: 'type', 'tone'
@@ -23,8 +25,16 @@
         <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
       {%- endif -%}
       <h2 class="luna-h2 luna-reveal" id="luna-moon3d-title-{{ section.id }}">{{ section.settings.heading }}</h2>
-      {%- if section.settings.text != blank -%}
-        <div class="luna-lead luna-reveal">{{ section.settings.text }}</div>
+      {%- if section.settings.text_drag != blank or section.settings.text_switch != blank -%}
+        <p class="luna-lead luna-js-only luna-reveal">
+          {%- if section.settings.text_drag != blank -%}
+            <span class="luna-moon3d__drag-text">{{ section.settings.text_drag | escape }}</span>
+          {%- endif -%}
+          {%- if section.settings.text_drag != blank and section.settings.text_switch != blank %} {% endif -%}
+          {%- if section.settings.text_switch != blank -%}
+            <span>{{ section.settings.text_switch | escape }}</span>
+          {%- endif -%}
+        </p>
       {%- endif -%}
 
       {%- for block in luna_tones -%}
@@ -156,10 +166,18 @@
       "default": "Girala. Accendila."
     },
     {
-      "type": "richtext",
-      "id": "text",
-      "label": "Testo",
-      "default": "<p>Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.</p>"
+      "type": "text",
+      "id": "text_drag",
+      "label": "Istruzione: trascinamento",
+      "info": "Nascosta senza JavaScript e senza WebGL, quando al posto della luna 3D c'è la foto.",
+      "default": "Trascina per farla ruotare."
+    },
+    {
+      "type": "text",
+      "id": "text_switch",
+      "label": "Istruzione: pulsante",
+      "info": "Nascosta solo senza JavaScript: con la foto il pulsante funziona.",
+      "default": "Con il pulsante qui sotto la vedi accesa e spenta."
     },
     {
       "type": "text",
