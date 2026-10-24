@@ -1,0 +1,35 @@
+{
+  "descrizione": "Seconda tonalità finta nella hero e nella luna 3D (la lampada vera ne ha una sola): prova il selettore e la sincronia hero ↔ 3D.",
+  "sezioni": {
+    "hero": {
+      "blocks": {
+        "tone_prova": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco freddo (prova)",
+            "color": "#CFE0FF"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco",
+        "tone_prova"
+      ]
+    },
+    "moon3d": {
+      "blocks": {
+        "tone_prova": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco freddo (prova)",
+            "color": "#CFE0FF"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco",
+        "tone_prova"
+      ]
+    }
+  }
+}

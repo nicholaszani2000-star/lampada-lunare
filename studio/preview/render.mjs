@@ -6,11 +6,8 @@
 //           --esaurito        variante non disponibile
 //           --editor          simula l'editor del tema (request.design_mode e Shopify.designMode)
 //           --varianti        due varianti finte (opzione «Confezione»), per provare il selettore
-// Pagine di prova per check.mjs: out/due-tonalita.html ha una seconda tonalità finta nelle sezioni con blocchi
-// «tone» (la lampada vera ne ha una sola), per provare il selettore e la sincronia hero ↔ 3D; out/editor.html
-// simula l'editor del tema (come --editor), per provare quello che si vede solo lì; out/senza-barrato.html è il
-// prodotto senza prezzo barrato (come --senza-barrato); out/reso-14.html ha il reso a 14 giorni in offerta e
-// chiusura, per provare che la garanzia e le «notti di prova» spariscono (§10).
+// Pagine di prova per check.mjs: ogni file studio/preview/overrides/<nome>.json genera out/<nome>.html, con
+// setting, blocchi, opzioni o prezzi della variante sovrascritti (formato sopra la funzione readOverrides).
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve as resolvePath, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -653,24 +650,60 @@ function blocksFrom(schema, entry, sectionId) {
     });
 }
 
-const TEST_TONE = { type: 'tone', settings: { name: 'Bianco freddo (prova)', color: '#CFE0FF' } };
+/* ------------------------------------------------------------------ */
+/* Pagine di prova: override dei setting                                */
+/* ------------------------------------------------------------------ */
+// studio/preview/overrides/<nome>.json → out/<nome>.html. Tutti i campi sono facoltativi:
+// {
+//   "descrizione": "a cosa serve la pagina",
+//   "opzioni": ["--editor"],                   le stesse opzioni della riga di comando
+//   "variante": { "compare_at_price": null },  campi della variante finta (prezzi in centesimi)
+//   "sezioni": {                               per id della sezione nel template
+//     "offer": { "settings": { … }, "blocks": { "id": { … } }, "block_order": [ … ] }
+//   }
+// }
+// settings si uniscono a quelli del template; i blocchi con lo stesso id si uniscono, quelli nuovi si aggiungono;
+// block_order, se c'è, sostituisce quello del template.
+const OVERRIDES = join(paths.preview, 'overrides');
 
-/** Reso a 14 giorni nelle sezioni che hanno il setting return_days (solo per reso-14.html). */
-function withShortReturn(template) {
-  for (const entry of Object.values(template.sections)) {
-    if (entry.settings && 'return_days' in entry.settings) entry.settings.return_days = 14;
+function readOverrides() {
+  if (!existsSync(OVERRIDES)) return [];
+  return readdirSync(OVERRIDES)
+    .filter((file) => file.endsWith('.json'))
+    .sort()
+    .map((file) => {
+      const name = file.replace(/\.json$/, '');
+      if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`overrides/${file}: usa solo lettere minuscole, cifre e trattini`);
+      return { name, ...readJson(join(OVERRIDES, file)) };
+    });
+}
+
+function withOverrides(template, override) {
+  for (const [key, patch] of Object.entries(override.sezioni || {})) {
+    const entry = template.sections[key];
+    if (!entry) throw new Error(`overrides/${override.name}.json: la sezione "${key}" non è nel template`);
+    entry.settings = { ...(entry.settings || {}), ...(patch.settings || {}) };
+    if (patch.blocks) {
+      entry.blocks = { ...(entry.blocks || {}) };
+      for (const [id, block] of Object.entries(patch.blocks)) {
+        const current = entry.blocks[id] || {};
+        entry.blocks[id] = { ...current, ...block, settings: { ...(current.settings || {}), ...(block.settings || {}) } };
+      }
+    }
+    if (patch.block_order) entry.block_order = patch.block_order;
   }
   return template;
 }
 
-/** Aggiunge la tonalità di prova a ogni sezione che ha blocchi «tone» (solo per due-tonalita.html). */
-function withTestTone(template) {
-  for (const entry of Object.values(template.sections)) {
-    if (!entry.blocks || !Object.values(entry.blocks).some((block) => block.type === 'tone')) continue;
-    entry.blocks.tone_prova = TEST_TONE;
-    entry.block_order = [...(entry.block_order || Object.keys(entry.blocks)).filter((id) => id !== 'tone_prova'), 'tone_prova'];
-  }
-  return template;
+/** Applica i campi di "variante" alla variante finta e ricalcola i prezzi del prodotto. */
+function withVariant(data, patch) {
+  if (!patch) return data;
+  Object.assign(data.variant, patch);
+  const { product, variant } = data;
+  product.price = product.price_min = product.price_max = variant.price;
+  product.compare_at_price = product.compare_at_price_min = product.compare_at_price_max = variant.compare_at_price;
+  product.available = variant.available;
+  return data;
 }
 
 async function renderSections(engine, data, templateFile, transform = (template) => template) {
@@ -721,20 +754,19 @@ export async function render(options = args) {
   mkdirSync(paths.out, { recursive: true });
   cpSync(ASSETS, join(paths.out, 'assets'), { recursive: true });
 
-  const sections = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'));
+  const templateFile = join(THEME, 'templates', 'product.luna.json');
+  const sections = await renderSections(engine, data, templateFile);
   writeFileSync(join(paths.out, 'index.html'), await renderPage(engine, data, sections));
-  const twoTones = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'), withTestTone);
-  writeFileSync(join(paths.out, 'due-tonalita.html'), await renderPage(engine, data, twoTones));
-  const editorData = buildData(new Set([...options, '--editor']));
-  const editorEngine = createEngine(editorData.globals);
-  const editorSections = await renderSections(editorEngine, editorData, join(THEME, 'templates', 'product.luna.json'));
-  writeFileSync(join(paths.out, 'editor.html'), await renderPage(editorEngine, editorData, editorSections));
-  const fullPriceData = buildData(new Set([...options, '--senza-barrato']));
-  const fullPriceEngine = createEngine(fullPriceData.globals);
-  const fullPrice = await renderSections(fullPriceEngine, fullPriceData, join(THEME, 'templates', 'product.luna.json'));
-  writeFileSync(join(paths.out, 'senza-barrato.html'), await renderPage(fullPriceEngine, fullPriceData, fullPrice));
-  const shortReturn = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'), withShortReturn);
-  writeFileSync(join(paths.out, 'reso-14.html'), await renderPage(engine, data, shortReturn));
+
+  // Pagine di prova (studio/preview/overrides)
+  const testPages = [];
+  for (const override of readOverrides()) {
+    const pageData = withVariant(buildData(new Set([...options, ...(override.opzioni || [])])), override.variante);
+    const pageEngine = createEngine(pageData.globals);
+    const pageSections = await renderSections(pageEngine, pageData, templateFile, (template) => withOverrides(template, override));
+    writeFileSync(join(paths.out, `${override.name}.html`), await renderPage(pageEngine, pageData, pageSections));
+    testPages.push(`${override.name}.html`);
+  }
 
   // Catalogo dei componenti (snippet, CSS): non fa parte del tema
   const saleFree = buildData(new Set([...options, '--senza-barrato']));
@@ -746,10 +778,8 @@ export async function render(options = args) {
   writeFileSync(join(paths.out, 'styleguide.html'), await renderPage(engine, data, guide));
 
   const size = statSync(join(paths.out, 'index.html')).size;
-  console.log(
-    `✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html; ` +
-      'prove: due-tonalita.html, editor.html, senza-barrato.html, reso-14.html'
-  );
+  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB) e styleguide.html`);
+  if (testPages.length) console.log(`✓ pagine di prova (overrides): ${testPages.join(', ')}`);
   return data;
 }
 

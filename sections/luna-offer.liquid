@@ -2,9 +2,10 @@
   La sezione sconto (§6.10): badge con la percentuale calcolata dai prezzi di Shopify (solo se c'è il barrato),
   titolo con il prezzo, prezzo con barrato, risparmio e riga Omnibus (snippet luna-price), riepilogo, prezzo a sera,
   countdown solo con una data di fine reale, CTA n. 2 e garanzia solo se il reso supera i 14 giorni (§10).
+  Senza prezzo barrato il badge sparisce e la sezione resta un riepilogo d'acquisto.
   Prezzi, percentuale e prezzo a sera arrivano da Shopify e si aggiornano al cambio di variante (luna-landing.js).
-  Countdown: parte nascosto, lo mostra lo script fino alla fine impostata (ora italiana); a fine promo sparisce e
-  non riparte mai. Senza JavaScript o con la data vuota non c'è.
+  Countdown: solo con «Mostra countdown» attivo e una data di fine ISO 8601 con fuso orario. Parte nascosto e lo
+  mostra lo script solo se la data è valida e futura; alla scadenza sparisce per sempre: mai un timer che riparte.
 {%- endcomment -%}
 {%- liquid
   assign luna_variant = product.selected_or_first_available_variant
@@ -15,12 +16,11 @@
     assign luna_pct = luna_variant.compare_at_price | minus: luna_variant.price | times: 100.0 | divided_by: luna_variant.compare_at_price | round
   endif
   assign luna_price_html = luna_variant.price | money | prepend: '<span class="luna-nowrap" data-luna-price>' | append: '</span>'
-  # Meno di {c} centesimi a sera: il primo intero sopra prezzo / 365, in centesimi (lo stesso calcolo in luna-landing.js)
-  assign luna_per_day = luna_variant.price | divided_by: 365 | plus: 1
-  assign luna_end_date = section.settings.end_date | strip
-  assign luna_end_time = section.settings.end_time | strip | default: '23:59'
+  assign luna_end = section.settings.countdown_end | strip
   assign luna_refund_url = shop.refund_policy.url
 -%}
+{%- comment -%} Meno di {c} centesimi a sera: prezzo / 365 in centesimi, più uno (lo stesso calcolo in luna-landing.js) {%- endcomment -%}
+{%- assign luna_cents = luna_variant.price | divided_by: 365 | plus: 1 -%}
 <section class="luna-section luna-offer" aria-labelledby="luna-offer-title-{{ section.id }}">
   <div class="luna-container luna-container--narrow">
     <div class="luna-offer__panel luna-reveal">
@@ -66,30 +66,24 @@
         </ul>
       {%- endif -%}
 
-      {%- if section.settings.per_day_text != blank -%}
+      {%- if section.settings.show_per_day and section.settings.per_day_text != blank -%}
         <p
           class="luna-offer__per-day"
           data-luna-per-day
           data-template="{{ section.settings.per_day_text | escape }}"
-          {% if luna_per_day >= 100 %}
+          {% unless luna_cents < 100 %}
             hidden
-          {% endif %}
+          {% endunless %}
         >
           {%- render 'luna-icon', name: 'luna', size: 18 -%}
           <span data-luna-per-day-text>
-            {{- section.settings.per_day_text | escape | replace: '{c}', luna_per_day -}}
+            {{- section.settings.per_day_text | escape | replace: '{c}', luna_cents -}}
           </span>
         </p>
       {%- endif -%}
 
-      {%- if luna_end_date != blank -%}
-        <div
-          class="luna-countdown"
-          data-luna-countdown
-          data-end-date="{{ luna_end_date | escape }}"
-          data-end-time="{{ luna_end_time | escape }}"
-          hidden
-        >
+      {%- if section.settings.show_countdown and luna_end != blank -%}
+        <div class="luna-countdown" data-luna-countdown data-end="{{ luna_end | escape }}" hidden>
           {%- if section.settings.countdown_label != blank -%}
             <p class="luna-countdown__label" id="luna-countdown-label-{{ section.id }}">
               {{- section.settings.countdown_label | escape -}}
@@ -124,7 +118,7 @@
             class="luna-editor-note"
             data-luna-countdown-note
             data-expired="Il countdown non si vede più: la fine della promo è passata. Non riparte da solo."
-            data-invalid="Il countdown non si vede: scrivi la data come AAAA-MM-GG e l'ora come HH:MM."
+            data-invalid="Il countdown non si vede: scrivi la fine con data, ora e fuso orario, per esempio 2026-11-30T23:59:00+01:00."
             hidden
           ></p>
         {%- endif -%}
@@ -206,10 +200,16 @@
       "default": "IVA inclusa"
     },
     {
+      "type": "checkbox",
+      "id": "show_per_day",
+      "label": "Mostra il prezzo a sera",
+      "default": true
+    },
+    {
       "type": "text",
       "id": "per_day_text",
       "label": "Prezzo a sera",
-      "info": "{c} diventa il prezzo diviso per 365, arrotondato al centesimo superiore. Sparisce sopra un euro a sera.",
+      "info": "{c} diventa il prezzo in centesimi diviso per 365, più uno. Compare solo sotto i 100 centesimi.",
       "default": "Meno di {c} centesimi a sera per tutto il primo anno."
     },
     {
@@ -217,16 +217,17 @@
       "content": "Countdown"
     },
     {
-      "type": "text",
-      "id": "end_date",
-      "label": "Fine della promo (AAAA-MM-GG)",
-      "info": "Solo con una fine reale. Il countdown si vede fino a quel momento, poi sparisce e non riparte. Vuoto: nessun countdown."
+      "type": "checkbox",
+      "id": "show_countdown",
+      "label": "Mostra countdown",
+      "info": "Solo con una fine reale della promo (Codice del Consumo): alla scadenza sparisce e non riparte.",
+      "default": false
     },
     {
       "type": "text",
-      "id": "end_time",
-      "label": "Ora di fine (HH:MM, ora italiana)",
-      "default": "23:59"
+      "id": "countdown_end",
+      "label": "Fine della promo (ISO 8601 con fuso orario)",
+      "info": "Per esempio 2026-11-30T23:59:00+01:00 (+01:00 in inverno, +02:00 con l'ora legale). Se la data non è valida o è passata il countdown non compare."
     },
     {
       "type": "text",

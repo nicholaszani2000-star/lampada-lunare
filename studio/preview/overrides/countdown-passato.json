@@ -1,0 +1,11 @@
+{
+  "descrizione": "Countdown acceso con una data di fine passata: non si vede (e non riparte).",
+  "sezioni": {
+    "offer": {
+      "settings": {
+        "show_countdown": true,
+        "countdown_end": "2025-11-30T23:59:00+01:00"
+      }
+    }
+  }
+}

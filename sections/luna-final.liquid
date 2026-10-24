@@ -1,11 +1,12 @@
 {%- comment -%}
-  Chiusura emotiva e CTA n. 3 (§6.12): la lampada accesa che levita (gli stessi ritagli della hero, già in cache),
-  titolo, testo e bottone che invia il form della hero. Con il reso di 14 giorni o meno si usa il testo senza
+  Chiusura emotiva e CTA n. 3 (§6.12): la lampada accesa in grande (i livelli accesi dello step 2, lazy: sono gli
+  stessi file della hero, quindi di solito già in cache) con alone e cielo stellato statico, titolo, testo, bottone
+  con il prezzo che invia il form della hero e riga di fiducia. Con il reso di 14 giorni o meno si usa il testo senza
   «notti di prova» (§10). La CTA ha data-luna-final-cta: quando è sullo schermo la barra sticky si nasconde.
 {%- endcomment -%}
 {%- liquid
   assign luna_variant = product.selected_or_first_available_variant
-  assign luna_sizes = '(min-width: 1024px) 320px, min(58vw, 320px)'
+  assign luna_sizes = '(min-width: 1024px) 440px, min(78vw, 440px)'
   if section.settings.return_days > 14
     assign luna_text = section.settings.text
   else
@@ -13,6 +14,7 @@
   endif
 -%}
 <section class="luna-section luna-final" aria-labelledby="luna-final-title-{{ section.id }}">
+  <div class="luna-stars luna-final__stars" aria-hidden="true"></div>
   <div class="luna-container luna-final__inner">
     <figure class="luna-final__visual">
       {%- if section.settings.image != blank -%}
@@ -29,7 +31,7 @@
         }}
       {%- else -%}
         <div class="luna-final__lamp" role="img" aria-label="{{ section.settings.image_alt | escape }}">
-          <div class="luna-final__glow" aria-hidden="true"></div>
+          <div class="luna-final__glow" aria-hidden="true" data-luna-overflow-ok></div>
           {%- render 'luna-cutout', file: 'luna-base-on', sizes: luna_sizes, class: 'luna-final__layer' -%}
           <div class="luna-final__baselight" aria-hidden="true"><span class="luna-final__pulse"></span></div>
           <div class="luna-final__moon luna-levitate">
@@ -58,6 +60,21 @@
           attributes: 'data-luna-final-cta'
         %}
       </div>
+      <ul class="luna-trust luna-list-reset luna-final__trust luna-reveal">
+        {%- for luna_i in (1..3) -%}
+          {%- liquid
+            assign luna_trust_key = 'trust_' | append: luna_i
+            assign luna_trust_icon_key = 'trust_' | append: luna_i | append: '_icon'
+            assign luna_trust_text = section.settings[luna_trust_key]
+          -%}
+          {%- if luna_trust_text != blank -%}
+            <li class="luna-trust__item">
+              {%- render 'luna-icon', name: section.settings[luna_trust_icon_key], size: 22, class: 'luna-trust__icon' -%}
+              <span>{{ luna_trust_text | escape }}</span>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
     </div>
   </div>
 </section>
@@ -114,6 +131,67 @@
       "id": "sold_out_text",
       "label": "Bottone con variante esaurita",
       "default": "Esaurita"
+    },
+    {
+      "type": "header",
+      "content": "Fiducia"
+    },
+    {
+      "type": "text",
+      "id": "trust_1",
+      "label": "Rassicurazione 1",
+      "default": "Spedizione gratuita"
+    },
+    {
+      "type": "select",
+      "id": "trust_1_icon",
+      "label": "Icona 1",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "camion"
+    },
+    {
+      "type": "text",
+      "id": "trust_2",
+      "label": "Rassicurazione 2",
+      "default": "Pagamenti protetti"
+    },
+    {
+      "type": "select",
+      "id": "trust_2_icon",
+      "label": "Icona 2",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "scudo"
+    },
+    {
+      "type": "text",
+      "id": "trust_3",
+      "label": "Rassicurazione 3",
+      "default": "Reso in 30 giorni"
+    },
+    {
+      "type": "select",
+      "id": "trust_3_icon",
+      "label": "Icona 3",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "reso"
     },
     {
       "type": "header",

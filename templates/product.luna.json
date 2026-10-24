@@ -389,7 +389,6 @@
         "omnibus_text": "Prezzo più basso degli ultimi 30 giorni:",
         "tax_text": "IVA inclusa",
         "per_day_text": "Meno di {c} centesimi a sera per tutto il primo anno.",
-        "end_time": "23:59",
         "countdown_label": "L'offerta termina tra",
         "label_days": "giorni",
         "label_hours": "ore",
@@ -402,7 +401,9 @@
         "guarantee_title": "30 notti di prova",
         "guarantee_text": "Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.",
         "policy_link_text": "politica di rimborso",
-        "end_date": "2026-12-18"
+        "show_per_day": true,
+        "show_countdown": false,
+        "countdown_end": "2026-12-18T23:59:00+01:00"
       }
     },
     "faq": {

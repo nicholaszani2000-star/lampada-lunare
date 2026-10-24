@@ -1,0 +1,11 @@
+{
+  "descrizione": "Countdown acceso con una data di fine futura: si vede.",
+  "sezioni": {
+    "offer": {
+      "settings": {
+        "show_countdown": true,
+        "countdown_end": "2099-12-31T23:59:00+01:00"
+      }
+    }
+  }
+}

@@ -1294,11 +1294,29 @@
   });
 
   /* 17. Offerta: countdown fino alla fine reale della promo, poi sparisce ------ */
-  // Niente countdown che riparte (§10): la fine è una data e un'ora italiane fisse. Prima parte nascosto;
-  // si mostra solo se la fine è nel futuro e allo zero sparisce. Nell'editor una nota spiega perché non si vede.
+  // Niente countdown che riparte (§10): la fine è un istante fisso, ISO 8601 con fuso orario
+  // (2026-11-30T23:59:00+01:00). Parte nascosto; si mostra solo se la data è valida e futura e allo zero sparisce
+  // per sempre. Nell'editor una nota spiega perché non si vede.
+
+  /** '2026-11-30T23:59:00+01:00' → Date; null se manca il fuso orario o se la data non esiste (2026-02-30). */
+  Luna.parseInstant = function (value) {
+    var match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(Z|([+-])(\d{2}):(\d{2}))$/.exec(
+      String(value || '').trim()
+    );
+    if (!match) return null;
+    var offset = match[7] === 'Z' ? 0 : (match[8] === '-' ? -1 : 1) * (Number(match[9]) * 60 + Number(match[10]));
+    var wall = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6] || 0));
+    var check = new Date(wall);
+    var exists =
+      check.getUTCFullYear() === Number(match[1]) &&
+      check.getUTCMonth() + 1 === Number(match[2]) &&
+      check.getUTCDate() === Number(match[3]) &&
+      check.getUTCHours() === Number(match[4]) &&
+      check.getUTCMinutes() === Number(match[5]);
+    return exists ? new Date(wall - offset * 60000) : null;
+  };
+
   Luna.register('countdown', '[data-luna-countdown]', function (box, scope) {
-    var dateValue = box.getAttribute('data-end-date');
-    var timeValue = box.getAttribute('data-end-time') || '23:59';
     var note = box.parentElement ? box.parentElement.querySelector('[data-luna-countdown-note]') : null;
 
     function explain(reason) {
@@ -1307,8 +1325,7 @@
       note.hidden = false;
     }
 
-    var valid = dates.parseDay(dateValue) && /^([01]?\d|2[0-3]):[0-5]\d$/.test(timeValue.trim());
-    var end = valid ? dates.zonedDateTime(dateValue, timeValue) : null;
+    var end = Luna.parseInstant(box.getAttribute('data-end'));
     if (!end) {
       box.hidden = true;
       explain('invalid');

@@ -11,10 +11,11 @@
 //         riquadro nell'editor); riga di Natale prima e dopo la scadenza con la data simulata; lampada di «Come
 //         funziona» che si monta (view(), ripiego JavaScript, movimento ridotto); card dei benefici della stessa
 //         altezza su desktop; passaggi morbidi tra le sezioni, senza linee nette.
-// Step 6: offerta con percentuale e prezzo a sera calcolati dai prezzi di Shopify (e senza barrato niente badge,
-//         risparmio né riga Omnibus); countdown che si vede prima della fine e sparisce dopo, senza ripartire;
-//         garanzia e «notti di prova» solo con il reso sopra i 14 giorni; FAQ a fisarmonica anche con la tastiera e
-//         senza JavaScript; tre CTA in pagina più la barra sticky, che si nasconde davanti a offerta e chiusura.
+// Step 6: badge con percentuale e risparmio calcolati dai prezzi finti, che spariscono con il barrato vuoto;
+//         countdown assente da spento e con la data passata, presente con la data futura e mai più dopo la fine;
+//         niente «notti di prova» con 14 giorni di reso; FAQ che si aprono anche senza JavaScript; esattamente 3 CTA
+//         più la barra sticky su #luna-buy-form; barra sticky che sparisce davanti alla CTA finale. Le pagine di
+//         prova arrivano da studio/preview/overrides/*.json.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -959,8 +960,7 @@ async function offerChecks(browser, baseUrl) {
   const { variant } = buildData(new Set());
   const expectedPct = Math.round(((variant.compare_at_price - variant.price) * 100) / variant.compare_at_price);
   const expectedPerDay = Math.floor(variant.price / 365) + 1;
-  const [, offerEntry] = templateSection('luna-offer');
-  const offerSettings = offerEntry?.settings || {};
+  const expectedSave = `€${((variant.compare_at_price - variant.price) / 100).toFixed(2).replace('.', ',')}`;
 
   const readOffer = (page) =>
     page.evaluate(() => {
@@ -986,11 +986,11 @@ async function offerChecks(browser, baseUrl) {
     await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
     const offer = await readOffer(page);
     record(
-      'offerta: percentuale e prezzo a sera dai prezzi di Shopify',
+      'offerta: percentuale, risparmio e prezzo a sera dai prezzi finti',
       offer.badge.endsWith(`−${expectedPct}%`) && offer.title.includes(offer.heroPrice) && offer.heroPrice !== '' &&
-        offer.compare !== '' && offer.save !== '' && offer.omnibus.endsWith(offer.compare) &&
+        offer.compare !== '' && offer.save.endsWith(expectedSave) && offer.omnibus.endsWith(offer.compare) &&
         offer.perDay.includes(`${expectedPerDay} centesimi`) && offer.bigPrice === 0,
-      `«${offer.badge}» (atteso −${expectedPct}%), «${offer.title}», barrato ${offer.compare}, «${offer.save}», ` +
+      `«${offer.badge}» (atteso −${expectedPct}%), «${offer.title}», barrato ${offer.compare}, «${offer.save}» (atteso ${expectedSave}), ` +
         `«${offer.omnibus}», «${offer.perDay}» (atteso ${expectedPerDay})`
     );
     await ctx.close();
@@ -1003,7 +1003,7 @@ async function offerChecks(browser, baseUrl) {
     await page.goto(`${baseUrl}/senza-barrato.html`, { waitUntil: 'networkidle' });
     const offer = await readOffer(page);
     record(
-      'offerta senza barrato: niente badge, risparmio né Omnibus',
+      'offerta con il barrato vuoto (override): niente badge, risparmio né Omnibus',
       !offer.badge && !offer.compare && !offer.save && !offer.omnibus && offer.title.includes(offer.heroPrice) && offer.perDay !== '',
       `badge «${offer.badge}», barrato «${offer.compare}», risparmio «${offer.save}», Omnibus «${offer.omnibus}»; ` +
         `restano «${offer.title}» e «${offer.perDay}»`
@@ -1011,65 +1011,62 @@ async function offerChecks(browser, baseUrl) {
     await ctx.close();
   }
 
-  // 3. Countdown: si vede solo prima della fine reale, sparisce alla fine e non riparte
+  // 3. Countdown: non c'è da spento né con la data passata; c'è con la data futura e alla fine sparisce per sempre
   {
-    const end = offerSettings.end_date ? romeInstant(offerSettings.end_date, offerSettings.end_time || '23:59') : null;
+    const futureOverride = JSON.parse(readFileSync(join(paths.preview, 'overrides', 'countdown-futuro.json'), 'utf8'));
+    const end = new Date(futureOverride.sezioni.offer.settings.countdown_end);
     const lines = [];
-    let ok = Boolean(end);
+    let ok = true;
     const state = (page) =>
-      page.$eval('[data-luna-countdown]', (box) => ({
-        visible: !box.hidden && box.getClientRects().length > 0,
-        clock: [...box.querySelectorAll('.luna-countdown__value')].map((value) => value.textContent).join(':'),
-      }));
-    if (end) {
-      // a. oggi (la fine è nel futuro)
-      {
-        const ctx = await context(browser, mobileOptions);
-        const page = await ctx.newPage();
-        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
-        const now = await state(page);
-        const future = Date.now() < end.getTime();
-        if (now.visible !== future) ok = false;
-        lines.push(`oggi ${now.visible ? `visibile (${now.clock})` : 'nascosto'}`);
-        await ctx.close();
-      }
-      // b. 3 secondi prima della fine: si vede, arriva a zero, sparisce e un minuto dopo è ancora nascosto
-      {
-        const ctx = await context(browser, mobileOptions);
-        const page = await ctx.newPage();
-        await page.clock.install({ time: new Date(end.getTime() - 3000) });
-        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
-        const before = await state(page);
-        await page.clock.runFor(4000);
-        const after = await state(page);
-        await page.clock.runFor(60000);
-        const later = await state(page);
-        // Durante il caricamento l'orologio simulato avanza: restano 2 o 3 secondi
-        if (!(before.visible && /^00:00:00:0[23]$/.test(before.clock) && !after.visible && !later.visible)) ok = false;
-        lines.push(`3 s prima ${before.visible ? `visibile (${before.clock})` : 'nascosto'}, ` +
-          `alla fine ${after.visible ? 'visibile' : 'sparito'}, un minuto dopo ${later.visible ? 'ripartito' : 'ancora nascosto'}`);
-        await ctx.close();
-      }
-      // c. dopo la fine (pagina aperta il giorno dopo) e senza JavaScript: niente countdown
-      for (const [label, options, when] of [
-        ['il giorno dopo', mobileOptions, new Date(end.getTime() + 86400000)],
-        ['senza JavaScript', { ...mobileOptions, javaScriptEnabled: false }, null],
-      ]) {
-        const ctx = await context(browser, options);
-        const page = await ctx.newPage();
-        if (when) await page.clock.setFixedTime(when);
-        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
-        const now = await state(page);
-        if (now.visible) ok = false;
-        lines.push(`${label} ${now.visible ? 'visibile' : 'nascosto'}`);
-        await ctx.close();
-      }
+      page.evaluate(() => {
+        const box = document.querySelector('[data-luna-countdown]');
+        return {
+          present: Boolean(box),
+          visible: Boolean(box && !box.hidden && box.getClientRects().length > 0),
+          clock: box ? [...box.querySelectorAll('.luna-countdown__value')].map((value) => value.textContent).join(':') : '',
+        };
+      });
+    for (const [label, pageName, expected] of [
+      ['spento (template)', 'index.html', false],
+      ['data passata', 'countdown-passato.html', false],
+      ['data futura', 'countdown-futuro.html', true],
+    ]) {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'networkidle' });
+      const now = await state(page);
+      if (now.visible !== expected) ok = false;
+      lines.push(`${label}: ${now.visible ? `visibile (${now.clock})` : now.present ? 'nascosto' : 'assente'}`);
+      await ctx.close();
     }
-    record(
-      'countdown solo fino alla fine reale, poi mai più',
-      ok,
-      `fine ${offerSettings.end_date || 'non impostata'} ${offerSettings.end_time || ''} · ${lines.join(' · ')}`
-    );
+    // Con la data futura: 3 secondi prima della fine si vede, allo zero sparisce e un minuto dopo è ancora nascosto
+    {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      await page.clock.install({ time: new Date(end.getTime() - 3000) });
+      await page.goto(`${baseUrl}/countdown-futuro.html`, { waitUntil: 'domcontentloaded' });
+      const before = await state(page);
+      await page.clock.runFor(4000);
+      const after = await state(page);
+      await page.clock.runFor(60000);
+      const later = await state(page);
+      // Durante il caricamento l'orologio simulato avanza: restano 2 o 3 secondi
+      if (!(before.visible && /^00:00:00:0[23]$/.test(before.clock) && !after.visible && !later.visible)) ok = false;
+      lines.push(`alla scadenza: prima ${before.visible ? `visibile (${before.clock})` : 'nascosto'}, ` +
+        `poi ${after.visible ? 'visibile' : 'sparito'}, un minuto dopo ${later.visible ? 'ripartito' : 'ancora nascosto'}`);
+      await ctx.close();
+    }
+    // Senza JavaScript non si vede mai
+    {
+      const ctx = await context(browser, { ...mobileOptions, javaScriptEnabled: false });
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/countdown-futuro.html`, { waitUntil: 'domcontentloaded' });
+      const now = await state(page);
+      if (now.visible) ok = false;
+      lines.push(`senza JavaScript: ${now.visible ? 'visibile' : 'nascosto'}`);
+      await ctx.close();
+    }
+    record('countdown: spento, data passata, data futura', ok, lines.join(' · '));
   }
 
   // 4. Garanzia e «notti di prova» solo con il reso sopra i 14 giorni (§10)
