@@ -58,7 +58,7 @@ SCENE_FILES = {
     "eclissi": "05-eclissi.jpg",
     "natale": "06-natale.jpg",
 }
-SCENE_QUALITY = 80
+SCENE_QUALITY = 88  # alzata da 80: sugli OLED le bande nei fondi scuri si vedono
 
 # Pesi massimi (§ step 2, punto 4)
 LIMITS = {
@@ -301,7 +301,7 @@ def contact_sheet() -> None:
     # C. Scene e condivisione in miniatura
     scenes = [(slug, load(f"luna-scene-{slug}-{800 if slug in ('caldo', 'orbita', 'eclissi', 'natale') else 1000}.webp")) for slug in SCENE_FILES]
     scenes.append(("luna-og.jpg", Image.open(ASSETS / "luna-og.jpg").convert("RGBA")))
-    tiles.append(("Scene · export 800 / 1000 px", scenes))
+    tiles.append(("Scene · export 800 / 1000 px, qualità 88", scenes))
 
     # Impaginazione a righe, ogni immagine scalata a un'altezza comune per riga
     blocks = []

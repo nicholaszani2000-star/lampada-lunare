@@ -58,7 +58,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 
 ### 4.2 Il layout layout/luna-landing.liquid
 - <html lang="{{ request.locale.iso_code }}"> con classe no-js, sostituita da js con uno script inline di una riga.
-- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image dalla prima immagine del prodotto a 1200 px, product:price:amount, product:price:currency); theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
+- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image = {{ 'luna-og.jpg' | asset_url | prepend: 'https:' }} — asset_url restituisce un indirizzo che inizia con //, og:image vuole un URL assoluto —, og:image:width 1200, og:image:height 630, og:image:alt, product:price:amount, product:price:currency) e twitter:card summary_large_image; le immagini del prodotto restano per Google e per i cataloghi; theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
 - {{ content_for_header }} è obbligatorio, sta nel <head> e va scritto così com'è: niente filtri, niente if, niente capture, niente snippet. Carica pixel, analytics, banner cookie, app e pulsanti di pagamento rapido.
 - Nel <body>: {{ content_for_layout }} e poi lo script {{ 'luna-landing.js' | asset_url }} con defer.
 - Niente loop su prodotti o varianti nel <head>: rallentano il primo byte.
@@ -107,6 +107,8 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 - Ogni sezione con immagini ha un image_picker per sostituirle dall'editor; se è vuoto usa l'asset.
 - Dove va ogni immagine del pacchetto (esportata nello step 2): hero → luna e base separate, accese e spente; moon3d, come ripiego → lampada accesa; benefits → scena orbita («Levita davvero»), scena caldo («Luce che scalda la stanza»), scena eclissi («Il regalo che non si dimentica»); gift → scena natale; specs → scena misure; barra sticky → miniatura; condivisioni → luna-og.jpg. Prima foto del prodotto su Shopify: scena notte.
 - L'immagine della lampada nella hero è l'elemento LCP: loading="eager" e fetchpriority="high". Tutte le altre: loading="lazy" e decoding="async".
+- Nella hero si scarica subito solo lo stato iniziale (spento; acceso con prefers-reduced-motion o nell'editor), come LCP con fetchpriority high. L'altro stato parte al primo frame dopo il paint, non all'evento load, così l'accensione arriva entro circa un secondo anche in 4G.
+- Ogni immagine del tema ha un alt descrittivo, scritto nella sezione che la mostra.
 
 ### 4.8 Editor del tema
 - Ogni componente JS si inizializza al DOMContentLoaded e di nuovo su shopify:section:load; su shopify:section:unload rimuove listener, observer e requestAnimationFrame.
