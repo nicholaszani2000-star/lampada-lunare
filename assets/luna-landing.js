@@ -798,7 +798,10 @@
     afterFirstPaint(scope, function () {
       stage.querySelectorAll('source[data-luna-defer]').forEach(function (source) {
         var image = source.parentElement ? source.parentElement.querySelector('img') : null;
-        if (image) image.setAttribute('fetchpriority', 'low');
+        // Priorità bassa solo se il <source> stava davvero rimandando l'immagine (l'altro stato): lo stato
+        // iniziale ha un <source> solo per il movimento ridotto e resta l'immagine LCP, con priorità alta
+        var deferring = !source.media || window.matchMedia(source.media).matches;
+        if (image && deferring) image.setAttribute('fetchpriority', 'low');
         source.remove();
       });
     });

@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -30,8 +31,12 @@ const TYPES = {
   '.ico': 'image/x-icon',
 };
 
-/** Serve una cartella su una porta libera di localhost. */
-export function serve(dir) {
+/**
+ * Serve una cartella su una porta libera di localhost.
+ * options.compress: gzip per HTML, CSS, JS, JSON e SVG, come il CDN di Shopify (per Lighthouse); spento di
+ * default, così i controlli misurano i byte senza compressione (stima prudente del §9).
+ */
+export function serve(dir, options = {}) {
   const server = createServer((request, response) => {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8' });
@@ -45,11 +50,16 @@ export function serve(dir) {
       response.end('Non trovato: ' + pathname);
       return;
     }
-    response.writeHead(200, {
-      'content-type': TYPES[extname(file).toLowerCase()] || 'application/octet-stream',
-      'cache-control': 'no-store',
-    });
-    response.end(request.method === 'HEAD' ? undefined : readFileSync(file));
+    const type = TYPES[extname(file).toLowerCase()] || 'application/octet-stream';
+    let body = readFileSync(file);
+    const headers = { 'content-type': type, 'cache-control': 'no-store' };
+    if (options.compress && /text|javascript|json|svg/.test(type) && /\bgzip\b/.test(request.headers['accept-encoding'] || '')) {
+      body = gzipSync(body, { level: 9 });
+      headers['content-encoding'] = 'gzip';
+      headers.vary = 'Accept-Encoding';
+    }
+    response.writeHead(200, headers);
+    response.end(request.method === 'HEAD' ? undefined : body);
   });
   return new Promise((resolve) => {
     server.listen(0, '127.0.0.1', () => {
