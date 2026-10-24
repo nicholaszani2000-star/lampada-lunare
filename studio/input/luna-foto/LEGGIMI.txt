@@ -9,7 +9,7 @@ ritagli/  PNG trasparenti, 1377 × 1755 px, tutti della stessa misura: si sovrap
   luna-accesa.png      solo la luna accesa (per farla levitare da sola)
   luna-spenta.png      solo la luna spenta
   base-accesa.png      solo la base, illuminata dalla luna
-  base-spenta.png      solo la base, al buio
+  base-spenta.png      solo la base: lo stesso legno chiaro, al buio
   layout.json          posizioni di luna e base, centro e raggio della luna, misure reali
 
 scene/  JPG
@@ -33,6 +33,7 @@ Cosa è stato fatto
   - Base: tolta l'ombra della luna e aggiunta la luce calda che la luna proietta da accesa.
   - Luna alzata di circa 2,5 mm rispetto allo scatto, così lo stacco della levitazione si vede.
   - Versione spenta ricavata da quella accesa: le due si sovrappongono perfettamente.
+  - La base è in legno chiaro (effetto legno, ABS): nella versione spenta è solo più scura e meno satura, come al buio.
 
 Quando arriva il campione
   Scatta due foto identiche, sul cavalletto: una accesa al buio e una spenta.

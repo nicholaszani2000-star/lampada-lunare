@@ -1,0 +1,15 @@
+{
+  "descrizione": "Reso di 14 giorni: è il diritto di recesso, quindi niente garanzia e niente «notti di prova» (§10).",
+  "sezioni": {
+    "offer": {
+      "settings": {
+        "return_days": 14
+      }
+    },
+    "final": {
+      "settings": {
+        "return_days": 14
+      }
+    }
+  }
+}

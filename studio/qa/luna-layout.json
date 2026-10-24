@@ -1,0 +1,30 @@
+{
+  "nota": "Percentuali sulla composizione intera (lampada-accesa.png, stessa dimensione per tutti i livelli: si sovrappongono a 0,0). La luna e la base sono separate: nella hero levita solo la luna. Dietro la luna la base è stata ricostruita, quindi la luna si può spostare verso l'alto senza scoprire buchi.",
+  "canvas_px": [
+    1377,
+    1755
+  ],
+  "luna": {
+    "left": 1.67,
+    "top": 0.46,
+    "width": 84.89,
+    "height": 66.61,
+    "centro_px": [
+      607.0,
+      591.8
+    ],
+    "raggio_px": 584.0
+  },
+  "base": {
+    "left": 0.15,
+    "top": 68.77,
+    "width": 99.27,
+    "height": 30.77,
+    "bordo_frontale_superiore_px_al_centro": 1408.4
+  },
+  "misure_reali_mm": {
+    "luna_diametro": 85,
+    "base_larghezza": 108,
+    "base_altezza": 22
+  }
+}

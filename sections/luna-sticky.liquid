@@ -1,0 +1,127 @@
+{%- comment -%}
+  Barra d'acquisto fissa in basso, solo sotto i 990 px (§6): miniatura, nome, prezzo compatto, «Acquista».
+  luna-landing.js la mostra quando la CTA della hero ([data-luna-hero-cta]) è fuori dallo schermo
+  e la nasconde quando si vede la CTA della sezione finale ([data-luna-final-cta], step 6).
+  Senza JavaScript resta sempre visibile.
+{%- endcomment -%}
+{%- liquid
+  assign luna_variant = product.selected_or_first_available_variant
+  assign luna_title = section.settings.title | default: product.title
+-%}
+<div
+  class="luna-sticky"
+  role="region"
+  aria-label="{{ section.settings.region_label | escape }}"
+  data-luna-sticky
+>
+  <div class="luna-sticky__inner">
+    {%- if section.settings.thumbnail != blank -%}
+      {{
+        section.settings.thumbnail
+        | image_url: width: 160
+        | image_tag:
+          class: 'luna-sticky__thumb',
+          widths: '96, 160',
+          sizes: '48px',
+          width: 48,
+          alt: '',
+          loading: 'eager',
+          fetchpriority: 'low',
+          decoding: 'async'
+      }}
+    {%- else -%}
+      <img
+        class="luna-sticky__thumb"
+        src="{{ 'luna-thumb-160.webp' | asset_url }}"
+        width="160"
+        height="160"
+        alt=""
+        loading="eager"
+        fetchpriority="low"
+        decoding="async"
+      >
+    {%- endif -%}
+    <div class="luna-sticky__info">
+      <p class="luna-sticky__title">{{ luna_title | escape }}</p>
+      {% render 'luna-price',
+        product: product,
+        variant: luna_variant,
+        layout: 'compact',
+        omnibus_text: section.settings.omnibus_text
+      %}
+    </div>
+    {% render 'luna-cta',
+      product: product,
+      variant: luna_variant,
+      text: section.settings.cta_text,
+      style: 'compact',
+      loading_text: section.settings.loading_text,
+      sold_out_text: section.settings.sold_out_text
+    %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Luna · Barra sticky",
+  "class": "luna-section-sticky",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Compare solo sotto i 990 px di larghezza, quando il bottone della hero esce dallo schermo."
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Nome del prodotto",
+      "info": "Se lo lasci vuoto si usa il titolo del prodotto.",
+      "default": "Lampada Lunare Levitante"
+    },
+    {
+      "type": "image_picker",
+      "id": "thumbnail",
+      "label": "Miniatura",
+      "info": "Se resta vuota si usa la lampada accesa del tema."
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Bottone",
+      "info": "{prezzo} diventa il prezzo della variante, se vuoi mostrarlo anche qui.",
+      "default": "Acquista"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Bottone durante il caricamento",
+      "default": "Ti porto al checkout…"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Bottone con variante esaurita",
+      "default": "Esaurita"
+    },
+    {
+      "type": "text",
+      "id": "omnibus_text",
+      "label": "Riga del prezzo più basso (Omnibus)",
+      "default": "Prezzo più basso degli ultimi 30 giorni:"
+    },
+    {
+      "type": "text",
+      "id": "region_label",
+      "label": "Nome della barra per i lettori di schermo",
+      "default": "Acquisto rapido"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Barra sticky"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

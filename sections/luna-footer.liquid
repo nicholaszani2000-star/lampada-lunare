@@ -1,0 +1,137 @@
+{%- comment -%}
+  Footer della landing: copyright, dati legali (ragione sociale, P.IVA, sede), policy del negozio
+  e icone dei metodi di pagamento attivi (§8, §10).
+{%- endcomment -%}
+{%- liquid
+  assign luna_year = 'now' | date: '%Y'
+  if section.settings.copyright != blank
+    assign luna_copyright = section.settings.copyright
+  else
+    assign luna_copyright = '© {anno} ' | append: shop.name
+  endif
+  assign luna_company = section.settings.company_name
+  assign luna_vat = section.settings.vat_number
+  assign luna_address = section.settings.address
+-%}
+<footer class="luna-footer">
+  <div class="luna-container luna-footer__inner">
+    <p class="luna-footer__brand">{{ luna_copyright | escape | replace: '{anno}', luna_year }}</p>
+
+    {%- if luna_company != blank or luna_vat != blank or luna_address != blank -%}
+      <p class="luna-footer__legal">
+        {%- if luna_company != blank -%}
+          <span>{{ luna_company | escape }}</span>
+        {%- endif -%}
+        {%- if luna_vat != blank -%}
+          <span>{{ section.settings.vat_label | escape }} {{ luna_vat | escape }}</span>
+        {%- endif -%}
+        {%- if luna_address != blank -%}
+          <span>{{ luna_address | escape }}</span>
+        {%- endif -%}
+      </p>
+    {%- endif -%}
+
+    {%- if section.settings.show_policies and shop.policies.size > 0 -%}
+      <nav class="luna-footer__nav" aria-label="{{ section.settings.policies_label | escape }}">
+        <ul class="luna-footer__policies luna-list-reset">
+          {%- for policy in shop.policies -%}
+            <li><a href="{{ policy.url }}">{{ policy.title | escape }}</a></li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+
+    {%- if section.settings.show_payment_icons and shop.enabled_payment_types.size > 0 -%}
+      <ul
+        class="luna-footer__payments luna-list-reset"
+        aria-label="{{ section.settings.payments_label | escape }}"
+      >
+        {%- for type in shop.enabled_payment_types -%}
+          <li>{{ type | payment_type_svg_tag: class: 'luna-footer__pay' }}</li>
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Luna · Footer",
+  "class": "luna-section-footer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "copyright",
+      "label": "Copyright",
+      "info": "{anno} diventa l'anno in corso. Se lo lasci vuoto si usa il nome del negozio.",
+      "default": "© {anno} Lunaria"
+    },
+    {
+      "type": "header",
+      "content": "Dati legali"
+    },
+    {
+      "type": "paragraph",
+      "content": "Ragione sociale, P.IVA e sede vanno indicati per legge: compilali prima di pubblicare la pagina."
+    },
+    {
+      "type": "text",
+      "id": "company_name",
+      "label": "Ragione sociale"
+    },
+    {
+      "type": "text",
+      "id": "vat_label",
+      "label": "Etichetta della partita IVA",
+      "default": "P.IVA"
+    },
+    {
+      "type": "text",
+      "id": "vat_number",
+      "label": "Partita IVA"
+    },
+    {
+      "type": "text",
+      "id": "address",
+      "label": "Sede legale"
+    },
+    {
+      "type": "header",
+      "content": "Policy e pagamenti"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_policies",
+      "label": "Mostra i link alle policy",
+      "info": "Le policy si scrivono in Impostazioni → Policy.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "policies_label",
+      "label": "Nome dei link alle policy per i lettori di schermo",
+      "default": "Informazioni legali"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_icons",
+      "label": "Mostra le icone di pagamento",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "payments_label",
+      "label": "Nome delle icone di pagamento per i lettori di schermo",
+      "default": "Metodi di pagamento accettati"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Footer"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

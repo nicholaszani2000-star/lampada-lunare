@@ -1,0 +1,63 @@
+{%- doc -%}
+  Un livello della lampada nella hero (luna o base, spenta o accesa), dentro un <picture>.
+  Si scarica subito solo lo stato iniziale: spento, acceso con prefers-reduced-motion o nell'editor.
+  L'altro stato ha un <source data-luna-defer> trasparente che luna-landing.js toglie al primo frame dopo il paint.
+
+  @param {string} key - 'moon-off', 'moon-on', 'base-off' oppure 'base-on'
+  @param {object} [image] - Immagine scelta dall'editor; se manca si usa l'asset luna-<key>-*.webp
+  @param {boolean} [editor] - true nell'editor del tema (la lampada parte accesa)
+  @param {string} [alt] - Testo alternativo (uno solo dei livelli lo porta, gli altri restano vuoti)
+  @param {string} [sizes] - Attributo sizes delle immagini
+{%- enddoc -%}
+{%- liquid
+  assign luna_placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+  assign luna_is_on = false
+  if key contains '-on'
+    assign luna_is_on = true
+  endif
+
+  assign luna_defer_media = 'none'
+  if editor
+    unless luna_is_on
+      assign luna_defer_media = 'all'
+    endunless
+  elsif luna_is_on
+    assign luna_defer_media = '(prefers-reduced-motion: no-preference)'
+  else
+    assign luna_defer_media = '(prefers-reduced-motion: reduce)'
+  endif
+
+  if image != blank
+    assign luna_src = image | image_url: width: 1000
+    assign luna_src_600 = image | image_url: width: 600
+    assign luna_src_1400 = image | image_url: width: 1400
+    assign luna_srcset = luna_src_600 | append: ' 600w, ' | append: luna_src | append: ' 1000w, ' | append: luna_src_1400 | append: ' 1400w'
+    assign luna_height = 1000 | divided_by: image.aspect_ratio | round
+  else
+    assign luna_file = 'luna-' | append: key
+    assign luna_src = luna_file | append: '-1000.webp' | asset_url
+    assign luna_src_600 = luna_file | append: '-600.webp' | asset_url
+    assign luna_src_1377 = luna_file | append: '-1377.webp' | asset_url
+    assign luna_srcset = luna_src_600 | append: ' 600w, ' | append: luna_src | append: ' 1000w, ' | append: luna_src_1377 | append: ' 1377w'
+    # 1377 × 1755 riportato a 1000 px di larghezza
+    assign luna_height = 1275
+  endif
+-%}
+<picture class="luna-lamp__layer luna-lamp__layer--{{ key }}{% if luna_is_on %} is-on-layer{% endif %}">
+  {%- if luna_defer_media == 'all' -%}
+    <source data-luna-defer srcset="{{ luna_placeholder }}">
+  {%- elsif luna_defer_media != 'none' -%}
+    <source data-luna-defer media="{{ luna_defer_media }}" srcset="{{ luna_placeholder }}">
+  {%- endif -%}
+  <img
+    src="{{ luna_src }}"
+    srcset="{{ luna_srcset }}"
+    sizes="{{ sizes | default: '100vw' }}"
+    width="1000"
+    height="{{ luna_height }}"
+    alt="{{ alt | escape }}"
+    loading="eager"
+    fetchpriority="high"
+    data-luna-layer="{{ key }}"
+  >
+</picture>

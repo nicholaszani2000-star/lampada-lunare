@@ -1,0 +1,183 @@
+{%- comment -%}
+  Smonta l'obiezione «sarà complicata?» (§6.6): tre passaggi numerati (è una sequenza) e la nota.
+  Accanto, la lampada che si monta mentre scorri: la luna sale dalla base, si accende e comincia a levitare.
+  Con animation-timeline: view() lo fa il CSS (dentro @supports); altrove luna-landing.js aggiunge is-animated
+  e poi is-assembled con un IntersectionObserver. Senza JavaScript, con movimento ridotto e nell'editor si vede
+  direttamente lo stato finale. Un'immagine scelta dall'editor prende il posto dell'animazione.
+{%- endcomment -%}
+{%- liquid
+  assign luna_steps = section.blocks | where: 'type', 'step'
+  assign luna_sizes = '(min-width: 1024px) 420px, min(76vw, 420px)'
+-%}
+<section class="luna-section luna-section--tint luna-how" aria-labelledby="luna-how-title-{{ section.id }}">
+  <div class="luna-container luna-how__grid">
+    <header class="luna-section__head luna-how__head">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      <h2 class="luna-h2 luna-reveal" id="luna-how-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+    </header>
+
+    <div class="luna-how__body">
+      <ol class="luna-how__steps" role="list">
+        {%- for block in luna_steps -%}
+          <li class="luna-how__step luna-reveal" {{ block.shopify_attributes }}>
+            <span class="luna-how__number" aria-hidden="true">{{ forloop.index }}</span>
+            <div class="luna-how__step-body">
+              <h3 class="luna-h3">{{ block.settings.title | escape }}</h3>
+              {%- if block.settings.text != blank -%}
+                <p class="luna-text luna-muted">{{ block.settings.text | escape }}</p>
+              {%- endif -%}
+            </div>
+          </li>
+        {%- endfor -%}
+      </ol>
+      {%- if section.settings.note != blank -%}
+        <div class="luna-how__note luna-reveal">
+          {%- render 'luna-icon', name: 'scintilla', size: 20 -%}
+          <div class="luna-small">{{ section.settings.note }}</div>
+        </div>
+      {%- endif -%}
+    </div>
+
+    <figure class="luna-how__visual">
+      {%- if section.settings.image != blank -%}
+        {{
+          section.settings.image
+          | image_url: width: 1000
+          | image_tag:
+            widths: '420, 600, 840, 1000',
+            sizes: luna_sizes,
+            alt: section.settings.image_alt,
+            class: 'luna-how__photo',
+            loading: 'lazy',
+            decoding: 'async'
+        }}
+      {%- else -%}
+        <div class="luna-how__stage" data-luna-how-stage role="img" aria-label="{{ section.settings.animation_alt | escape }}">
+          <div class="luna-how__glow luna-how__lit" aria-hidden="true"></div>
+          {%- render 'luna-cutout', file: 'luna-base-off', sizes: luna_sizes, class: 'luna-how__layer' -%}
+          {%- render 'luna-cutout', file: 'luna-base-on', sizes: luna_sizes, class: 'luna-how__layer luna-how__lit' -%}
+          <div class="luna-how__baselight luna-how__lit" aria-hidden="true"><span class="luna-how__pulse"></span></div>
+          <div class="luna-how__rise">
+            <div class="luna-how__float">
+              {%- render 'luna-cutout', file: 'luna-moon-off', sizes: luna_sizes, class: 'luna-how__layer' -%}
+              {%- render 'luna-cutout', file: 'luna-moon-on', sizes: luna_sizes, class: 'luna-how__layer luna-how__lit' -%}
+            </div>
+          </div>
+        </div>
+      {%- endif -%}
+      {%- if section.settings.size_label != blank -%}
+        <figcaption class="luna-chip luna-how__size">{{ section.settings.size_label | escape }}</figcaption>
+      {%- endif -%}
+    </figure>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Come funziona",
+  "class": "luna-section-how",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Facilissima"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Pronta in tre gesti."
+    },
+    {
+      "type": "richtext",
+      "id": "note",
+      "label": "Nota sotto i passaggi",
+      "default": "<p>La prima volta serve un minuto di pratica per trovare il punto di equilibrio. Poi diventa un gesto da due secondi.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Lampada che si monta"
+    },
+    {
+      "type": "text",
+      "id": "animation_alt",
+      "label": "Descrizione dell'animazione",
+      "info": "Per i lettori di schermo.",
+      "default": "La luna sale dalla base, si accende da sola e resta sospesa a mezz'aria"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura sotto la lampada",
+      "default": "Ø 8,5 cm"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Immagine al posto dell'animazione",
+      "info": "Facoltativa. Se resta vuota si vede la lampada che si monta mentre scorri."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Testo alternativo dell'immagine",
+      "default": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Passaggio",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Titolo",
+          "default": "Collega la base"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Testo",
+          "default": "Inserisci l'alimentatore nella presa: la base è pronta."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Come funziona",
+      "blocks": [
+        {
+          "type": "step",
+          "settings": {
+            "title": "Collega la base",
+            "text": "Inserisci l'alimentatore nella presa: la base è pronta."
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Avvicina la Luna",
+            "text": "Tienila sopra il centro della base: sentirai il campo magnetico che la aggancia."
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Lasciala andare",
+            "text": "Apri piano le dita. La Luna resta sospesa e inizia a ruotare."
+          }
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,139 @@
+{%- comment -%}
+  Header della landing: logo (o nome del brand in Fraunces) e luna-progresso.
+  Nessun menu e nessun link che porta fuori dalla pagina (§6).
+  La luna-progresso: due cerchi e una maschera; l'ombra scorre con lo scroll (luna-landing.js).
+  Senza JavaScript la luna resta piena.
+{%- endcomment -%}
+{%- liquid
+  assign luna_brand = section.settings.brand_name | default: shop.name
+  assign luna_logo_width = section.settings.logo_width
+-%}
+{%- if section.settings.sticky -%}
+  <style>
+    #shopify-section-{{ section.id }} {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+  </style>
+{%- endif -%}
+<header class="luna-header" data-luna-header>
+  <div class="luna-container luna-header__inner">
+    <span class="luna-header__brand">
+      {%- if section.settings.logo != blank -%}
+        {%- liquid
+          assign luna_logo_height = luna_logo_width | divided_by: section.settings.logo.aspect_ratio | round
+          assign luna_logo_sizes = luna_logo_width | append: 'px'
+          assign luna_logo_alt = section.settings.logo.alt | default: luna_brand
+        -%}
+        {{
+          section.settings.logo
+          | image_url: width: 480
+          | image_tag:
+            class: 'luna-header__logo',
+            alt: luna_logo_alt,
+            width: luna_logo_width,
+            height: luna_logo_height,
+            widths: '120, 180, 240, 360, 480',
+            sizes: luna_logo_sizes,
+            loading: 'eager'
+        }}
+      {%- else -%}
+        <span class="luna-header__wordmark">{{ luna_brand | escape }}</span>
+      {%- endif -%}
+    </span>
+
+    {%- if section.settings.show_moon -%}
+      <svg
+        class="luna-moonprogress"
+        data-luna-moon-progress
+        data-centre="16"
+        data-travel="24"
+        viewBox="0 0 32 32"
+        width="32"
+        height="32"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <defs>
+          <radialGradient id="luna-moon-lit-{{ section.id }}" cx="38%" cy="34%" r="72%">
+            <stop offset="0" stop-color="#FFF6E6"/>
+            <stop offset=".55" style="stop-color: var(--luna-light)"/>
+            <stop offset="1" stop-color="#E2A85F"/>
+          </radialGradient>
+          <mask
+            id="luna-moon-mask-{{ section.id }}"
+            maskUnits="userSpaceOnUse"
+            x="-24"
+            y="-4"
+            width="80"
+            height="40"
+          >
+            <rect x="-24" y="-4" width="80" height="40" fill="#fff"/>
+            <circle data-luna-moon-shadow cx="-8" cy="16" r="11.6" fill="#000"/>
+          </mask>
+        </defs>
+        <circle class="luna-moonprogress__base" cx="16" cy="16" r="11"/>
+        <circle
+          cx="16"
+          cy="16"
+          r="11"
+          fill="url(#luna-moon-lit-{{ section.id }})"
+          mask="url(#luna-moon-mask-{{ section.id }})"
+        />
+      </svg>
+    {%- endif -%}
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Luna · Header",
+  "class": "luna-section-header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Nome del brand",
+      "info": "Si vede quando non c'è un logo. Se lo lasci vuoto si usa il nome del negozio.",
+      "default": "Lunaria"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "Larghezza del logo",
+      "min": 60,
+      "max": 240,
+      "step": 4,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "checkbox",
+      "id": "show_moon",
+      "label": "Mostra la luna-progresso",
+      "info": "Passa da luna nuova a luna piena mentre si scorre la pagina.",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky",
+      "label": "Header fisso in alto",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Header"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

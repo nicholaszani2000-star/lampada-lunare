@@ -1,0 +1,165 @@
+{%- comment -%}
+  Le obiezioni rimaste (§6.11): blocchi domanda/risposta come <details> nativi, quindi apribili anche senza
+  JavaScript e con la tastiera. L'attributo name li rende una fisarmonica (se ne apre una alla volta) dove è
+  supportato; altrove restano indipendenti. Le parole impostate in «Parole che portano alla politica di rimborso»
+  diventano un link alla politica del negozio (shop.refund_policy), senza indirizzi scritti a mano.
+{%- endcomment -%}
+{%- liquid
+  assign luna_questions = section.blocks | where: 'type', 'question'
+  assign luna_refund_url = shop.refund_policy.url
+  assign luna_link_text = section.settings.policy_link_text | escape
+-%}
+{%- if luna_questions.size > 0 -%}
+  <section class="luna-section luna-section--tint luna-faq" aria-labelledby="luna-faq-title-{{ section.id }}">
+    <div class="luna-container luna-container--narrow">
+      <header class="luna-section__head luna-section__head--center">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+        {%- endif -%}
+        <h2 class="luna-h2 luna-reveal" id="luna-faq-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      </header>
+
+      <div class="luna-faq__list luna-reveal">
+        {%- for block in luna_questions -%}
+          {%- liquid
+            assign luna_answer = block.settings.answer
+            assign luna_linkable = false
+            if luna_refund_url != blank and luna_link_text != blank and luna_answer contains luna_link_text
+              assign luna_linkable = true
+            endif
+            # Se la risposta ha già un link scritto dall'editor non se ne aggiunge un altro
+            if luna_answer contains '<a '
+              assign luna_linkable = false
+            endif
+            if luna_linkable
+              assign luna_link = '<a href="' | append: luna_refund_url | append: '">' | append: luna_link_text | append: '</a>'
+              assign luna_answer = luna_answer | replace_first: luna_link_text, luna_link
+            endif
+          -%}
+          <details class="luna-faq__item" name="luna-faq-{{ section.id }}" {{ block.shopify_attributes }}>
+            <summary class="luna-faq__question">
+              <span>{{ block.settings.question | escape }}</span>
+              <span class="luna-faq__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="luna-faq__answer luna-text luna-muted">{{ luna_answer }}</div>
+          </details>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Luna · Domande",
+  "class": "luna-section-faq",
+  "max_blocks": 20,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "info": "Facoltativo."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Domande frequenti"
+    },
+    {
+      "type": "text",
+      "id": "policy_link_text",
+      "label": "Parole che portano alla politica di rimborso",
+      "info": "Se compaiono in una risposta diventano un link alla politica di rimborso del negozio.",
+      "default": "politica di rimborso"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "Domanda",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Domanda",
+          "default": "Come fa a levitare?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Risposta",
+          "default": "<p>Nella base c'è un sistema magnetico che tiene la luna in equilibrio a pochi centimetri, senza alcun contatto.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Domande",
+      "blocks": [
+        {
+          "type": "question",
+          "settings": {
+            "question": "Come fa a levitare?",
+            "answer": "<p>Nella base c'è un sistema magnetico che tiene la luna in equilibrio a pochi centimetri, senza alcun contatto.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "È difficile posizionarla?",
+            "answer": "<p>La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "Va collegata alla corrente?",
+            "answer": "<p>Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "Come la spengo senza farla cadere?",
+            "answer": "<p>Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "Quando arriva?",
+            "answer": "<p>Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "E se non mi piace?",
+            "answer": "<p>Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "È adatta ai bambini?",
+            "answer": "<p>È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "Il pagamento è sicuro?",
+            "answer": "<p>Il checkout è gestito da Shopify su connessione cifrata. Puoi pagare con i metodi che vedi in fondo alla pagina, anche con il pagamento rapido dallo smartphone.</p>"
+          }
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

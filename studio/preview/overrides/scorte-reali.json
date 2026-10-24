@@ -1,0 +1,7 @@
+{
+  "descrizione": "Magazzino Shopify che tiene il conto dei pezzi, con 3 pezzi rimasti: la riga delle scorte compare solo con dati veri (§10).",
+  "variante": {
+    "inventory_management": "shopify",
+    "inventory_quantity": 3
+  }
+}

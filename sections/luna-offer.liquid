@@ -1,0 +1,345 @@
+{%- comment -%}
+  La sezione sconto (§6.10): badge con la percentuale calcolata dai prezzi di Shopify (solo se c'è il barrato),
+  titolo con il prezzo, prezzo con barrato, risparmio e riga Omnibus (snippet luna-price), riepilogo, prezzo a sera,
+  countdown solo con una data di fine reale, CTA n. 2 e garanzia solo se il reso supera i 14 giorni (§10).
+  Senza prezzo barrato il badge sparisce e la sezione resta un riepilogo d'acquisto.
+  Prezzi, percentuale e prezzo a sera arrivano da Shopify e si aggiornano al cambio di variante (luna-landing.js).
+  Countdown: solo con «Mostra countdown» attivo e una data di fine ISO 8601 con fuso orario. Parte nascosto e lo
+  mostra lo script solo se la data è valida e futura; alla scadenza sparisce per sempre: mai un timer che riparte.
+{%- endcomment -%}
+{%- liquid
+  assign luna_variant = product.selected_or_first_available_variant
+  assign luna_items = section.blocks | where: 'type', 'item'
+  assign luna_on_sale = false
+  if luna_variant.compare_at_price > luna_variant.price
+    assign luna_on_sale = true
+    assign luna_pct = luna_variant.compare_at_price | minus: luna_variant.price | times: 100.0 | divided_by: luna_variant.compare_at_price | round
+  endif
+  assign luna_price_html = luna_variant.price | money | prepend: '<span class="luna-nowrap" data-luna-price>' | append: '</span>'
+  assign luna_end = section.settings.countdown_end | strip
+  assign luna_refund_url = shop.refund_policy.url
+-%}
+{%- comment -%} Meno di {c} centesimi a sera: prezzo / 365 in centesimi, più uno (lo stesso calcolo in luna-landing.js) {%- endcomment -%}
+{%- assign luna_cents = luna_variant.price | divided_by: 365 | plus: 1 -%}
+<section class="luna-section luna-offer" aria-labelledby="luna-offer-title-{{ section.id }}">
+  <div class="luna-container luna-container--narrow">
+    <div class="luna-offer__panel luna-reveal">
+      <div class="luna-offer__head">
+        {%- if section.settings.badge_text != blank -%}
+          <p
+            class="luna-badge luna-badge--sale luna-offer__badge"
+            data-luna-sale-part
+            data-luna-pct
+            data-template="{{ section.settings.badge_text | escape }}"
+            {% unless luna_on_sale %}
+              hidden
+            {% endunless %}
+          >
+            {%- if luna_on_sale -%}
+              {{- section.settings.badge_text | escape | replace: '{pct}', luna_pct -}}
+            {%- endif -%}
+          </p>
+        {%- endif -%}
+        <h2 class="luna-h2" id="luna-offer-title-{{ section.id }}">
+          {{- section.settings.heading | replace: '{prezzo}', luna_price_html -}}
+        </h2>
+        {% render 'luna-price',
+          product: product,
+          variant: luna_variant,
+          layout: 'large',
+          show_price: false,
+          show_badge: false,
+          savings_text: section.settings.savings_text,
+          omnibus_text: section.settings.omnibus_text,
+          tax_text: section.settings.tax_text
+        %}
+      </div>
+
+      {%- if luna_items.size > 0 -%}
+        <ul class="luna-offer__list" role="list">
+          {%- for block in luna_items -%}
+            <li {{ block.shopify_attributes }}>
+              {%- render 'luna-icon', name: 'spunta', size: 20 -%}
+              <span>{{ block.settings.text | escape }}</span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if section.settings.show_per_day and section.settings.per_day_text != blank -%}
+        <p
+          class="luna-offer__per-day"
+          data-luna-per-day
+          data-template="{{ section.settings.per_day_text | escape }}"
+          {% unless luna_cents < 100 %}
+            hidden
+          {% endunless %}
+        >
+          {%- render 'luna-icon', name: 'luna', size: 18 -%}
+          <span data-luna-per-day-text>
+            {{- section.settings.per_day_text | escape | replace: '{c}', luna_cents -}}
+          </span>
+        </p>
+      {%- endif -%}
+
+      {%- if section.settings.show_countdown and luna_end != blank -%}
+        <div class="luna-countdown" data-luna-countdown data-end="{{ luna_end | escape }}" hidden>
+          {%- if section.settings.countdown_label != blank -%}
+            <p class="luna-countdown__label" id="luna-countdown-label-{{ section.id }}">
+              {{- section.settings.countdown_label | escape -}}
+            </p>
+          {%- endif -%}
+          <p
+            class="luna-countdown__clock"
+            role="timer"
+            {% if section.settings.countdown_label != blank %}
+              aria-labelledby="luna-countdown-label-{{ section.id }}"
+            {% endif %}
+          >
+            {%- for luna_unit in (1..4) -%}
+              {%- case luna_unit -%}
+                {%- when 1 -%}{%- assign luna_key = 'days' -%}{%- assign luna_name = section.settings.label_days -%}
+                {%- when 2 -%}{%- assign luna_key = 'hours' -%}{%- assign luna_name = section.settings.label_hours -%}
+                {%- when 3 -%}{%- assign luna_key = 'minutes' -%}{%- assign luna_name = section.settings.label_minutes -%}
+                {%- when 4 -%}{%- assign luna_key = 'seconds' -%}{%- assign luna_name = section.settings.label_seconds -%}
+              {%- endcase -%}
+              {%- unless forloop.first -%}
+                <span class="luna-countdown__sep" aria-hidden="true">:</span>
+              {%- endunless -%}
+              <span class="luna-countdown__unit">
+                <span class="luna-countdown__value" data-luna-countdown-{{ luna_key }}>00</span>
+                <span class="luna-countdown__name">{{ luna_name | escape }}</span>
+              </span>
+            {%- endfor -%}
+          </p>
+        </div>
+        {%- if request.design_mode -%}
+          <p
+            class="luna-editor-note"
+            data-luna-countdown-note
+            data-expired="Il countdown non si vede più: la fine della promo è passata. Non riparte da solo."
+            data-invalid="Il countdown non si vede: scrivi la fine con data, ora e fuso orario, per esempio 2026-11-30T23:59:00+01:00."
+            hidden
+          ></p>
+        {%- endif -%}
+      {%- endif -%}
+
+      {% render 'luna-cta',
+        product: product,
+        variant: luna_variant,
+        text: section.settings.cta_text,
+        loading_text: section.settings.loading_text,
+        sold_out_text: section.settings.sold_out_text,
+        class: 'luna-cta--block luna-offer__cta',
+        attributes: 'data-luna-final-cta'
+      %}
+
+      {%- if section.settings.return_days > 14 and section.settings.guarantee_title != blank -%}
+        <div class="luna-card luna-offer__guarantee">
+          <span class="luna-offer__guarantee-icon">{%- render 'luna-icon', name: 'scudo', size: 24 -%}</span>
+          <div class="luna-stack luna-stack--s">
+            <h3 class="luna-h3">{{ section.settings.guarantee_title | escape }}</h3>
+            {%- liquid
+              assign luna_guarantee = section.settings.guarantee_text | escape
+              assign luna_link_text = section.settings.policy_link_text | escape
+              if luna_refund_url != blank and luna_link_text != blank and luna_guarantee contains luna_link_text
+                assign luna_link = '<a href="' | append: luna_refund_url | append: '">' | append: luna_link_text | append: '</a>'
+                assign luna_guarantee = luna_guarantee | replace_first: luna_link_text, luna_link
+              endif
+            -%}
+            <p class="luna-small luna-muted">{{ luna_guarantee }}</p>
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Offerta",
+  "class": "luna-section-offer",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Prezzo e prezzo barrato si decidono nel prodotto su Shopify: percentuale, risparmio e prezzo a sera si calcolano da soli."
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge dello sconto",
+      "info": "{pct} diventa la percentuale. Compare solo se il prezzo barrato è più alto del prezzo.",
+      "default": "Offerta di lancio −{pct}%"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "info": "{prezzo} diventa il prezzo di Shopify.",
+      "default": "La tua Luna a {prezzo}."
+    },
+    {
+      "type": "text",
+      "id": "savings_text",
+      "label": "Risparmio",
+      "info": "{importo} diventa la differenza tra prezzo barrato e prezzo.",
+      "default": "Risparmi {importo}"
+    },
+    {
+      "type": "text",
+      "id": "omnibus_text",
+      "label": "Riga del prezzo più basso",
+      "info": "Obbligatoria accanto al prezzo barrato (Codice del Consumo, art. 17-bis).",
+      "default": "Prezzo più basso degli ultimi 30 giorni:"
+    },
+    {
+      "type": "text",
+      "id": "tax_text",
+      "label": "IVA",
+      "default": "IVA inclusa"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_per_day",
+      "label": "Mostra il prezzo a sera",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "per_day_text",
+      "label": "Prezzo a sera",
+      "info": "{c} diventa il prezzo in centesimi diviso per 365, più uno. Compare solo sotto i 100 centesimi.",
+      "default": "Meno di {c} centesimi a sera per tutto il primo anno."
+    },
+    {
+      "type": "header",
+      "content": "Countdown"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_countdown",
+      "label": "Mostra countdown",
+      "info": "Solo con una fine reale della promo (Codice del Consumo): alla scadenza sparisce e non riparte.",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "countdown_end",
+      "label": "Fine della promo (ISO 8601 con fuso orario)",
+      "info": "Per esempio 2026-11-30T23:59:00+01:00 (+01:00 in inverno, +02:00 con l'ora legale). Se la data non è valida o è passata il countdown non compare."
+    },
+    {
+      "type": "text",
+      "id": "countdown_label",
+      "label": "Testo del countdown",
+      "default": "L'offerta termina tra"
+    },
+    {
+      "type": "text",
+      "id": "label_days",
+      "label": "Etichetta dei giorni",
+      "default": "giorni"
+    },
+    {
+      "type": "text",
+      "id": "label_hours",
+      "label": "Etichetta delle ore",
+      "default": "ore"
+    },
+    {
+      "type": "text",
+      "id": "label_minutes",
+      "label": "Etichetta dei minuti",
+      "default": "minuti"
+    },
+    {
+      "type": "text",
+      "id": "label_seconds",
+      "label": "Etichetta dei secondi",
+      "default": "secondi"
+    },
+    {
+      "type": "header",
+      "content": "Bottone d'acquisto"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Bottone",
+      "info": "{prezzo} diventa il prezzo di Shopify.",
+      "default": "Acquista ora — {prezzo}"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Bottone durante il caricamento",
+      "default": "Ti porto al checkout…"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Bottone con variante esaurita",
+      "default": "Esaurita"
+    },
+    {
+      "type": "header",
+      "content": "Garanzia"
+    },
+    {
+      "type": "number",
+      "id": "return_days",
+      "label": "Giorni per il reso",
+      "info": "La garanzia compare solo sopra i 14 giorni: fino a 14 è il diritto di recesso previsto dalla legge. Se cambi i giorni, aggiorna anche i testi qui sotto e nella sezione Chiusura.",
+      "default": 30
+    },
+    {
+      "type": "text",
+      "id": "guarantee_title",
+      "label": "Titolo della garanzia",
+      "default": "30 notti di prova"
+    },
+    {
+      "type": "textarea",
+      "id": "guarantee_text",
+      "label": "Testo della garanzia",
+      "default": "Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso."
+    },
+    {
+      "type": "text",
+      "id": "policy_link_text",
+      "label": "Parole che portano alla politica di rimborso",
+      "info": "Se compaiono nel testo diventano un link alla politica di rimborso del negozio.",
+      "default": "politica di rimborso"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Voce del riepilogo",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Testo",
+          "default": "Lampada Lunare Levitante Ø 8,5 cm con base magnetica"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Offerta",
+      "blocks": [
+        { "type": "item", "settings": { "text": "Lampada Lunare Levitante Ø 8,5 cm con base magnetica" } },
+        { "type": "item", "settings": { "text": "Nella confezione: Luna, base, alimentatore e istruzioni" } },
+        { "type": "item", "settings": { "text": "Spedizione gratuita in 7–14 giorni lavorativi" } },
+        { "type": "item", "settings": { "text": "Reso entro 30 giorni" } }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

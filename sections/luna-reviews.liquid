@@ -1,0 +1,130 @@
+{%- comment -%}
+  Recensioni vere (§6.9, §10): solo blocchi @app dell'app recensioni installata (per esempio Judge.me) e video
+  facoltativi di clienti veri. Nessuna recensione scritta a mano.
+  Senza blocchi (o con soli video vuoti) fuori dall'editor la sezione non stampa nulla; nell'editor mostra un
+  riquadro che dice dove aggiungere il blocco dell'app.
+  Video: muti, in loop, playsinline, preload="none": luna-landing.js li avvia solo quando sono sullo schermo
+  (e non li avvia con il movimento ridotto). Senza JavaScript restano i controlli per avviarli a mano.
+{%- endcomment -%}
+{%- liquid
+  assign luna_apps = section.blocks | where: 'type', '@app'
+  assign luna_videos = 0
+  for block in section.blocks
+    if block.type == 'video' and block.settings.video != blank
+      assign luna_videos = luna_videos | plus: 1
+    endif
+  endfor
+  assign luna_count = luna_apps.size | plus: luna_videos
+-%}
+{%- if luna_count > 0 -%}
+  <section class="luna-section luna-reviews" aria-labelledby="luna-reviews-title-{{ section.id }}">
+    <div class="luna-container">
+      <header class="luna-section__head luna-section__head--center">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+        {%- endif -%}
+        <h2 class="luna-h2 luna-reveal" id="luna-reviews-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      </header>
+
+      {%- for block in luna_apps -%}
+        <div class="luna-reviews__app" {{ block.shopify_attributes }}>
+          {%- render block -%}
+        </div>
+      {%- endfor -%}
+
+      {%- if luna_videos > 0 -%}
+        <div class="luna-reviews__videos">
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'video' and block.settings.video != blank -%}
+              {%- assign luna_video = block.settings.video -%}
+              <figure class="luna-reviews__video luna-reveal" {{ block.shopify_attributes }}>
+                <video
+                  class="luna-reviews__player"
+                  data-luna-review-video
+                  muted
+                  loop
+                  playsinline
+                  controls
+                  preload="none"
+                  {% if luna_video.preview_image != blank %}
+                    poster="{{ luna_video.preview_image | image_url: width: 720 }}"
+                  {% endif %}
+                  style="aspect-ratio: {{ luna_video.aspect_ratio | default: 0.5625 }};"
+                  aria-label="{{ block.settings.label | escape }}"
+                >
+                  {%- for source in luna_video.sources -%}
+                    {%- if source.format == 'mp4' -%}
+                      <source src="{{ source.url }}" type="{{ source.mime_type }}">
+                    {%- endif -%}
+                  {%- endfor -%}
+                </video>
+              </figure>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </section>
+{%- elsif request.design_mode -%}
+  <div class="luna-container luna-reviews__placeholder">
+    <p>Aggiungi qui il blocco della tua app recensioni.</p>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Luna · Recensioni",
+  "class": "luna-section-reviews",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Solo recensioni vere: aggiungi il blocco dell'app recensioni installata. Senza blocchi la sezione non compare."
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Recensioni"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Cosa dice chi l'ha già accesa."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "video",
+      "name": "Video di un cliente",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video",
+          "info": "Solo video veri di clienti, con il loro consenso. Si vede muto e in loop."
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Descrizione del video",
+          "info": "Per i lettori di schermo.",
+          "default": "Video di un cliente con la Lampada Lunare Levitante"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Recensioni"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

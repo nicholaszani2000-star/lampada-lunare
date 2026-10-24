@@ -40,7 +40,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 ## 3. Regole d'oro (valgono in ogni step)
 1. Non modificare, rinominare o cancellare NESSUN file esistente del tema. Crei solo file nuovi con il prefisso «luna-», più il template templates/product.luna.json. Uniche eccezioni: aggiungere righe a .gitignore, .shopifyignore e .theme-check.yml.
 2. Alla fine di ogni step `shopify theme check` (lanciato dalla radice) deve dare 0 errori nei file luna. Gli errori già presenti nei file originali non li tocchi: li segnali.
-3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato.
+3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato. L'ambiente può azzerarsi tra una sessione e l'altra: se mancano Shopify CLI o le dipendenze di studio/, reinstallale prima di cominciare.
 4. Mobile first: progetta a 390 px di larghezza, poi adatta a 768 e a 1280 e oltre.
 5. Ogni testo visibile è modificabile dall'editor del tema: setting con valore predefinito uguale al copy del §8.
 6. Niente dati finti: nessuna recensione inventata, nessun contatore di visitatori o vendite, nessun countdown che riparte, scorte mostrate solo se reali (§10).
@@ -58,7 +58,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 
 ### 4.2 Il layout layout/luna-landing.liquid
 - <html lang="{{ request.locale.iso_code }}"> con classe no-js, sostituita da js con uno script inline di una riga.
-- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image dalla prima immagine del prodotto a 1200 px, product:price:amount, product:price:currency); theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
+- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image = {{ 'luna-og.jpg' | asset_url | prepend: 'https:' }} — asset_url restituisce un indirizzo che inizia con //, og:image vuole un URL assoluto —, og:image:width 1200, og:image:height 630, og:image:alt, product:price:amount, product:price:currency) e twitter:card summary_large_image; le immagini del prodotto restano per Google e per i cataloghi; theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
 - {{ content_for_header }} è obbligatorio, sta nel <head> e va scritto così com'è: niente filtri, niente if, niente capture, niente snippet. Carica pixel, analytics, banner cookie, app e pulsanti di pagamento rapido.
 - Nel <body>: {{ content_for_layout }} e poi lo script {{ 'luna-landing.js' | asset_url }} con defer.
 - Niente loop su prodotti o varianti nel <head>: rallentano il primo byte.
@@ -107,6 +107,8 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 - Ogni sezione con immagini ha un image_picker per sostituirle dall'editor; se è vuoto usa l'asset.
 - Dove va ogni immagine del pacchetto (esportata nello step 2): hero → luna e base separate, accese e spente; moon3d, come ripiego → lampada accesa; benefits → scena orbita («Levita davvero»), scena caldo («Luce che scalda la stanza»), scena eclissi («Il regalo che non si dimentica»); gift → scena natale; specs → scena misure; barra sticky → miniatura; condivisioni → luna-og.jpg. Prima foto del prodotto su Shopify: scena notte.
 - L'immagine della lampada nella hero è l'elemento LCP: loading="eager" e fetchpriority="high". Tutte le altre: loading="lazy" e decoding="async".
+- Nella hero si scarica subito solo lo stato iniziale (spento; acceso con prefers-reduced-motion o nell'editor), come LCP con fetchpriority high. L'altro stato parte al primo frame dopo il paint, non all'evento load, così l'accensione arriva entro circa un secondo anche in 4G.
+- Ogni immagine del tema ha un alt descrittivo, scritto nella sezione che la mostra.
 
 ### 4.8 Editor del tema
 - Ogni componente JS si inizializza al DOMContentLoaded e di nuovo su shopify:section:load; su shopify:section:unload rimuove listener, observer e requestAnimationFrame.
@@ -162,13 +164,14 @@ hero
 moon3d
 - occhiello: «Provala adesso»
 - H2: «Girala. Accendila.»
-- testo: «Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.»
+- testo, in due parti: «Trascina per farla ruotare.» · «Con il pulsante qui sotto la vedi accesa e spenta.» Senza JavaScript la frase intera non si mostra, perché non funzionano né il trascinamento né il pulsante. Senza WebGL ma con JavaScript si nasconde solo «Trascina per farla ruotare.», perché il pulsante sull'immagine di ripiego funziona.
 - didascalia: «Anteprima 3D illustrativa»
+- crediti, obbligatori (licenza CC BY 4.0), nella stessa didascalia: «Texture della Luna: Solar System Scope, CC BY 4.0»
 
 benefits
 - occhiello: «Perché tutti la notano»
 - H2: «Un pezzo di cielo, sul tuo comodino.»
-- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria. Niente fili, niente trucchi: solo la Luna che galleggia sopra il tuo comodino.»
+- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.»
 - «Luce che scalda la stanza»: «Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.»
 - «Il regalo che non si dimentica»: «Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.»
 
