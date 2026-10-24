@@ -5,6 +5,7 @@
 // Opzioni:  --senza-barrato   prodotto senza prezzo barrato (compare_at_price nullo)
 //           --esaurito        variante non disponibile
 //           --editor          simula l'editor del tema (request.design_mode e Shopify.designMode)
+//           --varianti        due varianti finte (opzione «Confezione»), per provare il selettore
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve as resolvePath, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -99,6 +100,31 @@ function productImages() {
   }).filter(Boolean);
 }
 
+// Solo per provare il selettore: la seconda variante ha un prezzo diverso, nessun barrato e non è disponibile
+function fakeVariants(first) {
+  const standard = { ...first, title: 'Standard', options: ['Standard'], option1: 'Standard' };
+  const gift = {
+    ...first,
+    id: first.id + 1,
+    title: 'Confezione regalo',
+    options: ['Confezione regalo'],
+    option1: 'Confezione regalo',
+    price: first.price + 500,
+    compare_at_price: null,
+    available: false,
+    url: first.url.replace(/variant=\d+/, `variant=${first.id + 1}`),
+  };
+  return {
+    has_only_default_variant: false,
+    options: ['Confezione'],
+    options_with_values: [
+      { name: 'Confezione', position: 1, values: ['Standard', 'Confezione regalo'], selected_value: 'Standard' },
+    ],
+    variants: [standard, gift],
+    selected_or_first_available_variant: standard,
+  };
+}
+
 export function buildData(options = args) {
   const images = productImages();
   const onSale = !options.has('--senza-barrato');
@@ -146,6 +172,7 @@ export function buildData(options = args) {
     options: ['Title'],
     options_with_values: [{ name: 'Title', position: 1, values: ['Default Title'], selected_value: 'Default Title' }],
     variants: [variant],
+    ...(options.has('--varianti') ? fakeVariants(variant) : {}),
     selected_variant: null,
     selected_or_first_available_variant: variant,
     first_available_variant: available ? variant : null,

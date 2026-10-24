@@ -349,10 +349,23 @@
       return date;
     },
 
-    /** Finestra di consegna: oggi + min e oggi + max giorni lavorativi. */
-    deliveryWindow: function (minDays, maxDays, now) {
-      var today = dates.today(now);
-      return { from: dates.addBusinessDays(today, minDays), to: dates.addBusinessDays(today, maxDays) };
+    /** Giorno di spedizione: oggi se lavorativo e prima dell'ora limite, altrimenti il primo lavorativo dopo. */
+    dispatchDay: function (cutoffHour, now) {
+      var parts = zoneParts(now || new Date());
+      var day = calendarDay(parts.year, parts.month, parts.day);
+      var late = cutoffHour !== undefined && cutoffHour !== null && parts.hour >= cutoffHour;
+      if (late || !isBusinessDay(day)) {
+        do {
+          day = addDays(day, 1);
+        } while (!isBusinessDay(day));
+      }
+      return day;
+    },
+
+    /** Finestra di consegna: giorno di spedizione + min e + max giorni lavorativi. */
+    deliveryWindow: function (minDays, maxDays, now, cutoffHour) {
+      var start = dates.dispatchDay(cutoffHour, now);
+      return { from: dates.addBusinessDays(start, minDays), to: dates.addBusinessDays(start, maxDays) };
     },
 
     /** Formatta in italiano: preset 'giorno', 'breve', 'data', 'completa' oppure opzioni di Intl. */
@@ -509,4 +522,522 @@
     });
     scope.add(reset);
   });
+  /* 9. Hero: cielo stellato su canvas 2D ----------------------------------- */
+  // Due strati di profondità, scintillio lento, parallasse col puntatore (desktop) e con lo scroll,
+  // una stella cadente ogni 8–14 secondi. Si ferma quando il palco non si vede o la scheda è nascosta.
+  function startSky(stage, scope, options) {
+    var canvas = stage.querySelector('[data-luna-sky]');
+    var context = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+    if (!context) return null;
+
+    var desktop = window.matchMedia('(min-width: 990px)').matches;
+    var count = desktop ? 320 : 180;
+    var maxRatio = desktop ? 2 : 1.5;
+    var seed = 20261023;
+    var random = function () {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    var colours = ['#F2EFE8', '#FFE9C9', '#DCE4FF'];
+    var stars = [];
+    for (var i = 0; i < count; i++) {
+      var near = random() < 0.3;
+      var tint = random();
+      stars.push({
+        x: random(),
+        y: random(),
+        size: near ? 0.7 + random() * 0.9 : 0.35 + random() * 0.55,
+        alpha: near ? 0.55 + random() * 0.45 : 0.22 + random() * 0.4,
+        phase: random() * Math.PI * 2,
+        speed: 0.25 + random() * 0.55,
+        near: near,
+        colour: tint < 0.12 ? colours[1] : tint > 0.9 ? colours[2] : colours[0],
+      });
+    }
+
+    var width = 0;
+    var height = 0;
+    var pointer = options.pointer;
+    var meteor = null;
+    var nextMeteor = performance.now() + 8000 + random() * 6000;
+    var running = false;
+    var visible = false;
+
+    function draw(time) {
+      context.clearRect(0, 0, width, height);
+      if (!width || !height) return;
+      var scroll = options.reduced ? 0 : window.scrollY || 0;
+      for (var s = 0; s < stars.length; s++) {
+        var star = stars[s];
+        var depth = star.near ? 1 : 0.4;
+        var x = star.x * width + pointer.x * 12 * depth;
+        var y = star.y * height + pointer.y * 9 * depth - scroll * (star.near ? 0.12 : 0.05);
+        x = ((x % width) + width) % width;
+        y = ((y % height) + height) % height;
+        var twinkle = options.reduced ? 1 : 0.62 + 0.38 * Math.sin(time * 0.001 * star.speed + star.phase);
+        context.globalAlpha = star.alpha * twinkle;
+        context.fillStyle = star.colour;
+        if (star.size > 1) {
+          context.beginPath();
+          context.arc(x, y, star.size, 0, 6.2832);
+          context.fill();
+        } else {
+          context.fillRect(x - star.size, y - star.size, star.size * 2, star.size * 2);
+        }
+      }
+
+      if (!options.reduced) {
+        if (!meteor && time >= nextMeteor) {
+          var direction = random() < 0.5 ? -1 : 1;
+          var angle = 0.42 + random() * 0.3;
+          meteor = {
+            start: time,
+            x: (0.2 + random() * 0.6) * width,
+            y: random() * height * 0.35,
+            dx: Math.cos(angle) * direction,
+            dy: Math.sin(angle),
+            distance: Math.max(width, height) * 0.45,
+            length: 70 + random() * 70,
+          };
+        }
+        if (meteor) {
+          var progress = (time - meteor.start) / 900;
+          if (progress >= 1) {
+            meteor = null;
+            nextMeteor = time + 8000 + random() * 6000;
+          } else {
+            var headX = meteor.x + meteor.dx * meteor.distance * progress;
+            var headY = meteor.y + meteor.dy * meteor.distance * progress;
+            var tailX = headX - meteor.dx * meteor.length;
+            var tailY = headY - meteor.dy * meteor.length;
+            var gradient = context.createLinearGradient(tailX, tailY, headX, headY);
+            gradient.addColorStop(0, 'rgba(255, 244, 224, 0)');
+            gradient.addColorStop(1, 'rgba(255, 244, 224, ' + (0.9 * Math.sin(Math.PI * progress)).toFixed(3) + ')');
+            context.globalAlpha = 1;
+            context.strokeStyle = gradient;
+            context.lineWidth = 1.3;
+            context.beginPath();
+            context.moveTo(tailX, tailY);
+            context.lineTo(headX, headY);
+            context.stroke();
+          }
+        }
+      }
+      context.globalAlpha = 1;
+    }
+
+    function resize() {
+      var rect = stage.getBoundingClientRect();
+      var ratio = Math.min(window.devicePixelRatio || 1, maxRatio);
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.max(1, Math.round(width * ratio));
+      canvas.height = Math.max(1, Math.round(height * ratio));
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      draw(performance.now());
+    }
+
+    function frame(time) {
+      if (!running) return;
+      options.onFrame(time);
+      draw(time);
+      scope.frame(frame);
+    }
+
+    function update() {
+      var shouldRun = visible && !document.hidden && !options.reduced;
+      if (shouldRun && !running) {
+        running = true;
+        scope.frame(frame);
+      } else if (!shouldRun) {
+        running = false;
+      }
+    }
+
+    if ('ResizeObserver' in window) {
+      scope.observe(new ResizeObserver(resize)).observe(stage);
+    } else {
+      scope.on(window, 'resize', resize);
+    }
+    if ('IntersectionObserver' in window) {
+      scope
+        .observe(
+          new IntersectionObserver(function (entries) {
+            visible = entries[entries.length - 1].isIntersecting;
+            update();
+          }, { rootMargin: '80px 0px' })
+        )
+        .observe(stage);
+    } else {
+      visible = true;
+    }
+    scope.on(document, 'visibilitychange', update);
+    resize();
+    update();
+    stage.classList.add('has-sky');
+    scope.add(function () {
+      running = false;
+      stage.classList.remove('has-sky');
+    });
+    return { draw: draw };
+  }
+
+  /* 10. Hero: lampada, accensione, interruttore, tonalità -------------------- */
+  // Primo frame dopo il primo paint con contenuto (First Contentful Paint); al massimo dopo 2,5 secondi
+  function afterFirstPaint(scope, callback) {
+    var done = false;
+    var timer = 0;
+    var observer = null;
+    function run() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+      scope.frame(callback);
+    }
+    var painted = performance.getEntriesByName && performance.getEntriesByName('first-contentful-paint').length;
+    if (painted) {
+      run();
+      return;
+    }
+    try {
+      observer = new PerformanceObserver(function (list) {
+        if (list.getEntriesByName('first-contentful-paint').length) run();
+      });
+      observer.observe({ type: 'paint', buffered: true });
+    } catch (error) {
+      observer = null;
+    }
+    timer = setTimeout(run, 2500);
+    scope.add(function () {
+      done = true;
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+    });
+  }
+
+  function whenLoaded(image) {
+    return new Promise(function (resolve) {
+      function check() {
+        var source = image.currentSrc || image.src || '';
+        if (image.complete && image.naturalWidth > 1 && source.indexOf('data:') !== 0) {
+          (image.decode ? image.decode() : Promise.resolve()).then(resolve, resolve);
+        } else {
+          image.addEventListener('load', check, { once: true });
+        }
+      }
+      image.addEventListener('error', function () {
+        resolve();
+      }, { once: true });
+      check();
+    });
+  }
+
+  Luna.register('hero-stage', '[data-luna-stage]', function (stage, scope) {
+    var reduced = Luna.reducedMotion();
+    var editor = stage.hasAttribute('data-luna-editor') || Luna.isDesignMode();
+    var lamp = stage.querySelector('[data-luna-lamp]');
+    var switchButton = stage.querySelector('[data-luna-switch]');
+    var hint = stage.querySelector('[data-luna-hint]');
+    var hero = stage.closest('.luna-hero') || stage.parentElement;
+    var tones = Array.prototype.slice.call(hero.querySelectorAll('[data-luna-tone]'));
+    var colour = tones.length ? tones[0].getAttribute('data-luna-tone') : '';
+    var power = reduced || editor ? 1 : 0;
+    var touched = false;
+    var destroyed = false;
+    var timers = [];
+    var later = function (callback, delay) {
+      timers.push(setTimeout(callback, delay));
+    };
+
+    function apply(value, silent) {
+      power = value;
+      stage.style.setProperty('--luna-power', String(value));
+      stage.classList.toggle('is-on', value > 0);
+      if (switchButton) switchButton.setAttribute('aria-checked', value > 0 ? 'true' : 'false');
+      if (!silent) Luna.setLight({ power: value, color: colour, source: 'hero' });
+    }
+
+    function setColour(value) {
+      if (!value) return;
+      colour = value;
+      stage.style.setProperty('--luna-light', value);
+    }
+
+    function hideHint() {
+      if (!hint) return;
+      hint.classList.add('is-hidden');
+      hint.setAttribute('aria-hidden', 'true');
+    }
+
+    function interact() {
+      touched = true;
+      hideHint();
+    }
+
+    // Stato iniziale senza animazioni
+    stage.classList.add('is-instant');
+    setColour(colour);
+    apply(power);
+    scope.frame(function () {
+      stage.classList.remove('is-instant');
+    });
+
+    // L'altro stato della lampada parte al primo frame dopo il primo paint, non all'evento load
+    afterFirstPaint(scope, function () {
+      stage.querySelectorAll('source[data-luna-defer]').forEach(function (source) {
+        var image = source.parentElement ? source.parentElement.querySelector('img') : null;
+        if (image) image.setAttribute('fetchpriority', 'low');
+        source.remove();
+      });
+    });
+
+    // Accensione al caricamento: immagini accese decodificate e almeno 600 ms dall'apertura
+    if (!reduced && !editor) {
+      var onImages = Array.prototype.slice.call(stage.querySelectorAll('img[data-luna-layer$="-on"]'));
+      Promise.all(onImages.map(whenLoaded)).then(function () {
+        if (destroyed || touched) return;
+        later(function () {
+          if (destroyed || touched) return;
+          stage.classList.add('is-igniting');
+          apply(1);
+          later(function () {
+            stage.classList.remove('is-igniting');
+          }, 1300);
+        }, Math.max(0, 600 - performance.now()));
+      });
+    }
+
+    if (switchButton) {
+      scope.on(switchButton, 'click', function () {
+        interact();
+        stage.classList.remove('is-igniting');
+        if (navigator.vibrate) {
+          try {
+            navigator.vibrate(8);
+          } catch (error) {
+            /* alcuni browser lo vietano senza gesto: va bene così */
+          }
+        }
+        apply(power > 0 ? 0 : 1);
+      });
+    }
+
+    // Tonalità (blocchi della sezione): con un solo blocco il selettore resta nascosto
+    function selectTone(button) {
+      interact();
+      tones.forEach(function (tone) {
+        tone.setAttribute('aria-checked', tone === button ? 'true' : 'false');
+        tone.tabIndex = tone === button ? 0 : -1;
+      });
+      setColour(button.getAttribute('data-luna-tone'));
+      apply(1);
+    }
+    tones.forEach(function (tone, index) {
+      tone.tabIndex = index === 0 ? 0 : -1;
+      scope.on(tone, 'click', function () {
+        selectTone(tone);
+      });
+      scope.on(tone, 'keydown', function (event) {
+        var step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        var next = tones[(index + step + tones.length) % tones.length];
+        next.focus();
+        selectTone(next);
+      });
+    });
+
+    // Sincronia con la luna 3D (step 4) e con chiunque emetta 'luna:light'
+    Luna.onLight(function (detail) {
+      if (detail.source === 'hero') return;
+      interact();
+      if (detail.color) setColour(detail.color);
+      apply(detail.power, true);
+    }, scope);
+
+    // Puntatore: parallasse delle stelle e inclinazione del palco (max 6°), solo su desktop
+    var pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    var desktop = window.matchMedia('(min-width: 990px) and (hover: hover) and (pointer: fine)').matches;
+    if (desktop && !reduced) {
+      scope.on(stage, 'pointermove', function (event) {
+        var rect = stage.getBoundingClientRect();
+        pointer.targetX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        pointer.targetY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+      });
+      scope.on(stage, 'pointerleave', function () {
+        pointer.targetX = 0;
+        pointer.targetY = 0;
+      });
+    }
+
+    startSky(stage, scope, {
+      reduced: reduced,
+      pointer: pointer,
+      onFrame: function () {
+        pointer.x += (pointer.targetX - pointer.x) * 0.06;
+        pointer.y += (pointer.targetY - pointer.y) * 0.06;
+        if (desktop && lamp && !reduced) {
+          lamp.style.transform = 'rotateX(' + (-pointer.y * 6).toFixed(2) + 'deg) rotateY(' + (pointer.x * 6).toFixed(2) + 'deg)';
+        }
+      },
+    });
+
+    scope.add(function () {
+      destroyed = true;
+      timers.forEach(clearTimeout);
+      if (lamp) lamp.style.transform = '';
+    });
+  });
+
+  /* 11. Consegna stimata: ricalcolata con l'ora di Roma --------------------- */
+  Luna.register('delivery', '[data-luna-delivery]', function (element) {
+    var min = parseInt(element.getAttribute('data-min'), 10) || 0;
+    var max = parseInt(element.getAttribute('data-max'), 10) || 0;
+    var cutoff = parseInt(element.getAttribute('data-cutoff'), 10);
+    if (max <= 0) {
+      element.hidden = true;
+      return;
+    }
+    var range = dates.deliveryWindow(min, Math.max(min, max), new Date(), Number.isNaN(cutoff) ? null : cutoff);
+    var from = element.querySelector('[data-luna-date-from]');
+    var to = element.querySelector('[data-luna-date-to]');
+    if (from) from.textContent = dates.format(range.from, 'breve');
+    if (to) to.textContent = dates.format(range.to, 'breve');
+  });
+
+  /* 12. Varianti: aggiornano id, prezzi, disponibilità e scorte ------------- */
+  function fillTemplate(element, template, token, value, html) {
+    element.textContent = '';
+    var parts = template.split(token);
+    parts.forEach(function (part, index) {
+      if (part) element.appendChild(doc.createTextNode(part));
+      if (index < parts.length - 1) {
+        if (html) {
+          var span = doc.createElement('span');
+          span.className = html.className || '';
+          span.setAttribute(html.attribute, '');
+          span.textContent = value;
+          element.appendChild(span);
+        } else {
+          element.appendChild(doc.createTextNode(value));
+        }
+      }
+    });
+  }
+
+  Luna.applyVariant = function (variant) {
+    var form = doc.getElementById('luna-buy-form');
+    if (form && form.elements.id) form.elements.id.value = variant.id;
+    var sale = Boolean(variant.compare);
+
+    doc.querySelectorAll('[data-luna-price-block]').forEach(function (block) {
+      block.classList.toggle('is-on-sale', sale);
+      block.querySelectorAll('[data-luna-sale-part]').forEach(function (part) {
+        part.hidden = !sale;
+      });
+      block.querySelectorAll('[data-luna-compare], [data-luna-omnibus]').forEach(function (element) {
+        element.textContent = variant.compare || '';
+      });
+      var badge = block.querySelector('[data-luna-pct]');
+      if (badge) badge.textContent = sale ? (badge.getAttribute('data-template') || '').replace('{pct}', variant.pct) : '';
+      var save = block.querySelector('[data-luna-save-line]');
+      if (save) {
+        if (sale) fillTemplate(save, save.getAttribute('data-template') || '', '{importo}', variant.save, { attribute: 'data-luna-save' });
+        else save.textContent = '';
+      }
+    });
+    doc.querySelectorAll('[data-luna-price]').forEach(function (element) {
+      element.textContent = variant.price;
+    });
+
+    doc.querySelectorAll('[data-luna-cta]').forEach(function (button) {
+      var label = button.querySelector('[data-luna-cta-label]');
+      button.disabled = !variant.available;
+      if (!label) return;
+      if (variant.available) {
+        fillTemplate(label, button.getAttribute('data-label-template') || '', '{prezzo}', variant.price, {
+          className: 'luna-cta__price',
+          attribute: 'data-luna-price',
+        });
+      } else {
+        label.textContent = button.getAttribute('data-sold-out-text') || '';
+      }
+    });
+    doc.querySelectorAll('[data-luna-express]').forEach(function (element) {
+      element.hidden = !variant.available;
+    });
+    doc.querySelectorAll('[data-luna-stock]').forEach(function (element) {
+      var template = element.getAttribute('data-template') || '';
+      element.hidden = !variant.stock || !template;
+      element.textContent = variant.stock ? template.replace('{n}', variant.stock) : '';
+    });
+
+    if (window.history && window.history.replaceState) {
+      var url = new URL(window.location.href);
+      url.searchParams.set('variant', variant.id);
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+  };
+
+  Luna.register('variants', '[data-luna-variants]', function (picker, scope) {
+    var data = picker.querySelector('[data-luna-variants-json]');
+    var variants = data ? JSON.parse(data.textContent) : [];
+    scope.on(picker, 'change', function () {
+      var chosen = Array.prototype.map.call(picker.querySelectorAll('fieldset'), function (fieldset) {
+        var input = fieldset.querySelector('input:checked');
+        return input ? input.value : null;
+      });
+      var match = variants.find(function (variant) {
+        return variant.options.every(function (value, index) {
+          return value === chosen[index];
+        });
+      });
+      if (match) Luna.applyVariant(match);
+    });
+  });
+
+  /* 13. Barra sticky: fuori la CTA della hero, dentro quella finale --------- */
+  Luna.register('sticky', '[data-luna-sticky]', function (bar, scope) {
+    var heroCta = doc.querySelector('[data-luna-hero-cta]');
+    if (!heroCta || !('IntersectionObserver' in window)) {
+      bar.classList.add('is-visible');
+      return;
+    }
+    var heroVisible = true;
+    var finals = new Set();
+
+    function update() {
+      bar.classList.toggle('is-visible', !heroVisible && finals.size === 0);
+    }
+
+    scope
+      .observe(
+        new IntersectionObserver(function (entries) {
+          heroVisible = entries[entries.length - 1].isIntersecting;
+          update();
+        })
+      )
+      .observe(heroCta);
+
+    var finalButtons = doc.querySelectorAll('[data-luna-final-cta]');
+    if (finalButtons.length) {
+      var finalObserver = scope.observe(
+        new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) finals.add(entry.target);
+            else finals.delete(entry.target);
+          });
+          update();
+        })
+      );
+      finalButtons.forEach(function (button) {
+        finalObserver.observe(button);
+      });
+    }
+    scope.add(function () {
+      bar.classList.remove('is-visible');
+    });
+  });
+
 })();

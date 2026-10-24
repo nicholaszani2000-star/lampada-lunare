@@ -1,0 +1,728 @@
+{%- comment -%}
+  Hero: il momento «wow» e l'offerta completa (§6.3).
+  Sotto i 990 px: occhiello, H1, palco con la lampada, prezzo, CTA, pagamento rapido, consegna e scorte,
+  fiducia, sottotitolo. Da 990 px: palco a sinistra, a destra testi e acquisto con il sottotitolo sotto l'H1.
+  Form unico #luna-buy-form (§4.5), prezzi solo da Shopify (§4.6), JSON-LD una volta sola.
+
+  Lampada: quattro livelli dello step 2 (base e luna, spente e accese) nello stesso riquadro.
+  Si scarica subito solo lo stato iniziale (spento; acceso con riduzione del movimento o nell'editor):
+  l'altro stato ha un <source data-luna-defer> trasparente che luna-landing.js toglie al primo frame dopo il paint.
+{%- endcomment -%}
+{%- liquid
+  assign luna_variant = product.selected_or_first_available_variant
+  assign luna_editor = request.design_mode
+
+  # Geometria dei livelli: pixel dell'immagine originale (studio/qa/luna-layout.json) → percentuali del riquadro
+  assign luna_canvas_w = section.settings.canvas_w | at_least: 1
+  assign luna_canvas_h = section.settings.canvas_h | at_least: 1
+  assign luna_moon_x = section.settings.moon_cx | times: 100.0 | divided_by: luna_canvas_w
+  assign luna_moon_y = section.settings.moon_cy | times: 100.0 | divided_by: luna_canvas_h
+  assign luna_moon_d = section.settings.moon_r | times: 200.0 | divided_by: luna_canvas_w
+  assign luna_base_light_y = section.settings.base_light_cy | times: 100.0 | divided_by: luna_canvas_h
+
+  assign luna_tones = section.blocks | where: 'type', 'tone'
+  assign luna_light = luna_tones.first.settings.color
+
+  assign luna_lamp_sizes = '(min-width: 990px) 480px, 260px'
+-%}
+<section
+  class="luna-hero"
+  aria-labelledby="luna-hero-title-{{ section.id }}"
+>
+  <div class="luna-container luna-hero__grid">
+    <div class="luna-hero__intro">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      <h1 class="luna-h1 luna-hero__title" id="luna-hero-title-{{ section.id }}">
+        {{- section.settings.heading -}}
+      </h1>
+      {%- comment -%} Titoli per angolo di campagna (§7): ?h=regalo o ?h=relax, prima del primo paint {%- endcomment -%}
+      <script>
+        (function () {
+          var titles = { regalo: {{ section.settings.heading_regalo | json }}, relax: {{ section.settings.heading_relax | json }} };
+          var angle = new URLSearchParams(window.location.search).get('h');
+          if (angle && Object.prototype.hasOwnProperty.call(titles, angle) && titles[angle]) {
+            document.currentScript.previousElementSibling.innerHTML = titles[angle];
+          }
+        })();
+      </script>
+    </div>
+
+    {%- if section.settings.subheading != blank -%}
+      <div class="luna-hero__lead luna-lead">{{ section.settings.subheading }}</div>
+    {%- endif -%}
+
+    <div
+      class="luna-hero__stage luna-stage{% if luna_editor %} is-on{% endif %}"
+      data-luna-stage
+      {% if luna_editor %}
+        data-luna-editor
+      {% endif %}
+      {% if luna_light != blank %}
+        style="--luna-light: {{ luna_light }};"
+      {% endif %}
+    >
+      <div class="luna-stars luna-stage__stars-css" aria-hidden="true"></div>
+      <canvas class="luna-stage__sky" data-luna-sky aria-hidden="true"></canvas>
+      <div class="luna-stage__spread" aria-hidden="true" data-luna-overflow-ok></div>
+
+      <div
+        class="luna-lamp"
+        data-luna-lamp
+        style="aspect-ratio: {{ luna_canvas_w }} / {{ luna_canvas_h }}; --luna-moon-x: {{ luna_moon_x }}%; --luna-moon-y: {{ luna_moon_y }}%; --luna-moon-d: {{ luna_moon_d }}%; --luna-base-light-y: {{ luna_base_light_y }}%;"
+      >
+        <div class="luna-lamp__base">
+          {%- render 'luna-lamp-layer', key: 'base-off', image: section.settings.base_off_image, editor: luna_editor, sizes: luna_lamp_sizes -%}
+          {%- render 'luna-lamp-layer', key: 'base-on', image: section.settings.base_on_image, editor: luna_editor, sizes: luna_lamp_sizes -%}
+          <div class="luna-lamp__baselight" aria-hidden="true">
+            <span class="luna-lamp__baselight-pulse luna-levitate-shadow"></span>
+          </div>
+        </div>
+
+        <div class="luna-lamp__moon luna-levitate">
+          <div class="luna-lamp__halo" aria-hidden="true" data-luna-overflow-ok></div>
+          <div class="luna-lamp__core" aria-hidden="true" data-luna-overflow-ok></div>
+          {%- render 'luna-lamp-layer',
+            key: 'moon-off',
+            image: section.settings.moon_off_image,
+            editor: luna_editor,
+            alt: section.settings.lamp_alt,
+            sizes: luna_lamp_sizes
+          -%}
+          {%- render 'luna-lamp-layer', key: 'moon-on', image: section.settings.moon_on_image, editor: luna_editor, sizes: luna_lamp_sizes -%}
+          {%- if section.settings.rotation_hint -%}
+            <div class="luna-lamp__sheen" aria-hidden="true"></div>
+          {%- endif -%}
+          <button
+            type="button"
+            class="luna-lamp__switch luna-js-only"
+            role="switch"
+            aria-checked="{% if luna_editor %}true{% else %}false{% endif %}"
+            aria-label="{{ section.settings.switch_label | escape }}"
+            data-luna-switch
+          ></button>
+        </div>
+
+        <noscript>
+          <img
+            class="luna-lamp__noscript"
+            src="{{ 'luna-lamp-on-1000.webp' | asset_url }}"
+            width="1000"
+            height="1275"
+            alt=""
+          >
+        </noscript>
+      </div>
+
+      {%- if section.settings.size_label != blank -%}
+        <p class="luna-stage__size luna-chip">{{ section.settings.size_label | escape }}</p>
+      {%- endif -%}
+      {%- if section.settings.hint != blank -%}
+        <p class="luna-stage__hint luna-js-only" data-luna-hint>
+          {%- render 'luna-icon', name: 'tocco', size: 16 -%}
+          <span>{{ section.settings.hint | escape }}</span>
+        </p>
+      {%- endif -%}
+    </div>
+
+    <div class="luna-hero__buy">
+      {%- for block in luna_tones -%}
+        {%- if forloop.first -%}
+          <div
+            class="luna-tones{% if luna_tones.size < 2 %} luna-tones--single{% endif %}"
+            role="radiogroup"
+            aria-label="{{ section.settings.tone_label | escape }}"
+            data-luna-tones
+            {% if luna_tones.size < 2 %}
+              hidden
+            {% endif %}
+          >
+        {%- endif -%}
+        <button
+          type="button"
+          class="luna-chip luna-tone"
+          role="radio"
+          aria-checked="{% if forloop.first %}true{% else %}false{% endif %}"
+          data-luna-tone="{{ block.settings.color }}"
+          style="--luna-tone: {{ block.settings.color }};"
+          {{ block.shopify_attributes }}
+        >
+          <span class="luna-tone__dot" aria-hidden="true"></span>
+          {{- block.settings.name | escape -}}
+        </button>
+        {%- if forloop.last -%}
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {% render 'luna-price',
+        product: product,
+        variant: luna_variant,
+        layout: 'large',
+        badge_text: section.settings.badge_text,
+        savings_text: section.settings.savings_text,
+        omnibus_text: section.settings.omnibus_text,
+        tax_text: section.settings.tax_text
+      %}
+
+      {%- unless product.has_only_default_variant -%}
+        <div class="luna-variants" data-luna-variants>
+          {%- for option in product.options_with_values -%}
+            <fieldset class="luna-variants__option">
+              <legend class="luna-small luna-muted">{{ option.name | escape }}</legend>
+              <div class="luna-cluster">
+                {%- for value in option.values -%}
+                  <label class="luna-chip luna-variants__value">
+                    <input
+                      class="luna-visually-hidden"
+                      type="radio"
+                      name="luna-option-{{ option.position }}"
+                      value="{{ value | escape }}"
+                      {% if option.selected_value == value %}
+                        checked
+                      {% endif %}
+                    >
+                    <span>{{ value | escape }}</span>
+                  </label>
+                {%- endfor -%}
+              </div>
+            </fieldset>
+          {%- endfor -%}
+          <script type="application/json" data-luna-variants-json>
+            [
+              {%- for v in product.variants -%}
+                {%- liquid
+                  assign luna_v_sale = false
+                  if v.compare_at_price > v.price
+                    assign luna_v_sale = true
+                    assign luna_v_pct = v.compare_at_price | minus: v.price | times: 100.0 | divided_by: v.compare_at_price | round
+                  endif
+                  assign luna_v_stock = 'null'
+                  if v.inventory_management == 'shopify' and v.inventory_quantity > 0 and v.inventory_quantity <= section.settings.stock_threshold
+                    assign luna_v_stock = v.inventory_quantity
+                  endif
+                -%}
+                {
+                  "id": {{ v.id }},
+                  "available": {{ v.available | json }},
+                  "options": {{ v.options | json }},
+                  "price": {{ v.price | money | json }},
+                  "compare": {% if luna_v_sale %}{{ v.compare_at_price | money | json }}{% else %}null{% endif %},
+                  "pct": {% if luna_v_sale %}{{ luna_v_pct }}{% else %}null{% endif %},
+                  "save": {% if luna_v_sale %}{{ v.compare_at_price | minus: v.price | money | json }}{% else %}null{% endif %},
+                  "stock": {{ luna_v_stock }}
+                }
+                {%- unless forloop.last %},{% endunless -%}
+              {%- endfor -%}
+            ]
+          </script>
+        </div>
+      {%- endunless -%}
+
+      {%- form 'product', product, id: 'luna-buy-form', novalidate: 'novalidate' -%}
+        <input type="hidden" name="id" value="{{ luna_variant.id }}" data-luna-variant-id>
+        <input type="hidden" name="quantity" value="1">
+        <input type="hidden" name="return_to" value="/checkout">
+        {% render 'luna-cta',
+          product: product,
+          variant: luna_variant,
+          text: section.settings.cta_text,
+          loading_text: section.settings.loading_text,
+          sold_out_text: section.settings.sold_out_text,
+          id: 'luna-hero-cta',
+          class: 'luna-cta--block',
+          attributes: 'data-luna-hero-cta'
+        %}
+        <div class="luna-buy__express" data-luna-express{% unless luna_variant.available %} hidden{% endunless %}>
+          {{ form | payment_button }}
+        </div>
+      {%- endform -%}
+
+      {%- comment -%}
+        Consegna stimata: calcolata qui sui giorni lavorativi (niente sabati, domeniche e festività fisse)
+        e ricalcolata da luna-landing.js con l'ora di Roma e la Pasquetta. Nascosta se i giorni sono 0.
+      {%- endcomment -%}
+      {%- liquid
+        assign luna_min = section.settings.delivery_min
+        assign luna_max = section.settings.delivery_max
+        if luna_max < luna_min
+          assign luna_max = luna_min
+        endif
+        assign luna_show_delivery = false
+        if luna_max > 0 and section.settings.delivery_text != blank
+          assign luna_show_delivery = true
+        endif
+      -%}
+      {%- if luna_show_delivery -%}
+        {%- liquid
+          assign luna_holidays = '01-01,01-06,04-25,05-01,06-02,08-15,11-01,12-08,12-25,12-26' | split: ','
+          assign luna_days = 'dom,lun,mar,mer,gio,ven,sab' | split: ','
+          assign luna_months = 'gen,feb,mar,apr,mag,giu,lug,ago,set,ott,nov,dic' | split: ','
+
+          # Mezzogiorno di oggi (ora del negozio): sommando 86400 secondi non si salta mai un giorno
+          assign luna_now = 'now' | date: '%s' | plus: 0
+          assign luna_hour = 'now' | date: '%H' | plus: 0
+          assign luna_minute = 'now' | date: '%M' | plus: 0
+          assign luna_since_midnight = luna_hour | times: 3600
+          assign luna_minute_seconds = luna_minute | times: 60
+          assign luna_since_midnight = luna_since_midnight | plus: luna_minute_seconds
+          assign luna_cursor = luna_now | minus: luna_since_midnight | plus: 43200
+
+          # Giorno di spedizione: oggi se lavorativo e prima dell'ora limite, altrimenti il primo lavorativo dopo
+          assign luna_weekday = luna_cursor | date: '%w' | plus: 0
+          assign luna_md = luna_cursor | date: '%m-%d'
+          assign luna_count = 0
+          if luna_weekday == 0 or luna_weekday == 6 or luna_hour >= section.settings.cutoff_hour
+            assign luna_count = -1
+          elsif luna_holidays contains luna_md
+            assign luna_count = -1
+          endif
+
+          assign luna_from = luna_cursor
+          assign luna_to = luna_cursor
+          for luna_step in (1..60)
+            assign luna_cursor = luna_cursor | plus: 86400
+            assign luna_weekday = luna_cursor | date: '%w' | plus: 0
+            assign luna_md = luna_cursor | date: '%m-%d'
+            if luna_weekday != 0 and luna_weekday != 6
+              unless luna_holidays contains luna_md
+                assign luna_count = luna_count | plus: 1
+                if luna_count == luna_min
+                  assign luna_from = luna_cursor
+                endif
+                if luna_count == luna_max
+                  assign luna_to = luna_cursor
+                  break
+                endif
+              endunless
+            endif
+          endfor
+
+          # Date come «mar 28 ott»
+          assign luna_index = luna_from | date: '%w' | plus: 0
+          assign luna_month = luna_from | date: '%m' | plus: -1
+          assign luna_day = luna_from | date: '%d' | plus: 0
+          assign luna_from_label = luna_days[luna_index] | append: ' ' | append: luna_day | append: ' ' | append: luna_months[luna_month]
+          assign luna_index = luna_to | date: '%w' | plus: 0
+          assign luna_month = luna_to | date: '%m' | plus: -1
+          assign luna_day = luna_to | date: '%d' | plus: 0
+          assign luna_to_label = luna_days[luna_index] | append: ' ' | append: luna_day | append: ' ' | append: luna_months[luna_month]
+          assign luna_from_html = '<strong data-luna-date-from>' | append: luna_from_label | append: '</strong>'
+          assign luna_to_html = '<strong data-luna-date-to>' | append: luna_to_label | append: '</strong>'
+        -%}
+        <p
+          class="luna-delivery"
+          data-luna-delivery
+          data-min="{{ luna_min }}"
+          data-max="{{ luna_max }}"
+          data-cutoff="{{ section.settings.cutoff_hour }}"
+        >
+          {%- render 'luna-icon', name: 'camion', size: 18, class: 'luna-delivery__icon' -%}
+          <span data-luna-delivery-text data-template="{{ section.settings.delivery_text | escape }}">
+            {{- section.settings.delivery_text | escape | replace: '{data1}', luna_from_html | replace: '{data2}', luna_to_html -}}
+          </span>
+        </p>
+      {%- endif -%}
+
+      {%- liquid
+        assign luna_stock = 0
+        if luna_variant.inventory_management == 'shopify' and luna_variant.inventory_quantity > 0
+          if luna_variant.inventory_quantity <= section.settings.stock_threshold
+            assign luna_stock = luna_variant.inventory_quantity
+          endif
+        endif
+      -%}
+      <p
+        class="luna-stock"
+        data-luna-stock
+        data-template="{{ section.settings.stock_text | escape }}"
+        {% if luna_stock == 0 or section.settings.stock_text == blank %}
+          hidden
+        {% endif %}
+      >
+        {%- if luna_stock > 0 -%}
+          {{- section.settings.stock_text | escape | replace: '{n}', luna_stock -}}
+        {%- endif -%}
+      </p>
+
+      <ul class="luna-trust luna-list-reset">
+        {%- for luna_i in (1..3) -%}
+          {%- liquid
+            assign luna_trust_key = 'trust_' | append: luna_i
+            assign luna_trust_icon_key = 'trust_' | append: luna_i | append: '_icon'
+            assign luna_trust_text = section.settings[luna_trust_key]
+          -%}
+          {%- if luna_trust_text != blank -%}
+            <li class="luna-trust__item">
+              {%- render 'luna-icon', name: section.settings[luna_trust_icon_key], size: 22, class: 'luna-trust__icon' -%}
+              <span>{{ luna_trust_text | escape }}</span>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </div>
+
+  <script type="application/ld+json">
+    {{ product | structured_data }}
+  </script>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Hero",
+  "class": "luna-section-hero",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Titoli"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "info": "Tieni la misura reale vicina alla lampada (Ø 8,5 cm).",
+      "default": "Levitazione magnetica · Ø 8,5 cm"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo (angolo «magia», predefinito)",
+      "default": "La Luna. <em>Sospesa</em> nella tua stanza."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading_regalo",
+      "label": "Titolo con ?h=regalo nell'indirizzo",
+      "default": "Il regalo che fa dire <em>wow</em> appena si accende."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading_relax",
+      "label": "Titolo con ?h=relax nell'indirizzo",
+      "default": "Spegni lo schermo. <em>Accendi</em> la Luna."
+    },
+    {
+      "type": "richtext",
+      "id": "subheading",
+      "label": "Sottotitolo",
+      "default": "<p>Fluttua a pochi centimetri dalla base, senza toccare nulla. Ruota piano su se stessa e riempie la stanza di luce calda. Chi la vede fa sempre la stessa domanda: “Ma come fa a stare su?”</p>"
+    },
+    {
+      "type": "header",
+      "content": "Lampada"
+    },
+    {
+      "type": "text",
+      "id": "hint",
+      "label": "Suggerimento sul palco",
+      "info": "Sparisce dopo il primo tocco.",
+      "default": "Tocca la luna per vederla accesa e spenta"
+    },
+    {
+      "type": "text",
+      "id": "switch_label",
+      "label": "Nome dell'interruttore per i lettori di schermo",
+      "default": "Luce della lampada"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura vicino alla lampada",
+      "default": "Ø 8,5 cm"
+    },
+    {
+      "type": "text",
+      "id": "lamp_alt",
+      "label": "Testo alternativo della lampada",
+      "default": "Lampada Lunare Levitante: luna di Ø 8,5 cm sospesa sopra la base in ABS effetto legno chiaro"
+    },
+    {
+      "type": "checkbox",
+      "id": "rotation_hint",
+      "label": "Riflesso che suggerisce la rotazione",
+      "info": "Lascialo attivo solo se la luna ruota da sola.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "tone_label",
+      "label": "Nome del selettore di tonalità",
+      "info": "Il selettore compare solo con almeno due blocchi «Tonalità».",
+      "default": "Tonalità della luce"
+    },
+    {
+      "type": "image_picker",
+      "id": "moon_off_image",
+      "label": "Luna spenta (PNG trasparente)",
+      "info": "Se resta vuoto si usa l'immagine del tema. Le quattro immagini devono avere la stessa misura e sovrapporsi."
+    },
+    {
+      "type": "image_picker",
+      "id": "moon_on_image",
+      "label": "Luna accesa (PNG trasparente)"
+    },
+    {
+      "type": "image_picker",
+      "id": "base_off_image",
+      "label": "Base spenta (PNG trasparente)"
+    },
+    {
+      "type": "image_picker",
+      "id": "base_on_image",
+      "label": "Base accesa (PNG trasparente)"
+    },
+    {
+      "type": "header",
+      "content": "Geometria della lampada"
+    },
+    {
+      "type": "paragraph",
+      "content": "Pixel delle immagini originali, come in studio/qa/luna-layout.json: servono a centrare le luci sulla luna. Cambiali solo se sostituisci le immagini."
+    },
+    {
+      "type": "number",
+      "id": "canvas_w",
+      "label": "Larghezza delle immagini (px)",
+      "default": 1377
+    },
+    {
+      "type": "number",
+      "id": "canvas_h",
+      "label": "Altezza delle immagini (px)",
+      "default": 1755
+    },
+    {
+      "type": "number",
+      "id": "moon_cx",
+      "label": "Centro della luna, orizzontale (px)",
+      "default": 607
+    },
+    {
+      "type": "number",
+      "id": "moon_cy",
+      "label": "Centro della luna, verticale (px)",
+      "default": 591.8
+    },
+    {
+      "type": "number",
+      "id": "moon_r",
+      "label": "Raggio della luna (px)",
+      "default": 584
+    },
+    {
+      "type": "number",
+      "id": "base_light_cy",
+      "label": "Centro del piano della base, verticale (px)",
+      "info": "A metà tra il bordo posteriore e il bordo frontale del piano.",
+      "default": 1307.7
+    },
+    {
+      "type": "header",
+      "content": "Prezzo e acquisto"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge dello sconto",
+      "info": "{pct} diventa la percentuale calcolata dai prezzi di Shopify. Senza prezzo barrato il badge non compare.",
+      "default": "−{pct}%"
+    },
+    {
+      "type": "text",
+      "id": "savings_text",
+      "label": "Risparmio",
+      "info": "{importo} diventa la differenza tra prezzo barrato e prezzo.",
+      "default": "Risparmi {importo}"
+    },
+    {
+      "type": "text",
+      "id": "omnibus_text",
+      "label": "Riga del prezzo più basso (Omnibus)",
+      "default": "Prezzo più basso degli ultimi 30 giorni:"
+    },
+    {
+      "type": "text",
+      "id": "tax_text",
+      "label": "IVA",
+      "default": "IVA inclusa"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Bottone d'acquisto",
+      "info": "{prezzo} diventa il prezzo della variante.",
+      "default": "Acquista ora — {prezzo}"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Bottone durante il caricamento",
+      "default": "Ti porto al checkout…"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Bottone con variante esaurita",
+      "default": "Esaurita"
+    },
+    {
+      "type": "header",
+      "content": "Consegna e scorte"
+    },
+    {
+      "type": "text",
+      "id": "delivery_text",
+      "label": "Consegna stimata",
+      "info": "{data1} e {data2} diventano le date. Si contano i giorni lavorativi, senza sabati, domeniche e festività.",
+      "default": "Ordina oggi, la ricevi tra {data1} e {data2}"
+    },
+    {
+      "type": "range",
+      "id": "delivery_min",
+      "label": "Giorni lavorativi minimi",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "type": "range",
+      "id": "delivery_max",
+      "label": "Giorni lavorativi massimi",
+      "info": "Con 0 la riga della consegna non compare.",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "cutoff_hour",
+      "label": "Ora limite di spedizione",
+      "info": "Gli ordini dopo quest'ora partono il giorno lavorativo dopo.",
+      "min": 0,
+      "max": 23,
+      "step": 1,
+      "unit": "h",
+      "default": 14
+    },
+    {
+      "type": "text",
+      "id": "stock_text",
+      "label": "Scorte basse",
+      "info": "Compare solo se Shopify tiene il conto dei pezzi e ne restano tra 1 e la soglia. {n} diventa il numero.",
+      "default": "Solo {n} pezzi disponibili"
+    },
+    {
+      "type": "range",
+      "id": "stock_threshold",
+      "label": "Soglia delle scorte basse",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "default": 15
+    },
+    {
+      "type": "header",
+      "content": "Fiducia"
+    },
+    {
+      "type": "text",
+      "id": "trust_1",
+      "label": "Rassicurazione 1",
+      "default": "Spedizione gratuita"
+    },
+    {
+      "type": "select",
+      "id": "trust_1_icon",
+      "label": "Icona 1",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "camion"
+    },
+    {
+      "type": "text",
+      "id": "trust_2",
+      "label": "Rassicurazione 2",
+      "default": "Pagamenti protetti"
+    },
+    {
+      "type": "select",
+      "id": "trust_2_icon",
+      "label": "Icona 2",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "scudo"
+    },
+    {
+      "type": "text",
+      "id": "trust_3",
+      "label": "Rassicurazione 3",
+      "default": "Reso in 30 giorni"
+    },
+    {
+      "type": "select",
+      "id": "trust_3_icon",
+      "label": "Icona 3",
+      "options": [
+        { "value": "camion", "label": "Camion" },
+        { "value": "scudo", "label": "Scudo" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "regalo", "label": "Regalo" },
+        { "value": "spunta", "label": "Spunta" }
+      ],
+      "default": "reso"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tone",
+      "name": "Tonalità",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Nome",
+          "default": "Bianco caldo"
+        },
+        {
+          "type": "color",
+          "id": "color",
+          "label": "Colore della luce",
+          "default": "#FFD9A3"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Hero",
+      "blocks": [
+        {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

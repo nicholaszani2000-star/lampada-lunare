@@ -12,6 +12,7 @@
   @param {string} [form_id] - Id del form da inviare (predefinito 'luna-buy-form')
   @param {string} [id] - Id del bottone
   @param {string} [class] - Classi CSS aggiuntive
+  @param {string} [attributes] - Attributi HTML aggiuntivi, per esempio 'data-luna-hero-cta'
 {%- enddoc -%}
 {%- liquid
   assign luna_variant = variant | default: product.selected_or_first_available_variant
@@ -30,6 +31,7 @@
     id="{{ id }}"
   {% endif %}
   data-luna-cta
+  {{ attributes }}
   data-label-template="{{ text | escape }}"
   data-loading-text="{{ luna_loading_text | escape }}"
   data-sold-out-text="{{ luna_sold_out_text | escape }}"

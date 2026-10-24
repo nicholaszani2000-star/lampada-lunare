@@ -17,6 +17,38 @@
         "sticky": true
       }
     },
+    "hero": {
+      "type": "luna-hero",
+      "blocks": {
+        "tone_bianco": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco"
+      ],
+      "settings": {
+        "eyebrow": "Levitazione magnetica · Ø 8,5 cm",
+        "heading": "La Luna. <em>Sospesa</em> nella tua stanza.",
+        "heading_regalo": "Il regalo che fa dire <em>wow</em> appena si accende.",
+        "heading_relax": "Spegni lo schermo. <em>Accendi</em> la Luna.",
+        "subheading": "<p>Fluttua a pochi centimetri dalla base, senza toccare nulla. Ruota piano su se stessa e riempie la stanza di luce calda. Chi la vede fa sempre la stessa domanda: “Ma come fa a stare su?”</p>",
+        "hint": "Tocca la luna per vederla accesa e spenta",
+        "rotation_hint": true,
+        "cta_text": "Acquista ora — {prezzo}",
+        "delivery_text": "Ordina oggi, la ricevi tra {data1} e {data2}",
+        "delivery_min": 7,
+        "delivery_max": 14,
+        "cutoff_hour": 14,
+        "trust_1": "Spedizione gratuita",
+        "trust_2": "Pagamenti protetti",
+        "trust_3": "Reso in 30 giorni"
+      }
+    },
     "footer": {
       "type": "luna-footer",
       "settings": {
@@ -27,7 +59,20 @@
         "show_payment_icons": true,
         "payments_label": "Metodi di pagamento accettati"
       }
+    },
+    "sticky": {
+      "type": "luna-sticky",
+      "settings": {
+        "title": "Lampada Lunare Levitante",
+        "cta_text": "Acquista"
+      }
     }
   },
-  "order": ["announcement", "header", "footer"]
+  "order": [
+    "announcement",
+    "header",
+    "hero",
+    "footer",
+    "sticky"
+  ]
 }
