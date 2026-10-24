@@ -91,6 +91,262 @@
         "title": "Lampada Lunare Levitante",
         "cta_text": "Acquista"
       }
+    },
+    "benefits": {
+      "type": "luna-benefits",
+      "blocks": {
+        "benefit1": {
+          "type": "benefit",
+          "settings": {
+            "scene": "orbita",
+            "image_alt": "Lampada Lunare Levitante accesa con un anello di luce che le gira intorno, sospesa sopra la base",
+            "icon": "calamita",
+            "title": "Levita davvero",
+            "text": "<p>Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.</p>"
+          }
+        },
+        "benefit2": {
+          "type": "benefit",
+          "settings": {
+            "scene": "caldo",
+            "image_alt": "Lampada Lunare Levitante accesa in una stanza buia, con una luce calda che illumina il piano",
+            "icon": "luce",
+            "title": "Luce che scalda la stanza",
+            "text": "<p>Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.</p>"
+          }
+        },
+        "benefit3": {
+          "type": "benefit",
+          "settings": {
+            "scene": "eclissi",
+            "image_alt": "Lampada Lunare Levitante accesa davanti a un'eclissi con la corona di luce",
+            "icon": "regalo",
+            "title": "Il regalo che non si dimentica",
+            "text": "<p>Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "benefit1",
+        "benefit2",
+        "benefit3"
+      ],
+      "settings": {
+        "eyebrow": "Perché tutti la notano",
+        "heading": "Un pezzo di cielo, sul tuo comodino.",
+        "size_label": "Ø 8,5 cm"
+      }
+    },
+    "how": {
+      "type": "luna-how",
+      "blocks": {
+        "step1": {
+          "type": "step",
+          "settings": {
+            "title": "Collega la base",
+            "text": "Inserisci l'alimentatore nella presa: la base è pronta."
+          }
+        },
+        "step2": {
+          "type": "step",
+          "settings": {
+            "title": "Avvicina la Luna",
+            "text": "Tienila sopra il centro della base: sentirai il campo magnetico che la aggancia."
+          }
+        },
+        "step3": {
+          "type": "step",
+          "settings": {
+            "title": "Lasciala andare",
+            "text": "Apri piano le dita. La Luna resta sospesa e inizia a ruotare."
+          }
+        }
+      },
+      "block_order": [
+        "step1",
+        "step2",
+        "step3"
+      ],
+      "settings": {
+        "eyebrow": "Facilissima",
+        "heading": "Pronta in tre gesti.",
+        "note": "<p>La prima volta serve un minuto di pratica per trovare il punto di equilibrio. Poi diventa un gesto da due secondi.</p>",
+        "animation_alt": "La luna sale dalla base, si accende da sola e resta sospesa a mezz'aria",
+        "size_label": "Ø 8,5 cm",
+        "image_alt": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base"
+      }
+    },
+    "gift": {
+      "type": "luna-gift",
+      "blocks": {
+        "chip1": {
+          "type": "chip",
+          "settings": {
+            "label": "Per lei"
+          }
+        },
+        "chip2": {
+          "type": "chip",
+          "settings": {
+            "label": "Per lui"
+          }
+        },
+        "chip3": {
+          "type": "chip",
+          "settings": {
+            "label": "Per la coppia"
+          }
+        },
+        "chip4": {
+          "type": "chip",
+          "settings": {
+            "label": "Per chi ha già tutto"
+          }
+        }
+      },
+      "block_order": [
+        "chip1",
+        "chip2",
+        "chip3",
+        "chip4"
+      ],
+      "settings": {
+        "eyebrow": "Idea regalo",
+        "heading": "Il regalo che si scarta… e poi si accende.",
+        "text": "<p>Per lei, per lui, per la coppia o per chi ha già tutto. Resta in casa, sul comodino o in salotto, e fa parlare ogni volta che si accende.</p>",
+        "chips_label": "Per chi è",
+        "christmas_text": "Ordina entro il {data} per riceverla prima di Natale.",
+        "image_alt": "Lampada Lunare Levitante accesa tra luci di Natale sfocate, con la luna sospesa sopra la base",
+        "size_label": "Ø 8,5 cm",
+        "christmas_deadline": "2026-12-03"
+      }
+    },
+    "specs": {
+      "type": "luna-specs",
+      "blocks": {
+        "spec1": {
+          "type": "spec",
+          "settings": {
+            "label": "Diametro",
+            "value": "Ø 8,5 cm"
+          }
+        },
+        "spec2": {
+          "type": "spec",
+          "settings": {
+            "label": "Materiale",
+            "value": "Luna in PLA stampato in 3D"
+          }
+        },
+        "spec3": {
+          "type": "spec",
+          "settings": {
+            "label": "Luce",
+            "value": "Bianco caldo, una sola tonalità"
+          }
+        },
+        "spec4": {
+          "type": "spec",
+          "settings": {
+            "label": "Accensione",
+            "value": "Si accende da sola appena la luna levita sopra la base"
+          }
+        },
+        "spec5": {
+          "type": "spec",
+          "settings": {
+            "label": "Alimentazione",
+            "value": "La base va alla presa con l'alimentatore incluso; la luna si accende senza fili"
+          }
+        },
+        "spec6": {
+          "type": "spec",
+          "settings": {
+            "label": "Base",
+            "value": "ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm"
+          }
+        },
+        "spec7": {
+          "type": "spec",
+          "settings": {
+            "label": "Nella confezione",
+            "value": "Luna, base, alimentatore e istruzioni"
+          }
+        },
+        "compare1": {
+          "type": "compare",
+          "settings": {
+            "label": "Fluttua a mezz'aria",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare2": {
+          "type": "compare",
+          "settings": {
+            "label": "Ruota da sola",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare3": {
+          "type": "compare",
+          "settings": {
+            "label": "Luce calda e morbida",
+            "ours": "yes",
+            "theirs": "text",
+            "theirs_text": "A volte"
+          }
+        },
+        "compare4": {
+          "type": "compare",
+          "settings": {
+            "label": "Fa parlare chi entra in casa",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare5": {
+          "type": "compare",
+          "settings": {
+            "label": "Effetto regalo",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        }
+      },
+      "block_order": [
+        "spec1",
+        "spec2",
+        "spec3",
+        "spec4",
+        "spec5",
+        "spec6",
+        "spec7",
+        "compare1",
+        "compare2",
+        "compare3",
+        "compare4",
+        "compare5"
+      ],
+      "settings": {
+        "eyebrow": "Dettagli",
+        "heading": "Tutto quello che c'è da sapere.",
+        "image_alt": "Lampada Lunare Levitante con le misure: luna di Ø 8,5 cm, base larga 10,8 cm e alta 2,2 cm",
+        "compare_title": "Lampada Lunare Levitante o una lampada qualsiasi?",
+        "ours_label": "Lampada Lunare Levitante",
+        "theirs_label": "Una lampada qualsiasi",
+        "feature_label": "Caratteristica",
+        "yes_label": "Sì",
+        "no_label": "No"
+      }
+    },
+    "reviews": {
+      "type": "luna-reviews",
+      "settings": {
+        "eyebrow": "Recensioni",
+        "heading": "Cosa dice chi l'ha già accesa."
+      }
     }
   },
   "order": [
@@ -98,6 +354,11 @@
     "header",
     "hero",
     "moon3d",
+    "benefits",
+    "how",
+    "gift",
+    "specs",
+    "reviews",
     "footer",
     "sticky"
   ]

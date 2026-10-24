@@ -7,13 +7,17 @@
 //         con ?luna3d=0 l'immagine di ripiego; tonalità sincronizzate hero ↔ 3D; swipe sul canvas che fa scorrere
 //         la pagina; trascinamento che ruota la luna (anche con movimento ridotto); editor: unload smonta, load rimonta;
 //         istruzioni nascoste senza JavaScript (e solo «Trascina…» senza WebGL); su desktop la 3D parte dopo la hero.
+// Step 5: confronto senza scroll orizzontale a 360 px; recensioni senza blocchi che non stampano nulla (e il
+//         riquadro nell'editor); riga di Natale prima e dopo la scadenza con la data simulata; lampada di «Come
+//         funziona» che si monta (view(), ripiego JavaScript, movimento ridotto); card dei benefici della stessa
+//         altezza su desktop; passaggi morbidi tra le sezioni, senza linee nette.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { launchBrowser, paths, serve } from './lib.mjs';
 import { render } from './render.mjs';
-import { scrollThrough, watchProblems } from './shoot.mjs';
+import { scrollThrough, stretchSky, watchProblems } from './shoot.mjs';
 
 const PAGES = ['index.html', 'styleguide.html'];
 const WIDTHS = [360, 390, 768, 1440];
@@ -668,6 +672,276 @@ async function moon3dChecks(browser, baseUrl) {
   return results;
 }
 
+/* ---------------------------------------------------------------- step 5 */
+function templateSection(type) {
+  const template = JSON.parse(readFileSync(join(paths.theme, 'templates', 'product.luna.json'), 'utf8'));
+  return Object.entries(template.sections).find(([, section]) => section.type === type) || [null, null];
+}
+
+/** Istante preciso di un'ora italiana ('2026-12-03', '23:30'), con l'ora legale giusta. */
+function romeInstant(day, time) {
+  const wall = Date.parse(`${day}T${time}:00Z`);
+  const parts = (instant) =>
+    Object.fromEntries(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Rome', hourCycle: 'h23',
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+      }).formatToParts(new Date(instant)).map((part) => [part.type, part.value])
+    );
+  let instant = wall;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const p = parts(instant);
+    instant += wall - Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute));
+  }
+  return new Date(instant);
+}
+
+const nextDay = (day) => new Date(Date.parse(`${day}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);
+
+async function persuasionChecks(browser, baseUrl) {
+  const results = [];
+  const record = (name, ok, detail = '') => results.push({ name, ok, detail });
+
+  // 1. Confronto a 360 px: schede, niente scroll orizzontale
+  {
+    const ctx = await context(browser, { ...mobileOptions, viewport: { width: 360, height: 800 } });
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.querySelector('[data-luna-comparison]').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(800);
+    const state = await page.evaluate(() => {
+      const box = document.querySelector('[data-luna-comparison]');
+      const table = box.querySelector('table');
+      const outside = [...box.querySelectorAll('*')].filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width && (rect.left < -1 || rect.right > window.innerWidth + 1);
+      });
+      return {
+        page: document.documentElement.scrollWidth,
+        box: `${box.scrollWidth}/${box.clientWidth}`,
+        table: `${table.scrollWidth}/${table.clientWidth}`,
+        overflow: box.scrollWidth > box.clientWidth || table.scrollWidth > table.clientWidth,
+        outside: outside.length,
+        rows: box.querySelectorAll('tbody tr').length,
+        display: getComputedStyle(box.querySelector('tbody tr')).display,
+      };
+    });
+    record(
+      'confronto a 360 px senza scroll orizzontale',
+      state.page === 360 && !state.overflow && state.outside === 0 && state.rows > 0 && state.display === 'grid',
+      `pagina ${state.page} px, confronto ${state.box}, tabella ${state.table}, ${state.rows} schede (${state.display}), ` +
+        `elementi fuori dallo schermo: ${state.outside}`
+    );
+    await ctx.close();
+  }
+
+  // 2. Recensioni senza blocchi: fuori dall'editor nessun markup; nell'editor il riquadro
+  {
+    const [key] = templateSection('luna-reviews');
+    const wrapper = `#shopify-section-template--20261023__${key}`;
+    const read = async (pageName) => {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'networkidle' });
+      const state = await page.$eval(wrapper, (element) => ({
+        html: element.innerHTML.trim(),
+        height: Math.round(element.getBoundingClientRect().height),
+        placeholder: element.querySelector('.luna-reviews__placeholder')?.textContent.trim() || '',
+      }));
+      await ctx.close();
+      return state;
+    };
+    const live = await read('index.html');
+    const editor = await read('editor.html');
+    record(
+      'recensioni senza blocchi: non stampa nulla',
+      live.html === '' && live.height === 0,
+      `fuori dall'editor: ${live.html.length} caratteri di markup, altezza ${live.height} px`
+    );
+    record(
+      'recensioni nell\'editor: riquadro per l\'app',
+      editor.placeholder.startsWith('Aggiungi qui il blocco della tua app recensioni') && editor.height > 0,
+      `«${editor.placeholder}», altezza ${editor.height} px`
+    );
+  }
+
+  // 3. Riga di Natale: si vede fino al giorno impostato compreso (ora italiana), poi sparisce
+  {
+    const [, gift] = templateSection('luna-gift');
+    const deadline = gift?.settings?.christmas_deadline || '';
+    const moments = [
+      ['oggi', null, true],
+      ['ultimo giorno alle 23:30', deadline && romeInstant(deadline, '23:30'), true],
+      ['giorno dopo alle 00:30', deadline && romeInstant(nextDay(deadline), '00:30'), false],
+    ];
+    const seen = [];
+    let ok = Boolean(deadline);
+    for (const [label, when, expected] of moments) {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      if (when) await page.clock.setFixedTime(when);
+      await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+      const state = await page.$eval('[data-luna-deadline]', (line) => ({
+        visible: !line.hidden && line.getClientRects().length > 0,
+        text: line.textContent.replace(/\s+/g, ' ').trim(),
+      }));
+      // «oggi» vale solo se oggi è prima della scadenza; altrimenti la riga deve mancare
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date());
+      const want = label === 'oggi' ? today <= deadline : expected;
+      if (state.visible !== want) ok = false;
+      seen.push(`${label}: ${state.visible ? `visibile («${state.text}»)` : 'nascosta'}`);
+      await ctx.close();
+    }
+    record('riga di Natale prima e dopo la scadenza', ok, `scadenza ${deadline || 'non impostata'} · ${seen.join(' · ')}`);
+  }
+
+  // 4. Come funziona: la luna sale dalla base, si accende e comincia a levitare
+  {
+    const read = (page) =>
+      page.evaluate(() => {
+        const stage = document.querySelector('[data-luna-how-stage]');
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(stage.querySelector('.luna-how__rise')).transform);
+        return {
+          rise: Math.round(matrix.m42 * 10) / 10,
+          lit: Number(getComputedStyle(stage.querySelector('.luna-how__layer.luna-how__lit')).opacity),
+          float: getComputedStyle(stage.querySelector('.luna-how__float')).animationName,
+          classes: stage.className.replace('luna-how__stage', '').trim(),
+        };
+      });
+    const place = (page, fraction) =>
+      page.evaluate((f) => {
+        const stage = document.querySelector('[data-luna-how-stage]');
+        window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - window.innerHeight * f);
+      }, fraction);
+    const lines = [];
+    let ok = true;
+
+    // a. animation-timeline: view() (Chromium)
+    {
+      const ctx = await context(browser, mobileOptions);
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+      const supported = await page.evaluate(() => CSS.supports('animation-timeline: view()'));
+      await place(page, 0.95);
+      await page.waitForTimeout(400);
+      const start = await read(page);
+      await place(page, 0.12);
+      await page.waitForTimeout(400);
+      const end = await read(page);
+      if (!(supported && start.rise > 15 && start.lit === 0 && end.rise === 0 && end.lit === 1)) ok = false;
+      lines.push(`view(): appena entra +${start.rise} px e spenta, in alto ${end.rise} px e accesa (${end.lit})`);
+      await ctx.close();
+    }
+    // b. ripiego senza view(): IntersectionObserver e classi (Safari prima della 26, Firefox)
+    {
+      const ctx = await context(browser, mobileOptions);
+      await ctx.addInitScript(() => {
+        const supports = CSS.supports.bind(CSS);
+        CSS.supports = (...args) => (args.join(' ').includes('animation-timeline') ? false : supports(...args));
+        document.addEventListener('DOMContentLoaded', () => {
+          const style = document.createElement('style');
+          style.textContent = '.luna-how__stage,.luna-how__rise,.luna-how__lit{animation:none!important;view-timeline:none!important}';
+          document.head.append(style);
+        });
+      });
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+      const start = await read(page);
+      await place(page, 0.25);
+      await page.waitForTimeout(2800);
+      const end = await read(page);
+      if (!(start.classes === 'is-animated' && start.rise > 15 && start.lit === 0 &&
+        /is-assembled/.test(end.classes) && end.rise === 0 && end.lit === 1 && end.float === 'luna-how-float')) ok = false;
+      lines.push(`ripiego: «${start.classes}» +${start.rise} px spenta → «${end.classes}» ${end.rise} px, accesa, levitazione ${end.float}`);
+      await ctx.close();
+    }
+    // c. movimento ridotto: subito lo stato finale, ferma
+    {
+      const ctx = await context(browser, { ...mobileOptions, reducedMotion: 'reduce' });
+      const page = await ctx.newPage();
+      await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+      await place(page, 0.95);
+      await page.waitForTimeout(300);
+      const state = await read(page);
+      if (!(state.rise === 0 && state.lit === 1 && state.float === 'none' && state.classes === '')) ok = false;
+      lines.push(`movimento ridotto: ${state.rise} px, accesa (${state.lit}), levitazione ${state.float}`);
+      await ctx.close();
+    }
+    record('come funziona: la lampada si monta mentre scorri', ok, lines.join(' · '));
+  }
+
+  // 5. Benefici: tre colonne della stessa altezza su desktop
+  {
+    const ctx = await context(browser, { viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await scrollThrough(page);
+    const cards = await page.$$eval('.luna-benefit', (list) =>
+      list.map((card) => {
+        const rect = card.getBoundingClientRect();
+        return { top: Math.round(rect.top + window.scrollY), height: Math.round(rect.height), width: Math.round(rect.width) };
+      })
+    );
+    const same = (key) => cards.every((card) => Math.abs(card[key] - cards[0][key]) <= 1);
+    record(
+      'benefici: tre colonne della stessa altezza a 1440 px',
+      cards.length === 3 && same('top') && same('height') && same('width'),
+      cards.map((card) => `${card.width}×${card.height}`).join(', ')
+    );
+    await ctx.close();
+  }
+
+  // 6. Passaggi morbidi tra le sezioni: luminosità dello sfondo lungo il margine sinistro, riga per riga
+  {
+    const ctx = await context(browser, mobileOptions);
+    const page = await ctx.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle' });
+    await scrollThrough(page);
+    await stretchSky(page);
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    const strip = await page.screenshot({ fullPage: true, clip: { x: 2, y: 0, width: 12, height } });
+    const result = await page.evaluate(async (src) => {
+      const image = new Image();
+      image.src = src;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context2d = canvas.getContext('2d');
+      context2d.drawImage(image, 0, 0);
+      const { data, width } = context2d.getImageData(0, 0, canvas.width, canvas.height);
+      const rows = [];
+      for (let y = 0; y < canvas.height; y += 1) {
+        const values = [];
+        for (let x = 0; x < width; x += 1) {
+          const i = (y * width + x) * 4;
+          values.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]);
+        }
+        values.sort((a, b) => a - b);
+        rows.push(values[Math.floor(values.length / 2)]); // mediana: le stelle non contano
+      }
+      let max = 0;
+      let at = 0;
+      for (let y = 0; y + 2 < rows.length; y += 1) {
+        const jump = Math.abs(rows[y + 2] - rows[y]);
+        if (jump > max) {
+          max = jump;
+          at = y;
+        }
+      }
+      return { max: Math.round(max * 10) / 10, at, rows: rows.length };
+    }, `data:image/png;base64,${strip.toString('base64')}`);
+    record(
+      'passaggi morbidi tra le sezioni (390 px)',
+      result.max <= 6,
+      `salto massimo di luminosità dello sfondo ${result.max}/255 su 2 px (a ${result.at} px), su ${result.rows} px di pagina`
+    );
+    await ctx.close();
+  }
+
+  return results;
+}
+
 /* ---------------------------------------------------------------- avvio */
 async function main() {
   await render();
@@ -694,7 +968,10 @@ async function main() {
       }
     }
     console.log('');
-    for (const result of [...(await heroChecks(browser, server.url)), ...(await moon3dChecks(browser, server.url))]) {
+    // In sequenza: alcuni controlli misurano tempi e caricamenti, in parallelo si disturberebbero
+    const results = [];
+    for (const group of [heroChecks, moon3dChecks, persuasionChecks]) results.push(...(await group(browser, server.url)));
+    for (const result of results) {
       total += 1;
       if (!result.ok) failed += 1;
       console.log(`${result.ok ? '✓' : '✗'} ${result.name}  ·  ${result.detail}`);

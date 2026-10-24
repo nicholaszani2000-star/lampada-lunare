@@ -308,10 +308,13 @@
       return calendarDay(parts.year, parts.month, parts.day);
     },
 
-    /** '2026-12-03' → giorno del calendario. */
+    /** '2026-12-03' → giorno del calendario; null se la data non esiste (2026-02-30, 2026-13-01). */
     parseDay: function (value) {
       var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || '').trim());
-      return match ? calendarDay(Number(match[1]), Number(match[2]), Number(match[3])) : null;
+      if (!match) return null;
+      var day = calendarDay(Number(match[1]), Number(match[2]), Number(match[3]));
+      var exists = day.getUTCMonth() + 1 === Number(match[2]) && day.getUTCDate() === Number(match[3]);
+      return exists ? day : null;
     },
 
     /** '2026-12-18' e '23:59' in ora italiana → istante preciso (Date). */
@@ -1205,6 +1208,101 @@
       view = null;
       stage.classList.remove('is-3d', 'is-fallback');
       section.classList.remove('is-fallback');
+    });
+  });
+
+  /* 15. Come funziona: la lampada che si monta mentre scorri ------------------ */
+  // Dove c'è animation-timeline: view() fa tutto il CSS. Altrove: is-animated mette la luna sulla base, spenta;
+  // is-assembled, quando il palco è sullo schermo, la fa salire, accendere e levitare. Con movimento ridotto,
+  // nell'editor o senza IntersectionObserver resta lo stato finale.
+  Luna.register('how', '[data-luna-how-stage]', function (stage, scope) {
+    var scrollDriven = window.CSS && CSS.supports && CSS.supports('animation-timeline: view()');
+    if (scrollDriven || Luna.reducedMotion() || Luna.isDesignMode() || !('IntersectionObserver' in window)) return;
+    // Già passata (pagina ricaricata più in basso): niente animazione all'indietro
+    if (stage.getBoundingClientRect().bottom < 0) return;
+    stage.classList.add('is-animated');
+    var observer = new IntersectionObserver(
+      function (entries) {
+        if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+        stage.classList.add('is-assembled');
+        observer.disconnect();
+      },
+      { threshold: 0.55 }
+    );
+    observer.observe(stage);
+    scope.add(function () {
+      observer.disconnect();
+      stage.classList.remove('is-animated', 'is-assembled');
+    });
+  });
+
+  /* 16. Regalo: scadenza di Natale fino al giorno impostato compreso ---------- */
+  Luna.register('deadline', '[data-luna-deadline]', function (line, scope) {
+    var day = dates.parseDay(line.getAttribute('data-luna-deadline'));
+    var note = line.parentElement ? line.parentElement.querySelector('[data-luna-deadline-note]') : null;
+
+    // Nell'editor una nota spiega perché la riga non si vede
+    function explain(reason) {
+      if (!note || !Luna.isDesignMode()) return;
+      note.textContent = note.getAttribute('data-' + reason) || '';
+      note.hidden = false;
+    }
+
+    if (!day) {
+      line.hidden = true;
+      explain('invalid');
+      return;
+    }
+    var label = line.querySelector('[data-luna-deadline-date]');
+    if (label) label.textContent = dates.format(day, 'data');
+
+    var visible = dates.today().getTime() <= day.getTime();
+    line.hidden = !visible;
+    if (!visible) {
+      explain('expired');
+      return;
+    }
+    // Pagina lasciata aperta: a mezzanotte (ora italiana) del giorno dopo la riga sparisce da sola
+    var next = addDays(day, 1);
+    var end = dates.zonedDateTime(
+      next.getUTCFullYear() + '-' + dates.pad(next.getUTCMonth() + 1) + '-' + dates.pad(next.getUTCDate()),
+      '00:00'
+    );
+    var wait = end ? end.getTime() - Date.now() : 0;
+    if (wait > 0 && wait < 2147483647) {
+      var timer = setTimeout(function () {
+        line.hidden = true;
+        explain('expired');
+      }, wait);
+      scope.add(function () {
+        clearTimeout(timer);
+      });
+    }
+  });
+
+  /* 17. Recensioni: video dei clienti, muti e in loop solo quando si vedono --- */
+  // preload="none" nel markup: il video si scarica solo quando arriva sullo schermo. I controlli restano
+  // (si può fermare e togliere il muto); con movimento ridotto non parte da solo.
+  Luna.register('review-video', '[data-luna-review-video]', function (video, scope) {
+    if (Luna.reducedMotion() || !('IntersectionObserver' in window)) return;
+    video.muted = true;
+    var observer = new IntersectionObserver(
+      function (entries) {
+        var entry = entries[entries.length - 1];
+        if (entry.isIntersecting) {
+          if (video.preload !== 'auto') video.preload = 'auto';
+          var playing = video.play();
+          if (playing && playing.catch) playing.catch(function () {});
+        } else if (!video.paused) {
+          video.pause();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(video);
+    scope.add(function () {
+      observer.disconnect();
+      video.pause();
     });
   });
 

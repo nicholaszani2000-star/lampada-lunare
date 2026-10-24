@@ -1,0 +1,173 @@
+{%- comment -%}
+  Tre motivi per volerla (§6.5): card in vetro come blocchi, con immagine 4:5, icona, titolo e testo.
+  Una colonna su mobile, card orizzontali da 600 px, tre colonne della stessa altezza da 900 px; comparsa a cascata.
+  Ogni immagine si sostituisce dall'editor; se il campo è vuoto si usa la scena scelta in «Immagine del tema».
+  La misura reale (§10) compare sopra ogni immagine.
+{%- endcomment -%}
+{%- assign luna_sizes = '(min-width: 1240px) 370px, (min-width: 900px) 30vw, (min-width: 600px) 40vw, calc(100vw - 40px)' -%}
+<section class="luna-section luna-benefits" aria-labelledby="luna-benefits-title-{{ section.id }}">
+  <div class="luna-container">
+    <header class="luna-section__head luna-section__head--center">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      <h2 class="luna-h2 luna-reveal" id="luna-benefits-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+    </header>
+
+    <div class="luna-benefits__grid">
+      {%- for block in section.blocks -%}
+        <article class="luna-card luna-benefit luna-reveal" {{ block.shopify_attributes }}>
+          <div class="luna-benefit__media">
+            {%- render 'luna-scene',
+              scene: block.settings.scene,
+              image: block.settings.image,
+              alt: block.settings.image_alt,
+              sizes: luna_sizes,
+              class: 'luna-benefit__image'
+            -%}
+            {%- if section.settings.size_label != blank -%}
+              <p class="luna-chip luna-benefit__size">{{ section.settings.size_label | escape }}</p>
+            {%- endif -%}
+          </div>
+          <div class="luna-benefit__body">
+            {%- if block.settings.icon != 'none' -%}
+              <span class="luna-benefit__icon">{%- render 'luna-icon', name: block.settings.icon, size: 22 -%}</span>
+            {%- endif -%}
+            <h3 class="luna-h3">{{ block.settings.title | escape }}</h3>
+            {%- if block.settings.text != blank -%}
+              <div class="luna-text luna-muted">{{ block.settings.text }}</div>
+            {%- endif -%}
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Benefici",
+  "class": "luna-section-benefits",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Perché tutti la notano"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Un pezzo di cielo, sul tuo comodino."
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura sopra le immagini",
+      "info": "La misura reale va sempre vicino alle immagini grandi della lampada.",
+      "default": "Ø 8,5 cm"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "benefit",
+      "name": "Beneficio",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Immagine (4:5)",
+          "info": "Se resta vuota si usa l'immagine del tema scelta qui sotto."
+        },
+        {
+          "type": "select",
+          "id": "scene",
+          "label": "Immagine del tema",
+          "options": [
+            { "value": "orbita", "label": "Orbita" },
+            { "value": "caldo", "label": "Luce calda" },
+            { "value": "eclissi", "label": "Eclissi" },
+            { "value": "natale", "label": "Natale" }
+          ],
+          "default": "orbita"
+        },
+        {
+          "type": "text",
+          "id": "image_alt",
+          "label": "Testo alternativo dell'immagine",
+          "default": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icona",
+          "options": [
+            { "value": "calamita", "label": "Calamita" },
+            { "value": "luce", "label": "Luce" },
+            { "value": "regalo", "label": "Regalo" },
+            { "value": "luna", "label": "Luna" },
+            { "value": "scintilla", "label": "Scintilla" },
+            { "value": "stella", "label": "Stella" },
+            { "value": "none", "label": "Nessuna" }
+          ],
+          "default": "calamita"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Titolo",
+          "default": "Levita davvero"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Testo",
+          "default": "<p>Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Benefici",
+      "blocks": [
+        {
+          "type": "benefit",
+          "settings": {
+            "scene": "orbita",
+            "image_alt": "Lampada Lunare Levitante accesa con un anello di luce che le gira intorno, sospesa sopra la base",
+            "icon": "calamita",
+            "title": "Levita davvero",
+            "text": "<p>Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.</p>"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "scene": "caldo",
+            "image_alt": "Lampada Lunare Levitante accesa in una stanza buia, con una luce calda che illumina il piano",
+            "icon": "luce",
+            "title": "Luce che scalda la stanza",
+            "text": "<p>Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.</p>"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "scene": "eclissi",
+            "image_alt": "Lampada Lunare Levitante accesa davanti a un'eclissi con la corona di luce",
+            "icon": "regalo",
+            "title": "Il regalo che non si dimentica",
+            "text": "<p>Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.</p>"
+          }
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

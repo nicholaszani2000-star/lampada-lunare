@@ -1935,10 +1935,700 @@ html {
   }
 }
 
+/* 18c. Benefici: tre card in vetro ------------------------------------ */
+.luna-benefits__grid {
+  display: grid;
+  gap: var(--luna-gap);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.luna-benefit {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.luna-benefit__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--luna-bg-2);
+}
+
+/* L'immagine sfuma nel vetro della card: nessun bordo netto */
+.luna-benefit__media::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 28%;
+  background: linear-gradient(180deg, rgba(5, 6, 11, 0), rgba(5, 6, 11, .55));
+  pointer-events: none;
+}
+
+.luna-benefit__image,
+.luna-gift__image,
+.luna-specs__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.luna-benefit__size,
+.luna-gift__size {
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  left: 14px;
+  min-height: 30px;
+  padding: 5px 12px;
+  background: rgba(5, 6, 11, .45);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: var(--luna-text-micro);
+}
+
+.luna-benefit__body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 10px;
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.luna-benefit__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border: 1px solid rgba(255, 217, 163, .22);
+  border-radius: 50%;
+  background: rgba(255, 217, 163, .08);
+  color: var(--luna-light);
+}
+
+/* Tablet: card orizzontali, così l'immagine 4:5 non diventa altissima */
+@media (min-width: 600px) and (max-width: 899px) {
+  .luna-benefit {
+    flex-direction: row;
+  }
+
+  .luna-benefit__media {
+    flex: 0 0 42%;
+  }
+
+  .luna-benefit__media::after {
+    inset: 0 0 0 auto;
+    width: 28%;
+    height: auto;
+    background: linear-gradient(90deg, rgba(5, 6, 11, 0), rgba(5, 6, 11, .5));
+  }
+
+  .luna-benefit__body {
+    align-content: center;
+  }
+}
+
+/* Desktop: tre colonne della stessa altezza */
+@media (min-width: 900px) {
+  .luna-benefits__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+/* 18d. Come funziona: passaggi e lampada che si monta ------------------- */
+.luna-how__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'head' 'visual' 'body';
+  gap: clamp(28px, 5vw, 48px) clamp(32px, 6vw, 80px);
+}
+
+.luna-how__head {
+  grid-area: head;
+  margin-bottom: 0;
+}
+
+.luna-how__body {
+  grid-area: body;
+  display: grid;
+  gap: 28px;
+}
+
+.luna-how__steps {
+  display: grid;
+  gap: 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.luna-how__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* Filo che unisce i numeri: è una sequenza */
+.luna-how__step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 21.5px;
+  top: 52px;
+  bottom: -18px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(255, 217, 163, .4), rgba(255, 217, 163, .06));
+}
+
+.luna-how__number {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 217, 163, .35);
+  border-radius: 50%;
+  background: rgba(255, 217, 163, .06);
+  color: var(--luna-light);
+  font-family: var(--luna-font-display);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.luna-how__step-body {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.luna-how__note {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--luna-line);
+  border-radius: var(--luna-radius-s);
+  background: var(--luna-glass);
+  color: var(--luna-muted);
+}
+
+.luna-how__note .luna-icon {
+  margin-top: 1px;
+  color: var(--luna-light);
+}
+
+.luna-how__visual {
+  grid-area: visual;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin: 0;
+}
+
+.luna-how__photo {
+  width: min(100%, 520px);
+  height: auto;
+  border-radius: var(--luna-radius-l);
+}
+
+.luna-how__stage {
+  position: relative;
+  width: min(76vw, 420px);
+  aspect-ratio: 1000 / 1275;
+}
+
+.luna-how__layer,
+.luna-how__layer img,
+.luna-how__rise,
+.luna-how__float {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.luna-how__layer img {
+  object-fit: contain;
+}
+
+.luna-how__glow {
+  position: absolute;
+  left: 44%;
+  top: 33%;
+  width: 120%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 217, 163, .30), rgba(255, 217, 163, 0));
+  pointer-events: none;
+}
+
+.luna-how__baselight {
+  position: absolute;
+  left: 44.08%;
+  top: 74.51%;
+  width: 62%;
+  height: 13%;
+  translate: -50% -50%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.luna-how__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse closest-side, rgba(255, 217, 163, .55), rgba(255, 217, 163, 0));
+  transform-origin: 50% 50%;
+  animation: luna-levitate-shadow 6s ease-in-out infinite;
+}
+
+/* Stato finale (senza JavaScript, movimento ridotto, editor): montata, accesa, sospesa */
+.luna-how__float {
+  animation: luna-how-float 6s ease-in-out infinite;
+}
+
+/* Ampiezza della levitazione: 0 finché la luna sale, 1 quando è montata */
+@property --luna-how-lift {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes luna-how-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, calc(-14px * var(--luna-how-lift)), 0); }
+}
+
+@keyframes luna-how-rise {
+  from { transform: translate3d(0, 7.5%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes luna-how-light {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes luna-how-lift {
+  from { --luna-how-lift: 0; }
+  to { --luna-how-lift: 1; }
+}
+
+/* Scroll: la luna parte appoggiata sulla base, sale, si accende e comincia a levitare */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .luna-how__stage {
+      view-timeline: --luna-how block;
+      animation: luna-how-lift linear both;
+      animation-timeline: --luna-how;
+      animation-range: cover 40% cover 50%;
+    }
+
+    .luna-how__rise {
+      animation: luna-how-rise linear both;
+      animation-timeline: --luna-how;
+      animation-range: entry 20% cover 40%;
+    }
+
+    .luna-how__lit {
+      animation: luna-how-light linear both;
+      animation-timeline: --luna-how;
+      animation-range: cover 34% cover 46%;
+    }
+  }
+}
+
+/* Ripiego senza view(): luna-landing.js aggiunge is-animated (stato iniziale, subito, senza transizioni)
+   e poi is-assembled (la luna sale, si accende e comincia a levitare) */
+.luna-how__stage.is-animated .luna-how__rise {
+  transform: translate3d(0, 7.5%, 0);
+}
+
+.luna-how__stage.is-animated .luna-how__lit {
+  opacity: 0;
+}
+
+.luna-how__stage.is-animated .luna-how__float {
+  animation: none;
+}
+
+.luna-how__stage.is-animated.is-assembled .luna-how__rise {
+  transform: translate3d(0, 0, 0);
+  transition: transform 1.4s var(--luna-ease);
+}
+
+.luna-how__stage.is-animated.is-assembled .luna-how__lit {
+  opacity: 1;
+  transition: opacity .9s var(--luna-ease) .9s;
+}
+
+.luna-how__stage.is-animated.is-assembled .luna-how__float {
+  animation: luna-how-float 6s ease-in-out 1.6s infinite;
+}
+
+@media (min-width: 1024px) {
+  .luna-how__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'head visual' 'body visual';
+    grid-template-rows: auto 1fr;
+  }
+
+  .luna-how__visual {
+    align-self: center;
+  }
+}
+
+/* 18e. Regalo ---------------------------------------------------------- */
+/* L'alone caldo è più largo dello schermo: si taglia solo ai lati, in verticale sfuma da sé */
+.luna-gift {
+  overflow-x: clip;
+}
+
+.luna-gift::before {
+  content: '';
+  position: absolute;
+  inset: 10% auto auto 50%;
+  z-index: -1;
+  width: min(120vw, 1100px);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 184, 102, .08), rgba(255, 184, 102, 0));
+  pointer-events: none;
+}
+
+.luna-gift__media,
+.luna-specs__media {
+  position: relative;
+  justify-self: center;
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  border-radius: var(--luna-radius-l);
+  background: var(--luna-bg-2);
+}
+
+.luna-gift__media {
+  aspect-ratio: 4 / 5;
+  box-shadow: 0 40px 90px -50px rgba(255, 184, 102, .45);
+}
+
+.luna-gift__text {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.luna-gift__chips {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.luna-gift__deadline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 184, 102, .32);
+  border-radius: var(--luna-radius-s);
+  background: rgba(255, 184, 102, .08);
+  color: var(--luna-ink);
+  font-size: var(--luna-text-small);
+  line-height: 1.45;
+}
+
+.luna-gift__deadline .luna-icon {
+  flex: none;
+  color: var(--luna-amber);
+}
+
+.luna-gift__deadline strong {
+  color: var(--luna-light);
+  font-weight: 620;
+}
+
+.luna-gift__deadline[hidden],
+.luna-editor-note[hidden] {
+  display: none;
+}
+
+/* Note visibili solo nell'editor del tema */
+.luna-editor-note {
+  padding: 10px 14px;
+  border: 1px dashed rgba(255, 217, 163, .45);
+  border-radius: var(--luna-radius-s);
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+}
+
+/* 18f. Specifiche e confronto ----------------------------------------- */
+.luna-specs__media {
+  aspect-ratio: 1;
+}
+
+.luna-specs__list {
+  display: grid;
+  margin: 0;
+}
+
+.luna-specs__row {
+  display: grid;
+  grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--luna-line);
+}
+
+.luna-specs__row:first-child {
+  border-top: 1px solid var(--luna-line);
+}
+
+.luna-specs__row dt {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+  line-height: 1.5;
+}
+
+.luna-specs__row dd {
+  margin: 0;
+  color: var(--luna-ink);
+  font-size: .9375rem;
+  line-height: 1.5;
+}
+
+.luna-compare {
+  max-width: 860px;
+  margin: clamp(56px, 9vw, 112px) auto 0;
+}
+
+.luna-compare__title {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.luna-compare__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.luna-compare__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.luna-compare__mark--yes {
+  background: rgba(255, 217, 163, .14);
+  color: var(--luna-light);
+}
+
+.luna-compare__mark--no {
+  color: var(--luna-muted);
+  opacity: .7;
+}
+
+.luna-compare__text {
+  color: var(--luna-muted);
+  font-size: var(--luna-text-small);
+}
+
+/* Desktop e tablet: tabella con la colonna della lampada in evidenza */
+@media (min-width: 640px) {
+  .luna-compare__table th,
+  .luna-compare__table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--luna-line);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .luna-compare__table thead th {
+    color: var(--luna-muted);
+    font-size: var(--luna-text-small);
+    font-weight: 560;
+    line-height: 1.3;
+  }
+
+  .luna-compare__table tbody th {
+    color: var(--luna-ink);
+    font-weight: 460;
+    text-align: left;
+  }
+
+  .luna-compare__table .luna-compare__ours {
+    width: 26%;
+    background: rgba(255, 217, 163, .05);
+  }
+
+  .luna-compare__table thead .luna-compare__ours {
+    border-radius: var(--luna-radius-s) var(--luna-radius-s) 0 0;
+    color: var(--luna-light);
+  }
+
+  .luna-compare__table tbody tr:last-child .luna-compare__ours {
+    border-radius: 0 0 var(--luna-radius-s) var(--luna-radius-s);
+  }
+
+  .luna-compare__table tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+}
+
+/* Mobile: ogni riga diventa una scheda leggibile, niente scroll orizzontale */
+@media (max-width: 639px) {
+  .luna-compare__table,
+  .luna-compare__table tbody,
+  .luna-compare__table tr,
+  .luna-compare__table th,
+  .luna-compare__table td {
+    display: block;
+  }
+
+  .luna-compare__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .luna-compare__table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .luna-compare__table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid var(--luna-line);
+    border-radius: var(--luna-radius);
+    background: var(--luna-glass);
+  }
+
+  .luna-compare__table tbody th {
+    margin-bottom: 4px;
+    color: var(--luna-ink);
+    font-weight: 460;
+    text-align: left;
+  }
+
+  .luna-compare__table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px 8px 8px 12px;
+    border-radius: var(--luna-radius-s);
+    background: rgba(255, 255, 255, .03);
+  }
+
+  /* Nome della colonna e segno sulla stessa riga: schede basse e leggibili */
+  .luna-compare__table td::before {
+    content: attr(data-label);
+    flex: 1;
+    min-width: 0;
+    color: var(--luna-muted);
+    font-size: var(--luna-text-small);
+    line-height: 1.3;
+  }
+
+  .luna-compare__table td .luna-compare__mark {
+    flex: none;
+    width: 28px;
+    height: 28px;
+  }
+
+  .luna-compare__table td .luna-compare__text {
+    flex: none;
+    max-width: 50%;
+    text-align: right;
+  }
+
+  .luna-compare__table td.luna-compare__ours {
+    background: rgba(255, 217, 163, .08);
+  }
+
+  .luna-compare__table td.luna-compare__ours::before {
+    color: var(--luna-light);
+  }
+}
+
+/* 18g. Recensioni ------------------------------------------------------ */
+.luna-reviews__app {
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+.luna-reviews__app + .luna-reviews__app,
+.luna-reviews__app + .luna-reviews__videos {
+  margin-top: clamp(32px, 5vw, 56px);
+}
+
+.luna-reviews__videos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .luna-reviews__videos {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--luna-gap);
+  }
+}
+
+.luna-reviews__video {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--luna-radius);
+  background: var(--luna-bg-2);
+}
+
+.luna-reviews__player {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.luna-reviews__placeholder p {
+  margin-block: 40px;
+  padding: 32px;
+  border: 1px dashed rgba(255, 217, 163, .45);
+  border-radius: var(--luna-radius);
+  color: var(--luna-muted);
+  text-align: center;
+}
+
 /* 19. Editor del tema ------------------------------------------------- */
 .luna-is-editor .luna-reveal {
   opacity: 1 !important;
   transform: none !important;
+}
+
+/* Nell'editor la lampada di «Come funziona» è già montata e accesa */
+.luna-is-editor .luna-how__stage,
+.luna-is-editor .luna-how__rise,
+.luna-is-editor .luna-how__lit {
+  animation: none;
 }
 
 /* 20. Movimento ridotto: gli stati restano, cambiano senza animazione -- */
@@ -1946,6 +2636,8 @@ html {
   .luna-sky__nebula,
   .luna-levitate,
   .luna-levitate-shadow,
+  .luna-how__float,
+  .luna-how__pulse,
   .luna-cta__spinner {
     animation: none;
   }

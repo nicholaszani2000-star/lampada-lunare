@@ -28,6 +28,18 @@ export async function scrollThrough(page) {
   await page.waitForTimeout(900);
 }
 
+/**
+ * Solo per gli screenshot a pagina intera: il cielo è fisso alla finestra e coprirebbe solo la prima schermata,
+ * lasciando un bordo che nel browser non esiste.
+ */
+export async function stretchSky(page) {
+  await page.addStyleTag({
+    content: `.luna-sky{height:${await page.evaluate(() => document.documentElement.scrollHeight)}px!important;` +
+      'contain:none!important;background-size:100% 100vh!important;background-repeat:no-repeat!important;' +
+      'background-color:var(--luna-bg)!important}',
+  });
+}
+
 /** Registra errori di console, eccezioni, richieste fallite e risposte HTTP ≥ 400. */
 // Avvisi del renderer software di Chromium headless (SwiftShader) quando Playwright legge i pixel di un canvas WebGL
 // per lo screenshot: non vengono dal nostro codice e su un telefono vero non esistono.
@@ -70,13 +82,7 @@ async function main() {
       await page.goto(`${server.url}/${shot.page}`, { waitUntil: 'networkidle' });
       await page.evaluate(() => document.fonts.ready);
       await scrollThrough(page);
-      // Solo per lo screenshot a pagina intera: il cielo è fisso alla finestra e coprirebbe solo
-      // la prima schermata, lasciando un bordo che nel browser non esiste
-      await page.addStyleTag({
-        content: `.luna-sky{height:${await page.evaluate(() => document.documentElement.scrollHeight)}px!important;` +
-          'contain:none!important;background-size:100% 100vh!important;background-repeat:no-repeat!important;' +
-          'background-color:var(--luna-bg)!important}',
-      });
+      await stretchSky(page);
       const jpeg = shot.file.endsWith('.jpg');
       await page.screenshot({
         path: join(paths.qa, shot.file),

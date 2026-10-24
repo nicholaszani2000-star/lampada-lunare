@@ -6,8 +6,9 @@
 //           --esaurito        variante non disponibile
 //           --editor          simula l'editor del tema (request.design_mode e Shopify.designMode)
 //           --varianti        due varianti finte (opzione «Confezione»), per provare il selettore
-// Pagina di prova: out/due-tonalita.html ha una seconda tonalità finta nelle sezioni con blocchi «tone»
-// (la lampada vera ne ha una sola): serve a check.mjs per provare il selettore e la sincronia hero ↔ 3D.
+// Pagine di prova per check.mjs: out/due-tonalita.html ha una seconda tonalità finta nelle sezioni con blocchi
+// «tone» (la lampada vera ne ha una sola), per provare il selettore e la sincronia hero ↔ 3D; out/editor.html
+// simula l'editor del tema (come --editor), per provare quello che si vede solo lì.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve as resolvePath, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -714,6 +715,10 @@ export async function render(options = args) {
   writeFileSync(join(paths.out, 'index.html'), await renderPage(engine, data, sections));
   const twoTones = await renderSections(engine, data, join(THEME, 'templates', 'product.luna.json'), withTestTone);
   writeFileSync(join(paths.out, 'due-tonalita.html'), await renderPage(engine, data, twoTones));
+  const editorData = buildData(new Set([...options, '--editor']));
+  const editorEngine = createEngine(editorData.globals);
+  const editorSections = await renderSections(editorEngine, editorData, join(THEME, 'templates', 'product.luna.json'));
+  writeFileSync(join(paths.out, 'editor.html'), await renderPage(editorEngine, editorData, editorSections));
 
   // Catalogo dei componenti (snippet, CSS): non fa parte del tema
   const saleFree = buildData(new Set([...options, '--senza-barrato']));
@@ -725,7 +730,7 @@ export async function render(options = args) {
   writeFileSync(join(paths.out, 'styleguide.html'), await renderPage(engine, data, guide));
 
   const size = statSync(join(paths.out, 'index.html')).size;
-  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html e due-tonalita.html (prova)`);
+  console.log(`✓ studio/preview/out/index.html (${(size / 1024).toFixed(1)} KB), styleguide.html; prove: due-tonalita.html, editor.html`);
   return data;
 }
 
