@@ -27,12 +27,12 @@ Il negozio si collega solo nello step 7. Fino ad allora si lavora con theme chec
 - Materiale della luna: PLA stampato in 3D
 - Base: ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm
 - Nella confezione: Luna, base, alimentatore e istruzioni
-- Spedizione: gratuita, consegna in 7–14 giorni lavorativi (se non è gratuita, scrivi ovunque «Spedizione tracciata» al posto di «Spedizione gratuita»)
+- Spedizione: gratuita; la spedisco io dall'Italia il giorno lavorativo dopo l'ordine, con corriere tracciato (1–3 giorni lavorativi): consegna in 2–4 giorni lavorativi (se non è gratuita, scrivi ovunque «Spedizione tracciata» al posto di «Spedizione gratuita»)
 - Reso: entro 30 giorni dalla consegna
 - Fine della promo: 2026-12-18 alle 23:59 (ora italiana)
-- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-03 (consegna fino a 14 giorni lavorativi)
+- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-17 (spedizione il 18, consegna al massimo il 23)
 - Immagini: il pacchetto studio/input/luna-foto (leggi il suo LEGGIMI.txt): ritagli della lampada vera, accesa e spenta, con luna e base separate; sei scene pronte; le foto del fornitore, che servono solo come riferimento.
-- Scorte: il magazzino non tiene il conto dei pezzi, quindi niente riga delle scorte.
+- Scorte: merce mia, Shopify tiene il conto dei pezzi. La riga «Solo {n} pezzi disponibili» compare solo con i numeri veri, sotto la soglia (§10).
 - Recensioni: l'app non è ancora scelta; finché non c'è, la sezione reviews resta vuota e nascosta.
 - Negozio, ragione sociale, P.IVA e sede: arrivano più avanti; per ora restano segnaposto (setting vuoti).
 Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segnalalo nel report.
@@ -158,7 +158,7 @@ hero
 - suggerimento: «Tocca la luna per vederla accesa e spenta»
 - CTA: «Acquista ora — {prezzo}» (prezzo da Liquid)
 - consegna: «Ordina oggi, la ricevi tra {data1} e {data2}»
-- scorte: nessuna riga (il magazzino non tiene il conto dei pezzi)
+- scorte: «Solo {n} pezzi disponibili» (n dal magazzino Shopify; la riga compare solo con i numeri veri, sotto la soglia: §10)
 - fiducia: «Spedizione gratuita» · «Pagamenti protetti» · «Reso in 30 giorni»
 
 moon3d
@@ -203,7 +203,7 @@ reviews
 offer (la sezione sconto)
 - badge: «Offerta di lancio −{pct}%» (pct calcolato in Liquid dai prezzi di Shopify; niente badge se il barrato manca o non è più alto del prezzo)
 - H2: «La tua Luna a {prezzo}.»
-- riepilogo: «Lampada Lunare Levitante Ø 8,5 cm con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita in 7–14 giorni lavorativi» · «Reso entro 30 giorni»
+- riepilogo: «Lampada Lunare Levitante Ø 8,5 cm con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita dall'Italia in 2–4 giorni lavorativi» · «Reso entro 30 giorni»
 - prezzo al giorno: «Meno di {c} centesimi a sera per tutto il primo anno.»
 - garanzia, solo se il reso supera i 14 giorni: titolo «30 notti di prova», testo «Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.»
 - countdown: «L'offerta termina tra» gg : hh : mm : ss
@@ -213,7 +213,7 @@ faq (blocchi domanda/risposta)
 2 «È difficile posizionarla?»: «La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.»
 3 «Va collegata alla corrente?»: «Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.»
 4 «Come la spengo senza farla cadere?»: «Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.»
-5 «Quando arriva?»: «Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.»
+5 «Quando arriva?»: «Spediamo noi, dall'Italia, con corriere tracciato: la ricevi in 2–4 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.»
 6 «E se non mi piace?»: «Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.»
 7 «È adatta ai bambini?»: «È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.»
 8 «Il pagamento è sicuro?»: «Il checkout è gestito da Shopify su connessione cifrata. Puoi pagare con i metodi che vedi in fondo alla pagina, anche con il pagamento rapido dallo smartphone.»

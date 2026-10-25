@@ -41,9 +41,9 @@
         "rotation_hint": true,
         "cta_text": "Acquista ora — {prezzo}",
         "delivery_text": "Ordina oggi, la ricevi tra {data1} e {data2}",
-        "delivery_min": 7,
-        "delivery_max": 14,
-        "cutoff_hour": 14,
+        "delivery_min": 1,
+        "delivery_max": 3,
+        "cutoff_hour": 0,
         "trust_1": "Spedizione gratuita",
         "trust_2": "Pagamenti protetti",
         "trust_3": "Reso in 30 giorni"
@@ -218,7 +218,7 @@
         "christmas_text": "Ordina entro il {data} per riceverla prima di Natale.",
         "image_alt": "Lampada Lunare Levitante accesa tra luci di Natale sfocate, con la luna sospesa sopra la base",
         "size_label": "Ø 8,5 cm",
-        "christmas_deadline": "2026-12-03"
+        "christmas_deadline": "2026-12-17"
       }
     },
     "specs": {
@@ -366,7 +366,7 @@
         "item3": {
           "type": "item",
           "settings": {
-            "text": "Spedizione gratuita in 7–14 giorni lavorativi"
+            "text": "Spedizione gratuita dall'Italia in 2–4 giorni lavorativi"
           }
         },
         "item4": {
@@ -441,7 +441,7 @@
           "type": "question",
           "settings": {
             "question": "Quando arriva?",
-            "answer": "<p>Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.</p>"
+            "answer": "<p>Spediamo noi, dall'Italia, con corriere tracciato: la ricevi in 2–4 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.</p>"
           }
         },
         "question6": {

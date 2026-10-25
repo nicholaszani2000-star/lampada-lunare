@@ -693,7 +693,7 @@ function templateSection(type) {
   return Object.entries(template.sections).find(([, section]) => section.type === type) || [null, null];
 }
 
-/** Istante preciso di un'ora italiana ('2026-12-03', '23:30'), con l'ora legale giusta. */
+/** Istante preciso di un'ora italiana ('2026-12-17', '23:30'), con l'ora legale giusta. */
 function romeInstant(day, time) {
   const wall = Date.parse(`${day}T${time}:00Z`);
   const parts = (instant) =>
@@ -1216,23 +1216,29 @@ function expectedDelivery(romeDay, hour, minDays, maxDays, cutoff) {
     }
     return cursor;
   };
-  return { ship: ROME_DAY.format(day), from: ROME_DAY.format(add(day, minDays)), to: ROME_DAY.format(add(day, maxDays)) };
+  const last = add(day, maxDays);
+  return { ship: ROME_DAY.format(day), from: ROME_DAY.format(add(day, minDays)), to: ROME_DAY.format(last), last };
 }
 
 async function deliveryChecks(browser, baseUrl) {
   const results = [];
   const hero = heroSettings();
-  const min = hero.delivery_min ?? 7;
-  const max = hero.delivery_max ?? 14;
-  const cutoff = hero.cutoff_hour ?? 14;
+  const min = hero.delivery_min ?? 1;
+  const max = hero.delivery_max ?? 3;
+  const cutoff = hero.cutoff_hour ?? 0;
+  // Con l'ora limite 0 ogni ordine è «dopo l'ora limite»: parte il giorno lavorativo dopo
+  const [, gift] = templateSection('luna-gift');
+  const christmas = gift?.settings?.christmas_deadline || '';
   const cases = [
-    ['ordine di venerdì prima dell\'ora limite', '2026-11-06', '10:00'],
-    ['ordine di venerdì dopo l\'ora limite', '2026-11-06', '15:30'],
+    ['ordine di venerdì', '2026-11-06', '10:00'],
     ['ordine di sabato', '2026-11-07', '10:00'],
-    ['ordine di mercoledì dopo l\'ora limite', '2026-11-04', '15:30'],
-    ['ordine il giorno prima dell\'Immacolata, dopo l\'ora limite', '2026-12-07', '15:00'],
+    ['ordine di mercoledì appena dopo mezzanotte', '2026-11-04', '00:30'],
+    ['ordine di mercoledì dopo le 14', '2026-11-04', '15:30'],
+    ['ordine il giorno prima dell\'Immacolata', '2026-12-07', '15:00'],
   ];
-  for (const [label, day, time] of cases) {
+  // Ultimo giorno d'ordine per Natale (sezione Regalo), a fine giornata: la consegna deve arrivare entro il 24
+  if (christmas) cases.push([`ultimo giorno d'ordine per Natale, a fine giornata`, christmas, '23:30', true]);
+  for (const [label, day, time, beforeChristmas] of cases) {
     const ctx = await context(browser, mobileOptions);
     const page = await ctx.newPage();
     await page.clock.setFixedTime(romeInstant(day, time));
@@ -1244,11 +1250,14 @@ async function deliveryChecks(browser, baseUrl) {
     }));
     const hour = Number(time.split(':')[0]);
     const want = expectedDelivery(day, hour, min, max, cutoff);
+    const christmasDay = Date.UTC(Number(day.slice(0, 4)), 11, 25, 12);
+    const inTime = !beforeChristmas || want.last < christmasDay;
     results.push({
       name: `consegna stimata · ${label}`,
-      ok: shown.from === want.from && shown.to === want.to,
+      ok: shown.from === want.from && shown.to === want.to && inTime,
       detail: `${ROME_DAY.format(Date.parse(`${day}T12:00:00Z`))} alle ${time}, spedizione ${want.ship}: «${shown.text}» ` +
-        `(attese ${want.from} e ${want.to}; ${min}–${max} giorni lavorativi, ora limite ${cutoff}:00)`,
+        `(attese ${want.from} e ${want.to}; ${min}–${max} giorni lavorativi, ora limite ${cutoff}:00)` +
+        (beforeChristmas ? ` · ${inTime ? 'arriva prima di Natale' : 'NON arriva prima di Natale'}` : ''),
     });
     await ctx.close();
   }
@@ -1323,7 +1332,8 @@ async function legalChecks(browser, baseUrl) {
     );
   }
 
-  // 3. Scorte: solo dal magazzino Shopify. Senza conteggio dei pezzi nessuna riga; con 3 pezzi veri la riga c'è
+  // 3. Scorte: solo dal magazzino Shopify. Senza conteggio dei pezzi nessuna riga; sopra la soglia nessuna riga;
+  //    con 3 pezzi veri (sotto la soglia) la riga c'è
   {
     const read = async (pageName) => {
       const { ctx, page } = await open(pageName);
@@ -1332,12 +1342,15 @@ async function legalChecks(browser, baseUrl) {
       return state;
     };
     const untracked = await read('index.html');
+    const plenty = await read('scorte-sopra-soglia.html');
     const tracked = await read('scorte-reali.html');
+    const line = (state) => (state.visible ? `«${state.text}»` : 'nessuna riga');
     record(
-      'scorte solo dal magazzino Shopify',
-      !untracked.visible && untracked.text === '' && tracked.visible && tracked.text.includes('3'),
-      `magazzino senza conteggio: ${untracked.visible ? `«${untracked.text}»` : 'nessuna riga'} · ` +
-        `3 pezzi nel magazzino Shopify: ${tracked.visible ? `«${tracked.text}»` : 'nessuna riga'}`
+      'scorte solo dal magazzino Shopify, sotto la soglia',
+      !untracked.visible && untracked.text === '' && !plenty.visible && plenty.text === '' &&
+        tracked.visible && tracked.text.includes('3'),
+      `magazzino senza conteggio: ${line(untracked)} · 40 pezzi, sopra la soglia: ${line(plenty)} · ` +
+        `3 pezzi nel magazzino Shopify: ${line(tracked)}`
     );
   }
 

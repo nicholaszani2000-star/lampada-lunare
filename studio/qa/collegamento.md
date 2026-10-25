@@ -87,9 +87,10 @@ solo finché il modello «luna» non è assegnato al prodotto.
       → Modifica formattazione).
 - [ ] **Fuso orario** del negozio: Europa/Roma (Impostazioni → Generali). Consegna stimata e scadenze contano i
       giorni lavorativi italiani.
-- [ ] **Magazzino**: «Monitora quantità» disattivato. La pagina non mostra righe di scorte; le mostrerebbe solo
-      con un conteggio vero.
-- [ ] **Spedizione** gratuita in Italia, 7–14 giorni lavorativi (Impostazioni → Spedizione e consegna).
+- [ ] **Magazzino**: «Monitora quantità» attivo, con il numero vero di pezzi che hai. La riga «Solo {n} pezzi
+      disponibili» compare da sola solo sotto la soglia della hero (oggi 15); sopra, nessuna riga.
+- [ ] **Spedizione** gratuita in Italia, 2–4 giorni lavorativi: spedisci tu il giorno lavorativo dopo l'ordine,
+      con corriere tracciato (Impostazioni → Spedizione e consegna).
 - [ ] **Policy**: politica di rimborso (30 giorni dalla consegna) e informativa sulla privacy
       (Impostazioni → Policy). Footer, garanzia e FAQ le collegano da sole.
 - [ ] **Imposte**: prezzi con IVA inclusa. La pagina scrive «IVA inclusa» solo se è così.
@@ -104,9 +105,8 @@ solo finché il modello «luna» non è assegnato al prodotto.
 - [ ] **Ragione sociale, P.IVA e sede** nel footer, dall'editor (sezione Footer).
 - [ ] **Countdown** della sezione Offerta («Mostra countdown»): acceso solo se lo sconto è reale e finisce
       davvero alla data impostata.
-- [ ] **Scadenza di Natale** nella sezione Regalo (oggi 2026-12-03). Con 14 giorni lavorativi un ordine del
-      3 dicembre prima delle 14 arriva entro il 24, ma uno dello stesso giorno dopo le 14 può arrivare il 28.
-      Per essere sicuri: 2026-12-02.
+- [ ] **Scadenza di Natale** nella sezione Regalo: 2026-12-17. Un ordine del 17 parte il 18 e arriva al
+      massimo il 23.
 - [ ] **Un ordine di prova** completato prima di accendere le campagne.
 - [ ] **Link per le campagne**: `https://<dominio>/products/lampada-lunare-levitante`, senza `?view=luna`. Con il
       modello «luna» assegnato, la pagina del prodotto è già la landing. Aggiungi i parametri UTM e, per gli
