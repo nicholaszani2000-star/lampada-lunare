@@ -1,0 +1,7 @@
+{
+  "descrizione": "Magazzino Shopify che tiene il conto dei pezzi, con 40 pezzi (sopra la soglia di 15): nessuna riga delle scorte (§10).",
+  "variante": {
+    "inventory_management": "shopify",
+    "inventory_quantity": 40
+  }
+}

@@ -1,0 +1,13 @@
+TEXTURE DELLA LUNA PER LA SEZIONE 3D (STEP 4)
+
+moon-color-2k.jpg   mappa colore equirettangolare, 2048 × 1024
+                    Fonte: Solar System Scope, https://www.solarsystemscope.com/textures/
+                    Licenza: Creative Commons Attribution 4.0 (CC BY 4.0): uso consentito anche a scopo commerciale, con attribuzione.
+moon-bump-1k.jpg    mappa del rilievo, 1024 × 512, ricavata dalla mappa colore (crateri e bordi in evidenza).
+                    Stessa fonte, stessa licenza.
+
+Attribuzione obbligatoria
+  In pagina, nella didascalia della sezione 3D: «Texture della Luna: Solar System Scope, CC BY 4.0»
+  In studio/CREDITS.md: fonte, link e licenza.
+
+Le mappe NASA del CGI Moon Kit non sono raggiungibili da questi ambienti cloud: queste le sostituiscono.

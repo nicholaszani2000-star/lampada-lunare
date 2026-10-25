@@ -1,0 +1,515 @@
+{
+  "layout": "luna-landing",
+  "sections": {
+    "announcement": {
+      "type": "luna-announcement",
+      "settings": {
+        "text": "Spedizione gratuita in tutta Italia · Reso entro 30 giorni",
+        "icon": "camion"
+      }
+    },
+    "header": {
+      "type": "luna-header",
+      "settings": {
+        "brand_name": "Lunaria",
+        "logo_width": 120,
+        "show_moon": true,
+        "sticky": true
+      }
+    },
+    "hero": {
+      "type": "luna-hero",
+      "blocks": {
+        "tone_bianco": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco"
+      ],
+      "settings": {
+        "eyebrow": "Levitazione magnetica · Ø 8,5 cm",
+        "heading": "La Luna. <em>Sospesa</em> nella tua stanza.",
+        "heading_regalo": "Il regalo che fa dire <em>wow</em> appena si accende.",
+        "heading_relax": "Spegni lo schermo. <em>Accendi</em> la Luna.",
+        "subheading": "<p>Fluttua a pochi centimetri dalla base, senza toccare nulla. Ruota piano su se stessa e riempie la stanza di luce calda. Chi la vede fa sempre la stessa domanda: “Ma come fa a stare su?”</p>",
+        "hint": "Tocca la luna per vederla accesa e spenta",
+        "rotation_hint": true,
+        "cta_text": "Acquista ora — {prezzo}",
+        "delivery_text": "Ordina oggi, la ricevi tra {data1} e {data2}",
+        "delivery_min": 1,
+        "delivery_max": 3,
+        "cutoff_hour": 0,
+        "trust_1": "Spedizione gratuita",
+        "trust_2": "Pagamenti protetti",
+        "trust_3": "Reso in 30 giorni"
+      }
+    },
+    "moon3d": {
+      "type": "luna-moon3d",
+      "blocks": {
+        "tone_bianco": {
+          "type": "tone",
+          "settings": {
+            "name": "Bianco caldo",
+            "color": "#FFD9A3"
+          }
+        }
+      },
+      "block_order": [
+        "tone_bianco"
+      ],
+      "settings": {
+        "eyebrow": "Provala adesso",
+        "heading": "Girala. Accendila.",
+        "text_drag": "Trascina per farla ruotare.",
+        "text_switch": "Con il pulsante qui sotto la vedi accesa e spenta.",
+        "drag_hint": "Trascina per ruotarla",
+        "auto_rotate": true,
+        "caption": "Anteprima 3D illustrativa",
+        "credit": "Texture della Luna: Solar System Scope, CC BY 4.0"
+      }
+    },
+    "footer": {
+      "type": "luna-footer",
+      "settings": {
+        "copyright": "© {anno} Lunaria",
+        "vat_label": "P.IVA",
+        "show_policies": true,
+        "policies_label": "Informazioni legali",
+        "show_payment_icons": true,
+        "payments_label": "Metodi di pagamento accettati"
+      }
+    },
+    "sticky": {
+      "type": "luna-sticky",
+      "settings": {
+        "title": "Lampada Lunare Levitante",
+        "cta_text": "Acquista"
+      }
+    },
+    "benefits": {
+      "type": "luna-benefits",
+      "blocks": {
+        "benefit1": {
+          "type": "benefit",
+          "settings": {
+            "scene": "orbita",
+            "image_alt": "Lampada Lunare Levitante accesa con un anello di luce che le gira intorno, sospesa sopra la base",
+            "icon": "calamita",
+            "title": "Levita davvero",
+            "text": "<p>Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.</p>"
+          }
+        },
+        "benefit2": {
+          "type": "benefit",
+          "settings": {
+            "scene": "caldo",
+            "image_alt": "Lampada Lunare Levitante accesa in una stanza buia, con una luce calda che illumina il piano",
+            "icon": "luce",
+            "title": "Luce che scalda la stanza",
+            "text": "<p>Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.</p>"
+          }
+        },
+        "benefit3": {
+          "type": "benefit",
+          "settings": {
+            "scene": "eclissi",
+            "image_alt": "Lampada Lunare Levitante accesa davanti a un'eclissi con la corona di luce",
+            "icon": "regalo",
+            "title": "Il regalo che non si dimentica",
+            "text": "<p>Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "benefit1",
+        "benefit2",
+        "benefit3"
+      ],
+      "settings": {
+        "eyebrow": "Perché tutti la notano",
+        "heading": "Un pezzo di cielo, sul tuo comodino.",
+        "size_label": "Ø 8,5 cm"
+      }
+    },
+    "how": {
+      "type": "luna-how",
+      "blocks": {
+        "step1": {
+          "type": "step",
+          "settings": {
+            "title": "Collega la base",
+            "text": "Inserisci l'alimentatore nella presa: la base è pronta."
+          }
+        },
+        "step2": {
+          "type": "step",
+          "settings": {
+            "title": "Avvicina la Luna",
+            "text": "Tienila sopra il centro della base: sentirai il campo magnetico che la aggancia."
+          }
+        },
+        "step3": {
+          "type": "step",
+          "settings": {
+            "title": "Lasciala andare",
+            "text": "Apri piano le dita. La Luna resta sospesa e inizia a ruotare."
+          }
+        }
+      },
+      "block_order": [
+        "step1",
+        "step2",
+        "step3"
+      ],
+      "settings": {
+        "eyebrow": "Facilissima",
+        "heading": "Pronta in tre gesti.",
+        "note": "<p>La prima volta serve un minuto di pratica per trovare il punto di equilibrio. Poi diventa un gesto da due secondi.</p>",
+        "animation_alt": "La luna sale dalla base, si accende da sola e resta sospesa a mezz'aria",
+        "size_label": "Ø 8,5 cm",
+        "image_alt": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base"
+      }
+    },
+    "gift": {
+      "type": "luna-gift",
+      "blocks": {
+        "chip1": {
+          "type": "chip",
+          "settings": {
+            "label": "Per lei"
+          }
+        },
+        "chip2": {
+          "type": "chip",
+          "settings": {
+            "label": "Per lui"
+          }
+        },
+        "chip3": {
+          "type": "chip",
+          "settings": {
+            "label": "Per la coppia"
+          }
+        },
+        "chip4": {
+          "type": "chip",
+          "settings": {
+            "label": "Per chi ha già tutto"
+          }
+        }
+      },
+      "block_order": [
+        "chip1",
+        "chip2",
+        "chip3",
+        "chip4"
+      ],
+      "settings": {
+        "eyebrow": "Idea regalo",
+        "heading": "Il regalo che si scarta… e poi si accende.",
+        "text": "<p>Per lei, per lui, per la coppia o per chi ha già tutto. Resta in casa, sul comodino o in salotto, e fa parlare ogni volta che si accende.</p>",
+        "chips_label": "Per chi è",
+        "christmas_text": "Ordina entro il {data} per riceverla prima di Natale.",
+        "image_alt": "Lampada Lunare Levitante accesa tra luci di Natale sfocate, con la luna sospesa sopra la base",
+        "size_label": "Ø 8,5 cm",
+        "christmas_deadline": "2026-12-17"
+      }
+    },
+    "specs": {
+      "type": "luna-specs",
+      "blocks": {
+        "spec1": {
+          "type": "spec",
+          "settings": {
+            "label": "Diametro",
+            "value": "Ø 8,5 cm"
+          }
+        },
+        "spec2": {
+          "type": "spec",
+          "settings": {
+            "label": "Materiale",
+            "value": "Luna in PLA stampato in 3D"
+          }
+        },
+        "spec3": {
+          "type": "spec",
+          "settings": {
+            "label": "Luce",
+            "value": "Bianco caldo, una sola tonalità"
+          }
+        },
+        "spec4": {
+          "type": "spec",
+          "settings": {
+            "label": "Accensione",
+            "value": "Si accende da sola appena la luna levita sopra la base"
+          }
+        },
+        "spec5": {
+          "type": "spec",
+          "settings": {
+            "label": "Alimentazione",
+            "value": "La base va alla presa con l'alimentatore incluso; la luna si accende senza fili"
+          }
+        },
+        "spec6": {
+          "type": "spec",
+          "settings": {
+            "label": "Base",
+            "value": "ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm"
+          }
+        },
+        "spec7": {
+          "type": "spec",
+          "settings": {
+            "label": "Nella confezione",
+            "value": "Luna, base, alimentatore e istruzioni"
+          }
+        },
+        "compare1": {
+          "type": "compare",
+          "settings": {
+            "label": "Fluttua a mezz'aria",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare2": {
+          "type": "compare",
+          "settings": {
+            "label": "Ruota da sola",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare3": {
+          "type": "compare",
+          "settings": {
+            "label": "Luce calda e morbida",
+            "ours": "yes",
+            "theirs": "text",
+            "theirs_text": "A volte"
+          }
+        },
+        "compare4": {
+          "type": "compare",
+          "settings": {
+            "label": "Fa parlare chi entra in casa",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        },
+        "compare5": {
+          "type": "compare",
+          "settings": {
+            "label": "Effetto regalo",
+            "ours": "yes",
+            "theirs": "no"
+          }
+        }
+      },
+      "block_order": [
+        "spec1",
+        "spec2",
+        "spec3",
+        "spec4",
+        "spec5",
+        "spec6",
+        "spec7",
+        "compare1",
+        "compare2",
+        "compare3",
+        "compare4",
+        "compare5"
+      ],
+      "settings": {
+        "eyebrow": "Dettagli",
+        "heading": "Tutto quello che c'è da sapere.",
+        "image_alt": "Lampada Lunare Levitante con le misure: luna di Ø 8,5 cm, base larga 10,8 cm e alta 2,2 cm",
+        "compare_title": "Lampada Lunare Levitante o una lampada qualsiasi?",
+        "ours_label": "Lampada Lunare Levitante",
+        "theirs_label": "Una lampada qualsiasi",
+        "feature_label": "Caratteristica",
+        "yes_label": "Sì",
+        "no_label": "No"
+      }
+    },
+    "reviews": {
+      "type": "luna-reviews",
+      "settings": {
+        "eyebrow": "Recensioni",
+        "heading": "Cosa dice chi l'ha già accesa."
+      }
+    },
+    "offer": {
+      "type": "luna-offer",
+      "blocks": {
+        "item1": {
+          "type": "item",
+          "settings": {
+            "text": "Lampada Lunare Levitante Ø 8,5 cm con base magnetica"
+          }
+        },
+        "item2": {
+          "type": "item",
+          "settings": {
+            "text": "Nella confezione: Luna, base, alimentatore e istruzioni"
+          }
+        },
+        "item3": {
+          "type": "item",
+          "settings": {
+            "text": "Spedizione gratuita dall'Italia in 2–4 giorni lavorativi"
+          }
+        },
+        "item4": {
+          "type": "item",
+          "settings": {
+            "text": "Reso entro 30 giorni"
+          }
+        }
+      },
+      "block_order": [
+        "item1",
+        "item2",
+        "item3",
+        "item4"
+      ],
+      "settings": {
+        "badge_text": "Offerta di lancio −{pct}%",
+        "heading": "La tua Luna a {prezzo}.",
+        "savings_text": "Risparmi {importo}",
+        "omnibus_text": "Prezzo più basso degli ultimi 30 giorni:",
+        "tax_text": "IVA inclusa",
+        "per_day_text": "Meno di {c} centesimi a sera per tutto il primo anno.",
+        "countdown_label": "L'offerta termina tra",
+        "label_days": "giorni",
+        "label_hours": "ore",
+        "label_minutes": "minuti",
+        "label_seconds": "secondi",
+        "cta_text": "Acquista ora — {prezzo}",
+        "loading_text": "Ti porto al checkout…",
+        "sold_out_text": "Esaurita",
+        "return_days": 30,
+        "guarantee_title": "30 notti di prova",
+        "guarantee_text": "Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.",
+        "policy_link_text": "politica di rimborso",
+        "show_per_day": true,
+        "show_countdown": false,
+        "countdown_end": "2026-12-18T23:59:00+01:00"
+      }
+    },
+    "faq": {
+      "type": "luna-faq",
+      "blocks": {
+        "question1": {
+          "type": "question",
+          "settings": {
+            "question": "Come fa a levitare?",
+            "answer": "<p>Nella base c'è un sistema magnetico che tiene la luna in equilibrio a pochi centimetri, senza alcun contatto.</p>"
+          }
+        },
+        "question2": {
+          "type": "question",
+          "settings": {
+            "question": "È difficile posizionarla?",
+            "answer": "<p>La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.</p>"
+          }
+        },
+        "question3": {
+          "type": "question",
+          "settings": {
+            "question": "Va collegata alla corrente?",
+            "answer": "<p>Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.</p>"
+          }
+        },
+        "question4": {
+          "type": "question",
+          "settings": {
+            "question": "Come la spengo senza farla cadere?",
+            "answer": "<p>Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.</p>"
+          }
+        },
+        "question5": {
+          "type": "question",
+          "settings": {
+            "question": "Quando arriva?",
+            "answer": "<p>Spediamo noi, dall'Italia, con corriere tracciato: la ricevi in 2–4 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.</p>"
+          }
+        },
+        "question6": {
+          "type": "question",
+          "settings": {
+            "question": "E se non mi piace?",
+            "answer": "<p>Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.</p>"
+          }
+        },
+        "question7": {
+          "type": "question",
+          "settings": {
+            "question": "È adatta ai bambini?",
+            "answer": "<p>È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.</p>"
+          }
+        },
+        "question8": {
+          "type": "question",
+          "settings": {
+            "question": "Il pagamento è sicuro?",
+            "answer": "<p>Il checkout è gestito da Shopify su connessione cifrata. Puoi pagare con i metodi che vedi in fondo alla pagina, anche con il pagamento rapido dallo smartphone.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "question1",
+        "question2",
+        "question3",
+        "question4",
+        "question5",
+        "question6",
+        "question7",
+        "question8"
+      ],
+      "settings": {
+        "heading": "Domande frequenti",
+        "policy_link_text": "politica di rimborso"
+      }
+    },
+    "final": {
+      "type": "luna-final",
+      "settings": {
+        "heading": "Stasera, accendi la Luna.",
+        "text": "Spedizione gratuita, 30 notti di prova e un regalo che nessuno dimentica.",
+        "return_days": 30,
+        "text_short_return": "Spedizione gratuita e un regalo che nessuno dimentica.",
+        "cta_text": "Acquista ora — {prezzo}",
+        "loading_text": "Ti porto al checkout…",
+        "sold_out_text": "Esaurita",
+        "image_alt": "Lampada Lunare Levitante accesa, con la luna sospesa sopra la base",
+        "size_label": "Ø 8,5 cm"
+      }
+    }
+  },
+  "order": [
+    "announcement",
+    "header",
+    "hero",
+    "moon3d",
+    "benefits",
+    "how",
+    "gift",
+    "specs",
+    "reviews",
+    "offer",
+    "faq",
+    "final",
+    "footer",
+    "sticky"
+  ]
+}

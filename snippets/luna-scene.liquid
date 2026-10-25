@@ -1,0 +1,57 @@
+{%- doc -%}
+  Immagine di una scena: quella scelta dall'editor (image_picker) oppure, se il campo è vuoto, l'asset del tema
+  esportato nello step 2. Sempre con width, height, loading="lazy" e decoding="async" (§4.7).
+
+  @param {string} scene - orbita, caldo, eclissi, natale (4:5, 800 e 1600 px) · notte, misure (1:1, 1000 e 2000 px)
+  @param {object} [image] - Immagine scelta dall'editor; se è vuota si usa l'asset luna-scene-{scene}
+  @param {string} alt - Testo alternativo, scritto nella sezione che mostra l'immagine
+  @param {string} sizes - Attributo sizes
+  @param {string} [class] - Classi CSS dell'immagine
+{%- enddoc -%}
+{%- if image != blank -%}
+  {{
+    image
+    | image_url: width: 1600
+    | image_tag:
+      widths: '400, 600, 800, 1000, 1200, 1600',
+      sizes: sizes,
+      alt: alt,
+      class: class,
+      loading: 'lazy',
+      decoding: 'async'
+  }}
+{%- else -%}
+  {%- liquid
+    assign luna_square = false
+    if scene == 'notte' or scene == 'misure'
+      assign luna_square = true
+    endif
+    if luna_square
+      assign luna_small = 1000
+      assign luna_large = 2000
+      assign luna_height = 1000
+    else
+      assign luna_small = 800
+      assign luna_large = 1600
+      assign luna_height = 1000
+    endif
+    assign luna_base = 'luna-scene-' | append: scene | append: '-'
+    assign luna_file_small = luna_base | append: luna_small | append: '.webp'
+    assign luna_file_large = luna_base | append: luna_large | append: '.webp'
+  -%}
+  <picture>
+    <img
+      src="{{ luna_file_small | asset_url }}"
+      srcset="{{ luna_file_small | asset_url }} {{ luna_small }}w, {{ luna_file_large | asset_url }} {{ luna_large }}w"
+      sizes="{{ sizes }}"
+      width="{{ luna_small }}"
+      height="{{ luna_height }}"
+      alt="{{ alt | escape }}"
+      {% if class != blank %}
+        class="{{ class }}"
+      {% endif %}
+      loading="lazy"
+      decoding="async"
+    >
+  </picture>
+{%- endif -%}

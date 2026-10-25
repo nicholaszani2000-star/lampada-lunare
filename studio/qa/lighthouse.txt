@@ -1,0 +1,20 @@
+Lighthouse 13.5.0 · mobile simulato · 2026-10-24T15:21:21.972Z · giro mediano su 3
+
+✓ Prestazioni             97 / obiettivo 85 (giri: 92–98)
+✓ Accessibilità          100 / obiettivo 95 (giri: 100–100)
+✓ Best practice          100 (giri: 100–100)
+✓ SEO                    100 / obiettivo 95 (giri: 100–100)
+
+  FCP          1,1 s (giri: 1054 ms–1351 ms)
+  LCP          2,4 s (giri: 2404 ms–2481 ms)
+  TBT          70 ms (giri: 36 ms–264 ms)
+  CLS          0,001 (giri: 0.000–0.001)
+  Speed Index  1,1 s (giri: 1143 ms–1351 ms)
+  ✓ LCP simulato sotto 2,5 s (osservato 147 ms) · ✓ CLS sotto 0,1 (§9)
+
+Nessun audit sotto 0,9.
+
+Script sul thread principale (ms totali · di cui esecuzione):
+  luna-landing.js                    1126 · 216
+  index.html                         275 · 12
+  Unattributable                     174 · 5

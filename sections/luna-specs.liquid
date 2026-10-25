@@ -1,0 +1,277 @@
+{%- comment -%}
+  Specifiche e confronto (§6.8). Accanto alla tabella l'immagine delle misure (sopra la tabella su mobile).
+  Blocchi «Specifica» (etichetta e valore, dati del §2) e «Confronto» (testo, valore per noi e per una lampada
+  qualsiasi: sì, no o testo libero). Su mobile ogni riga del confronto diventa una scheda: niente scroll
+  orizzontale. La tabella resta una tabella anche per i lettori di schermo (ruoli ARIA espliciti, perché il CSS
+  cambia display). Se la luna non ruotasse da sola (§2), basta togliere il blocco «Ruota da sola».
+{%- endcomment -%}
+{%- liquid
+  assign luna_specs = section.blocks | where: 'type', 'spec'
+  assign luna_rows = section.blocks | where: 'type', 'compare'
+  assign luna_sizes = '(min-width: 1024px) 520px, calc(100vw - 40px)'
+-%}
+<section class="luna-section luna-section--tint luna-specs" aria-labelledby="luna-specs-title-{{ section.id }}">
+  <div class="luna-container">
+    <header class="luna-section__head luna-section__head--center">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow luna-reveal">{{ section.settings.eyebrow | escape }}</p>
+      {%- endif -%}
+      <h2 class="luna-h2 luna-reveal" id="luna-specs-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+    </header>
+
+    <div class="luna-split luna-specs__grid">
+      <div class="luna-specs__media luna-reveal">
+        {%- render 'luna-scene',
+          scene: 'misure',
+          image: section.settings.image,
+          alt: section.settings.image_alt,
+          sizes: luna_sizes,
+          class: 'luna-specs__image'
+        -%}
+      </div>
+
+      {%- if luna_specs.size > 0 -%}
+        <dl class="luna-specs__list luna-reveal">
+          {%- for block in luna_specs -%}
+            <div class="luna-specs__row" {{ block.shopify_attributes }}>
+              <dt>{{ block.settings.label | escape }}</dt>
+              <dd>{{ block.settings.value | escape }}</dd>
+            </div>
+          {%- endfor -%}
+        </dl>
+      {%- endif -%}
+    </div>
+
+    {%- if luna_rows.size > 0 -%}
+      <div class="luna-compare luna-reveal" data-luna-comparison>
+        {%- if section.settings.compare_title != blank -%}
+          <h3 class="luna-h3 luna-compare__title" id="luna-compare-title-{{ section.id }}">
+            {{- section.settings.compare_title | escape -}}
+          </h3>
+        {%- endif -%}
+        <table
+          class="luna-compare__table"
+          role="table"
+          {% if section.settings.compare_title != blank %}
+            aria-labelledby="luna-compare-title-{{ section.id }}"
+          {% endif %}
+        >
+          <thead role="rowgroup">
+            <tr role="row">
+              <th scope="col" role="columnheader">
+                <span class="luna-visually-hidden">{{ section.settings.feature_label | escape }}</span>
+              </th>
+              <th scope="col" role="columnheader" class="luna-compare__ours">{{ section.settings.ours_label | escape }}</th>
+              <th scope="col" role="columnheader">{{ section.settings.theirs_label | escape }}</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
+            {%- for block in luna_rows -%}
+              <tr role="row" {{ block.shopify_attributes }}>
+                <th scope="row" role="rowheader">{{ block.settings.label | escape }}</th>
+                {%- for luna_side in (1..2) -%}
+                  {%- liquid
+                    if luna_side == 1
+                      assign luna_value = block.settings.ours
+                      assign luna_text = block.settings.ours_text
+                      assign luna_column = section.settings.ours_label
+                    else
+                      assign luna_value = block.settings.theirs
+                      assign luna_text = block.settings.theirs_text
+                      assign luna_column = section.settings.theirs_label
+                    endif
+                  -%}
+                  <td
+                    role="cell"
+                    class="luna-compare__cell{% if luna_side == 1 %} luna-compare__ours{% endif %}"
+                    data-label="{{ luna_column | escape }}"
+                  >
+                    {%- case luna_value -%}
+                      {%- when 'yes' -%}
+                        <span class="luna-compare__mark luna-compare__mark--yes">
+                          {%- render 'luna-icon', name: 'spunta', size: 20 -%}
+                          <span class="luna-visually-hidden">{{ section.settings.yes_label | escape }}</span>
+                        </span>
+                      {%- when 'no' -%}
+                        <span class="luna-compare__mark luna-compare__mark--no">
+                          {%- render 'luna-icon', name: 'croce', size: 18 -%}
+                          <span class="luna-visually-hidden">{{ section.settings.no_label | escape }}</span>
+                        </span>
+                      {%- else -%}
+                        <span class="luna-compare__text">{{ luna_text | escape }}</span>
+                    {%- endcase -%}
+                  </td>
+                {%- endfor -%}
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Specifiche",
+  "class": "luna-section-specs",
+  "max_blocks": 30,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Dettagli"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Tutto quello che c'è da sapere."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Immagine delle misure",
+      "info": "Se resta vuota si usa la scena delle misure del tema."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Testo alternativo dell'immagine",
+      "default": "Lampada Lunare Levitante con le misure: luna di Ø 8,5 cm, base larga 10,8 cm e alta 2,2 cm"
+    },
+    {
+      "type": "header",
+      "content": "Confronto"
+    },
+    {
+      "type": "text",
+      "id": "compare_title",
+      "label": "Titolo del confronto",
+      "default": "Lampada Lunare Levitante o una lampada qualsiasi?"
+    },
+    {
+      "type": "text",
+      "id": "ours_label",
+      "label": "Colonna della lampada",
+      "default": "Lampada Lunare Levitante"
+    },
+    {
+      "type": "text",
+      "id": "theirs_label",
+      "label": "Colonna di confronto",
+      "default": "Una lampada qualsiasi"
+    },
+    {
+      "type": "text",
+      "id": "feature_label",
+      "label": "Nome della prima colonna",
+      "info": "Per i lettori di schermo.",
+      "default": "Caratteristica"
+    },
+    {
+      "type": "text",
+      "id": "yes_label",
+      "label": "Parola per «sì»",
+      "info": "Per i lettori di schermo: sullo schermo c'è l'icona.",
+      "default": "Sì"
+    },
+    {
+      "type": "text",
+      "id": "no_label",
+      "label": "Parola per «no»",
+      "info": "Per i lettori di schermo: sullo schermo c'è l'icona.",
+      "default": "No"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "spec",
+      "name": "Specifica",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Etichetta",
+          "default": "Diametro"
+        },
+        {
+          "type": "text",
+          "id": "value",
+          "label": "Valore",
+          "default": "Ø 8,5 cm"
+        }
+      ]
+    },
+    {
+      "type": "compare",
+      "name": "Confronto",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Caratteristica",
+          "default": "Fluttua a mezz'aria"
+        },
+        {
+          "type": "select",
+          "id": "ours",
+          "label": "Lampada Lunare Levitante",
+          "options": [
+            { "value": "yes", "label": "Sì" },
+            { "value": "no", "label": "No" },
+            { "value": "text", "label": "Testo libero" }
+          ],
+          "default": "yes"
+        },
+        {
+          "type": "text",
+          "id": "ours_text",
+          "label": "Testo libero per la lampada",
+          "info": "Solo con «Testo libero»."
+        },
+        {
+          "type": "select",
+          "id": "theirs",
+          "label": "Una lampada qualsiasi",
+          "options": [
+            { "value": "yes", "label": "Sì" },
+            { "value": "no", "label": "No" },
+            { "value": "text", "label": "Testo libero" }
+          ],
+          "default": "no"
+        },
+        {
+          "type": "text",
+          "id": "theirs_text",
+          "label": "Testo libero per l'altra lampada",
+          "info": "Solo con «Testo libero»."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Specifiche",
+      "blocks": [
+        { "type": "spec", "settings": { "label": "Diametro", "value": "Ø 8,5 cm" } },
+        { "type": "spec", "settings": { "label": "Materiale", "value": "Luna in PLA stampato in 3D" } },
+        { "type": "spec", "settings": { "label": "Luce", "value": "Bianco caldo, una sola tonalità" } },
+        { "type": "spec", "settings": { "label": "Accensione", "value": "Si accende da sola appena la luna levita sopra la base" } },
+        { "type": "spec", "settings": { "label": "Alimentazione", "value": "La base va alla presa con l'alimentatore incluso; la luna si accende senza fili" } },
+        { "type": "spec", "settings": { "label": "Base", "value": "ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm" } },
+        { "type": "spec", "settings": { "label": "Nella confezione", "value": "Luna, base, alimentatore e istruzioni" } },
+        { "type": "compare", "settings": { "label": "Fluttua a mezz'aria", "ours": "yes", "theirs": "no" } },
+        { "type": "compare", "settings": { "label": "Ruota da sola", "ours": "yes", "theirs": "no" } },
+        { "type": "compare", "settings": { "label": "Luce calda e morbida", "ours": "yes", "theirs": "text", "theirs_text": "A volte" } },
+        { "type": "compare", "settings": { "label": "Fa parlare chi entra in casa", "ours": "yes", "theirs": "no" } },
+        { "type": "compare", "settings": { "label": "Effetto regalo", "ours": "yes", "theirs": "no" } }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

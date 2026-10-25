@@ -1,0 +1,175 @@
+{%- comment -%}
+  Angolo regalo e Natale (§6.7): testo, chip dei destinatari (blocchi), immagine e scadenza di Natale.
+  La riga della scadenza parte nascosta e la mostra luna-landing.js solo fino al giorno impostato compreso
+  (ora italiana); il giorno dopo sparisce. Senza JavaScript o con il campo vuoto la riga non c'è.
+  Nell'editor una nota spiega perché la riga non si vede (data passata o scritta male).
+{%- endcomment -%}
+{%- liquid
+  assign luna_chips = section.blocks | where: 'type', 'chip'
+  assign luna_deadline = section.settings.christmas_deadline | strip
+  assign luna_line = section.settings.christmas_text | split: '{data}'
+  assign luna_sizes = '(min-width: 1024px) 520px, calc(100vw - 40px)'
+-%}
+<section class="luna-section luna-gift" aria-labelledby="luna-gift-title-{{ section.id }}">
+  <div class="luna-container luna-split luna-gift__grid">
+    <div class="luna-gift__media luna-reveal">
+      {%- render 'luna-scene',
+        scene: 'natale',
+        image: section.settings.image,
+        alt: section.settings.image_alt,
+        sizes: luna_sizes,
+        class: 'luna-gift__image'
+      -%}
+      {%- if section.settings.size_label != blank -%}
+        <p class="luna-chip luna-gift__size">{{ section.settings.size_label | escape }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="luna-gift__text">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="luna-eyebrow luna-reveal">
+          {%- render 'luna-icon', name: 'regalo', size: 16 -%}
+          {{- section.settings.eyebrow | escape -}}
+        </p>
+      {%- endif -%}
+      <h2 class="luna-h2 luna-reveal" id="luna-gift-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      {%- if section.settings.text != blank -%}
+        <div class="luna-lead luna-reveal">{{ section.settings.text }}</div>
+      {%- endif -%}
+
+      {%- if luna_chips.size > 0 -%}
+        <ul class="luna-cluster luna-gift__chips luna-reveal" role="list" aria-label="{{ section.settings.chips_label | escape }}">
+          {%- for block in luna_chips -%}
+            <li class="luna-chip" {{ block.shopify_attributes }}>{{ block.settings.label | escape }}</li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if luna_deadline != blank and section.settings.christmas_text != blank -%}
+        <p class="luna-gift__deadline" data-luna-deadline="{{ luna_deadline | escape }}" hidden>
+          {%- render 'luna-icon', name: 'camion', size: 20 -%}
+          <span>
+            {%- if section.settings.christmas_text contains '{data}' -%}
+              {{- luna_line[0] | escape -}}
+              <strong data-luna-deadline-date>{{ luna_deadline | escape }}</strong>
+              {{- luna_line[1] | escape -}}
+            {%- else -%}
+              {{- section.settings.christmas_text | escape -}}
+            {%- endif -%}
+          </span>
+        </p>
+        {%- if request.design_mode -%}
+          <p
+            class="luna-editor-note"
+            data-luna-deadline-note
+            data-expired="La riga di Natale non si vede più: la data impostata è passata."
+            data-invalid="La riga di Natale non si vede: scrivi la data come AAAA-MM-GG, per esempio 2026-12-17."
+            hidden
+          ></p>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Luna · Regalo",
+  "class": "luna-section-gift",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Occhiello",
+      "default": "Idea regalo"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Titolo",
+      "default": "Il regalo che si scarta… e poi si accende."
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Testo",
+      "default": "<p>Per lei, per lui, per la coppia o per chi ha già tutto. Resta in casa, sul comodino o in salotto, e fa parlare ogni volta che si accende.</p>"
+    },
+    {
+      "type": "text",
+      "id": "chips_label",
+      "label": "Nome dell'elenco dei destinatari",
+      "info": "Per i lettori di schermo.",
+      "default": "Per chi è"
+    },
+    {
+      "type": "header",
+      "content": "Scadenza di Natale"
+    },
+    {
+      "type": "text",
+      "id": "christmas_deadline",
+      "label": "Ultimo giorno d'ordine (AAAA-MM-GG)",
+      "info": "Per esempio 2026-12-17. La riga si vede fino a quel giorno compreso, poi sparisce da sola. Vuoto: nessuna riga."
+    },
+    {
+      "type": "text",
+      "id": "christmas_text",
+      "label": "Testo della scadenza",
+      "info": "{data} diventa il giorno scritto in italiano, per esempio «17 dicembre».",
+      "default": "Ordina entro il {data} per riceverla prima di Natale."
+    },
+    {
+      "type": "header",
+      "content": "Immagine"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Immagine",
+      "info": "Se resta vuota si usa la scena di Natale del tema."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Testo alternativo dell'immagine",
+      "default": "Lampada Lunare Levitante accesa tra luci di Natale sfocate, con la luna sospesa sopra la base"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Misura sopra l'immagine",
+      "default": "Ø 8,5 cm"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "chip",
+      "name": "Destinatario",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Testo",
+          "default": "Per lei"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Regalo",
+      "blocks": [
+        { "type": "chip", "settings": { "label": "Per lei" } },
+        { "type": "chip", "settings": { "label": "Per lui" } },
+        { "type": "chip", "settings": { "label": "Per la coppia" } },
+        { "type": "chip", "settings": { "label": "Per chi ha già tutto" } }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

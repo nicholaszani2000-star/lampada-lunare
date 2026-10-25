@@ -1,0 +1,50 @@
+{%- comment -%}
+  Barra in cima alla pagina: spedizione e reso, solo informazioni vere (§6).
+{%- endcomment -%}
+{%- if section.settings.text != blank -%}
+  <div class="luna-announcement">
+    <div class="luna-container luna-announcement__inner">
+      {%- if section.settings.icon != 'none' -%}
+        {%- render 'luna-icon', name: section.settings.icon, size: 16, class: 'luna-announcement__icon' -%}
+      {%- endif -%}
+      <p>{{ section.settings.text | escape }}</p>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Luna · Annuncio",
+  "class": "luna-section-announcement",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Testo",
+      "info": "Solo informazioni vere: spedizione e reso.",
+      "default": "Spedizione gratuita in tutta Italia · Reso entro 30 giorni"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "Icona",
+      "options": [
+        { "value": "none", "label": "Nessuna" },
+        { "value": "camion", "label": "Camion" },
+        { "value": "reso", "label": "Reso" },
+        { "value": "luna", "label": "Luna" },
+        { "value": "scintilla", "label": "Scintilla" }
+      ],
+      "default": "camion"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Luna · Annuncio"
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,6 @@
+{
+  "descrizione": "Simula l'editor del tema (request.design_mode e Shopify.designMode): quello che si vede solo lì.",
+  "opzioni": [
+    "--editor"
+  ]
+}

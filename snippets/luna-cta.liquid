@@ -1,0 +1,50 @@
+{%- doc -%}
+  Bottone d'acquisto: invia il form prodotto #luna-buy-form della hero (§4.5), anche da fuori dal form.
+  Al click non blocca l'invio: luna-landing.js mostra solo lo stato di caricamento.
+  {prezzo} nel testo diventa il prezzo della variante, letto da Shopify.
+
+  @param {product} product - Il prodotto
+  @param {string} text - Testo del bottone, per esempio «Acquista ora — {prezzo}»
+  @param {object} [variant] - La variante (predefinita: selezionata o prima disponibile)
+  @param {string} [style] - 'primary' (pillola grande) oppure 'compact' (barra sticky)
+  @param {string} [loading_text] - Testo durante il caricamento (predefinito «Ti porto al checkout…»)
+  @param {string} [sold_out_text] - Testo quando la variante è esaurita (predefinito «Esaurita»)
+  @param {string} [form_id] - Id del form da inviare (predefinito 'luna-buy-form')
+  @param {string} [id] - Id del bottone
+  @param {string} [class] - Classi CSS aggiuntive
+  @param {string} [attributes] - Attributi HTML aggiuntivi, per esempio 'data-luna-hero-cta'
+{%- enddoc -%}
+{%- liquid
+  assign luna_variant = variant | default: product.selected_or_first_available_variant
+  assign luna_style = style | default: 'primary'
+  assign luna_form_id = form_id | default: 'luna-buy-form'
+  assign luna_loading_text = loading_text | default: 'Ti porto al checkout…'
+  assign luna_sold_out_text = sold_out_text | default: 'Esaurita'
+  assign luna_price_money = luna_variant.price | money
+  assign luna_price_html = '<span class="luna-cta__price" data-luna-price>' | append: luna_price_money | append: '</span>'
+-%}
+<button
+  type="submit"
+  form="{{ luna_form_id }}"
+  class="luna-cta luna-cta--{{ luna_style }}{% if class != blank %} {{ class }}{% endif %}"
+  {% if id != blank %}
+    id="{{ id }}"
+  {% endif %}
+  data-luna-cta
+  {{ attributes }}
+  data-label-template="{{ text | escape }}"
+  data-loading-text="{{ luna_loading_text | escape }}"
+  data-sold-out-text="{{ luna_sold_out_text | escape }}"
+  {% unless luna_variant.available %}
+    disabled
+  {% endunless %}
+>
+  <span class="luna-cta__label" data-luna-cta-label>
+    {%- if luna_variant.available -%}
+      {{- text | escape | replace: '{prezzo}', luna_price_html -}}
+    {%- else -%}
+      {{- luna_sold_out_text | escape -}}
+    {%- endif -%}
+  </span>
+  <span class="luna-cta__spinner" aria-hidden="true"></span>
+</button>

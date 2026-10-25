@@ -1,0 +1,98 @@
+{%- doc -%}
+  Prezzo, prezzo barrato, percentuale di sconto, risparmio, riga Omnibus e IVA (§4.6).
+  Tutti i numeri arrivano da Shopify: niente prezzi scritti a mano.
+  Barrato, badge, risparmio e riga Omnibus compaiono solo se compare_at_price è maggiore di price;
+  restano nel codice con l'attributo hidden, così luna-landing.js può mostrarli al cambio di variante.
+  Layout 'large' (hero e offerta): tutto. Layout 'compact' (barra sticky): prezzo, barrato e riga Omnibus.
+
+  @param {product} product - Il prodotto
+  @param {object} [variant] - La variante da mostrare (predefinita: selezionata o prima disponibile)
+  @param {string} [layout] - 'large' oppure 'compact' (predefinito 'large')
+  @param {string} [badge_text] - Testo del badge, {pct} diventa la percentuale (predefinito «−{pct}%»)
+  @param {boolean} [show_price] - Mostra il prezzo attuale (predefinito sì; l'offerta lo ha già nel titolo, subito sopra)
+  @param {boolean} [show_badge] - Mostra il badge della percentuale nel layout large (predefinito sì; l'offerta
+    lo mette in cima alla sezione)
+  @param {boolean} [show_savings] - Mostra il risparmio nel layout large (predefinito sì)
+  @param {string} [savings_text] - Testo del risparmio, {importo} diventa la cifra (predefinito «Risparmi {importo}»)
+  @param {string} [omnibus_text] - Testo prima del prezzo più basso degli ultimi 30 giorni
+  @param {string} [tax_text] - Testo mostrato quando i prezzi includono l'IVA
+  @param {string} [sale_label] - Etichetta per i lettori di schermo del prezzo attuale
+  @param {string} [regular_label] - Etichetta per i lettori di schermo del prezzo barrato
+{%- enddoc -%}
+{%- liquid
+  assign luna_variant = variant | default: product.selected_or_first_available_variant
+  assign luna_layout = layout | default: 'large'
+  assign luna_show_price = show_price | default: true, allow_false: true
+  assign luna_show_badge = show_badge | default: true, allow_false: true
+  assign luna_show_savings = show_savings | default: true, allow_false: true
+  assign luna_badge_text = badge_text | default: '−{pct}%'
+  assign luna_savings_text = savings_text | default: 'Risparmi {importo}'
+  assign luna_omnibus_text = omnibus_text | default: 'Prezzo più basso degli ultimi 30 giorni:'
+  assign luna_tax_text = tax_text | default: 'IVA inclusa'
+  assign luna_sale_label = sale_label | default: 'Prezzo attuale'
+  assign luna_regular_label = regular_label | default: 'Prezzo di listino'
+
+  assign luna_on_sale = false
+  assign luna_pct = ''
+  assign luna_savings = ''
+  assign luna_compare = ''
+  if luna_variant.compare_at_price > luna_variant.price
+    assign luna_on_sale = true
+    assign luna_pct = luna_variant.compare_at_price | minus: luna_variant.price | times: 100.0 | divided_by: luna_variant.compare_at_price | round
+    assign luna_savings = luna_variant.compare_at_price | minus: luna_variant.price | money
+    assign luna_compare = luna_variant.compare_at_price | money
+  endif
+  assign luna_savings_html = '<span data-luna-save>' | append: luna_savings | append: '</span>'
+-%}
+<div
+  class="luna-price luna-price--{{ luna_layout }}{% if luna_on_sale %} is-on-sale{% endif %}"
+  data-luna-price-block
+>
+  <p class="luna-price__row">
+    {%- if luna_show_price %}
+      <span class="luna-visually-hidden">{{ luna_sale_label | escape }}</span>
+      <span class="luna-price__now" data-luna-price>{{ luna_variant.price | money }}</span>
+    {%- endif %}
+    <span class="luna-price__was" data-luna-sale-part{% unless luna_on_sale %} hidden{% endunless %}>
+      <span class="luna-visually-hidden">{{ luna_regular_label | escape }}</span>
+      <s data-luna-compare>{{ luna_compare }}</s>
+    </span>
+    {%- if luna_layout == 'large' and luna_show_badge %}
+      <span
+        class="luna-badge luna-badge--sale"
+        data-luna-sale-part
+        data-luna-pct
+        data-template="{{ luna_badge_text | escape }}"
+        {% unless luna_on_sale %}
+          hidden
+        {% endunless %}
+      >
+        {%- if luna_on_sale -%}
+          {{- luna_badge_text | escape | replace: '{pct}', luna_pct -}}
+        {%- endif -%}
+      </span>
+    {%- endif -%}
+  </p>
+  {%- if luna_layout == 'large' and luna_show_savings -%}
+    <p
+      class="luna-price__save"
+      data-luna-sale-part
+      data-luna-save-line
+      data-template="{{ luna_savings_text | escape }}"
+      {% unless luna_on_sale %}
+        hidden
+      {% endunless %}
+    >
+      {%- if luna_on_sale -%}
+        {{- luna_savings_text | escape | replace: '{importo}', luna_savings_html -}}
+      {%- endif -%}
+    </p>
+  {%- endif -%}
+  <p class="luna-price__omnibus" data-luna-sale-part{% unless luna_on_sale %} hidden{% endunless %}>
+    {{ luna_omnibus_text | escape }}
+    <span data-luna-omnibus>{{ luna_compare }}</span>
+  </p>
+  {%- if cart.taxes_included and luna_layout == 'large' -%}
+    <p class="luna-price__tax">{{ luna_tax_text | escape }}</p>
+  {%- endif -%}
+</div>

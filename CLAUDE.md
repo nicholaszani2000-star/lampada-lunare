@@ -27,12 +27,12 @@ Il negozio si collega solo nello step 7. Fino ad allora si lavora con theme chec
 - Materiale della luna: PLA stampato in 3D
 - Base: ABS effetto legno chiaro, larga 10,8 cm e alta 2,2 cm
 - Nella confezione: Luna, base, alimentatore e istruzioni
-- Spedizione: gratuita, consegna in 7–14 giorni lavorativi (se non è gratuita, scrivi ovunque «Spedizione tracciata» al posto di «Spedizione gratuita»)
+- Spedizione: gratuita; la spedisco io dall'Italia il giorno lavorativo dopo l'ordine, con corriere tracciato (1–3 giorni lavorativi): consegna in 2–4 giorni lavorativi (se non è gratuita, scrivi ovunque «Spedizione tracciata» al posto di «Spedizione gratuita»)
 - Reso: entro 30 giorni dalla consegna
 - Fine della promo: 2026-12-18 alle 23:59 (ora italiana)
-- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-03 (consegna fino a 14 giorni lavorativi)
+- Ultimo giorno d'ordine per ricevere prima di Natale: 2026-12-17 (spedizione il 18, consegna al massimo il 23)
 - Immagini: il pacchetto studio/input/luna-foto (leggi il suo LEGGIMI.txt): ritagli della lampada vera, accesa e spenta, con luna e base separate; sei scene pronte; le foto del fornitore, che servono solo come riferimento.
-- Scorte: il magazzino non tiene il conto dei pezzi, quindi niente riga delle scorte.
+- Scorte: merce mia, Shopify tiene il conto dei pezzi. La riga «Solo {n} pezzi disponibili» compare solo con i numeri veri, sotto la soglia (§10).
 - Recensioni: l'app non è ancora scelta; finché non c'è, la sezione reviews resta vuota e nascosta.
 - Negozio, ragione sociale, P.IVA e sede: arrivano più avanti; per ora restano segnaposto (setting vuoti).
 Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segnalalo nel report.
@@ -40,7 +40,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 ## 3. Regole d'oro (valgono in ogni step)
 1. Non modificare, rinominare o cancellare NESSUN file esistente del tema. Crei solo file nuovi con il prefisso «luna-», più il template templates/product.luna.json. Uniche eccezioni: aggiungere righe a .gitignore, .shopifyignore e .theme-check.yml.
 2. Alla fine di ogni step `shopify theme check` (lanciato dalla radice) deve dare 0 errori nei file luna. Gli errori già presenti nei file originali non li tocchi: li segnali.
-3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato.
+3. Git: all'inizio di ogni step assicurati di essere sul branch di lavoro (§1) con l'ultimo commit; alla fine di ogni step fai commit e push. Ogni passo deve poter essere annullato. L'ambiente può azzerarsi tra una sessione e l'altra: se mancano Shopify CLI o le dipendenze di studio/, reinstallale prima di cominciare.
 4. Mobile first: progetta a 390 px di larghezza, poi adatta a 768 e a 1280 e oltre.
 5. Ogni testo visibile è modificabile dall'editor del tema: setting con valore predefinito uguale al copy del §8.
 6. Niente dati finti: nessuna recensione inventata, nessun contatore di visitatori o vendite, nessun countdown che riparte, scorte mostrate solo se reali (§10).
@@ -58,7 +58,7 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 
 ### 4.2 Il layout layout/luna-landing.liquid
 - <html lang="{{ request.locale.iso_code }}"> con classe no-js, sostituita da js con uno script inline di una riga.
-- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image dalla prima immagine del prodotto a 1200 px, product:price:amount, product:price:currency); theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
+- Nel <head>, in quest'ordine: charset; viewport (width=device-width, initial-scale=1, viewport-fit=cover); title con {{ page_title }} e {{ shop.name }}; meta description con {{ page_description | escape }}; canonical con {{ canonical_url }}; Open Graph (og:type product, og:title, og:description, og:image = {{ 'luna-og.jpg' | asset_url | prepend: 'https:' }} — asset_url restituisce un indirizzo che inizia con //, og:image vuole un URL assoluto —, og:image:width 1200, og:image:height 630, og:image:alt, product:price:amount, product:price:currency) e twitter:card summary_large_image; le immagini del prodotto restano per Google e per i cataloghi; theme-color #05060B; @font-face inline con asset_url e font-display: swap; preload dei due font; il CSS luna-landing.css. SOLO DOPO tutto questo: {{ content_for_header }}.
 - {{ content_for_header }} è obbligatorio, sta nel <head> e va scritto così com'è: niente filtri, niente if, niente capture, niente snippet. Carica pixel, analytics, banner cookie, app e pulsanti di pagamento rapido.
 - Nel <body>: {{ content_for_layout }} e poi lo script {{ 'luna-landing.js' | asset_url }} con defer.
 - Niente loop su prodotti o varianti nel <head>: rallentano il primo byte.
@@ -107,6 +107,8 @@ Se ti serve un dato che qui non c'è, NON inventarlo: usa un testo neutro e segn
 - Ogni sezione con immagini ha un image_picker per sostituirle dall'editor; se è vuoto usa l'asset.
 - Dove va ogni immagine del pacchetto (esportata nello step 2): hero → luna e base separate, accese e spente; moon3d, come ripiego → lampada accesa; benefits → scena orbita («Levita davvero»), scena caldo («Luce che scalda la stanza»), scena eclissi («Il regalo che non si dimentica»); gift → scena natale; specs → scena misure; barra sticky → miniatura; condivisioni → luna-og.jpg. Prima foto del prodotto su Shopify: scena notte.
 - L'immagine della lampada nella hero è l'elemento LCP: loading="eager" e fetchpriority="high". Tutte le altre: loading="lazy" e decoding="async".
+- Nella hero si scarica subito solo lo stato iniziale (spento; acceso con prefers-reduced-motion o nell'editor), come LCP con fetchpriority high. L'altro stato parte al primo frame dopo il paint, non all'evento load, così l'accensione arriva entro circa un secondo anche in 4G.
+- Ogni immagine del tema ha un alt descrittivo, scritto nella sezione che la mostra.
 
 ### 4.8 Editor del tema
 - Ogni componente JS si inizializza al DOMContentLoaded e di nuovo su shopify:section:load; su shopify:section:unload rimuove listener, observer e requestAnimationFrame.
@@ -156,19 +158,20 @@ hero
 - suggerimento: «Tocca la luna per vederla accesa e spenta»
 - CTA: «Acquista ora — {prezzo}» (prezzo da Liquid)
 - consegna: «Ordina oggi, la ricevi tra {data1} e {data2}»
-- scorte: nessuna riga (il magazzino non tiene il conto dei pezzi)
+- scorte: «Solo {n} pezzi disponibili» (n dal magazzino Shopify; la riga compare solo con i numeri veri, sotto la soglia: §10)
 - fiducia: «Spedizione gratuita» · «Pagamenti protetti» · «Reso in 30 giorni»
 
 moon3d
 - occhiello: «Provala adesso»
 - H2: «Girala. Accendila.»
-- testo: «Trascina per farla ruotare. Con il pulsante qui sotto la vedi accesa e spenta.»
+- testo, in due parti: «Trascina per farla ruotare.» · «Con il pulsante qui sotto la vedi accesa e spenta.» Senza JavaScript la frase intera non si mostra, perché non funzionano né il trascinamento né il pulsante. Senza WebGL ma con JavaScript si nasconde solo «Trascina per farla ruotare.», perché il pulsante sull'immagine di ripiego funziona.
 - didascalia: «Anteprima 3D illustrativa»
+- crediti, obbligatori (licenza CC BY 4.0), nella stessa didascalia: «Texture della Luna: Solar System Scope, CC BY 4.0»
 
 benefits
 - occhiello: «Perché tutti la notano»
 - H2: «Un pezzo di cielo, sul tuo comodino.»
-- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria. Niente fili, niente trucchi: solo la Luna che galleggia sopra il tuo comodino.»
+- «Levita davvero»: «Un campo magnetico la tiene sospesa a mezz'aria, senza niente che la regga: solo la Luna che galleggia sopra il tuo comodino.»
 - «Luce che scalda la stanza»: «Luce calda e morbida, pensata per la sera: la accendi e la stanza cambia atmosfera.»
 - «Il regalo che non si dimentica»: «Per chi ha già tutto, per chi ama il cielo, per chi vuoi stupire. Pochi regali fanno lo stesso effetto appena si accendono.»
 
@@ -200,7 +203,7 @@ reviews
 offer (la sezione sconto)
 - badge: «Offerta di lancio −{pct}%» (pct calcolato in Liquid dai prezzi di Shopify; niente badge se il barrato manca o non è più alto del prezzo)
 - H2: «La tua Luna a {prezzo}.»
-- riepilogo: «Lampada Lunare Levitante Ø 8,5 cm con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita in 7–14 giorni lavorativi» · «Reso entro 30 giorni»
+- riepilogo: «Lampada Lunare Levitante Ø 8,5 cm con base magnetica» · «Nella confezione: Luna, base, alimentatore e istruzioni» · «Spedizione gratuita dall'Italia in 2–4 giorni lavorativi» · «Reso entro 30 giorni»
 - prezzo al giorno: «Meno di {c} centesimi a sera per tutto il primo anno.»
 - garanzia, solo se il reso supera i 14 giorni: titolo «30 notti di prova», testo «Se non ti conquista, hai 30 giorni dalla consegna per restituirla e farti rimborsare. Tutti i dettagli nella politica di rimborso.»
 - countdown: «L'offerta termina tra» gg : hh : mm : ss
@@ -210,7 +213,7 @@ faq (blocchi domanda/risposta)
 2 «È difficile posizionarla?»: «La prima volta serve un minuto: tieni la luna sopra il centro della base, aspetta di sentire che il campo magnetico la prende e apri le dita con calma. Dopo un paio di prove viene naturale.»
 3 «Va collegata alla corrente?»: «Sì: la base va alla presa con l'alimentatore incluso; la luna si accende senza fili.»
 4 «Come la spengo senza farla cadere?»: «Prendi prima la luna in mano, poi stacca l'alimentatore. In quest'ordine non cade mai.»
-5 «Quando arriva?»: «Spediamo in tutta Italia con corriere tracciato: la ricevi in 7–14 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.»
+5 «Quando arriva?»: «Spediamo noi, dall'Italia, con corriere tracciato: la ricevi in 2–4 giorni lavorativi. Il codice di tracciamento ti arriva via email appena il pacco parte.»
 6 «E se non mi piace?»: «Hai 30 giorni dalla consegna per restituirla. Trovi tutti i dettagli nella politica di rimborso.»
 7 «È adatta ai bambini?»: «È una lampada d'arredo, non un giocattolo: con i più piccoli serve la supervisione di un adulto.»
 8 «Il pagamento è sicuro?»: «Il checkout è gestito da Shopify su connessione cifrata. Puoi pagare con i metodi che vedi in fondo alla pagina, anche con il pagamento rapido dallo smartphone.»

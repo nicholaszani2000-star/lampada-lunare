@@ -1,0 +1,52 @@
+Esportazione immagini · studio/scripts/luna_export.py
+
+Ritagli: 6 PNG da 1377 × 1755 px
+  on: base + luna a 0,0 → lampada identica; pixel in cui luna e base si toccano: 0
+  off: base + luna a 0,0 → lampada identica; pixel in cui luna e base si toccano: 0
+  layout.json copiato in studio/qa/luna-layout.json
+
+Ritagli (WebP con trasparenza)
+luna-moon-on-600.webp               600 × 765     35.5 KB  q82  
+luna-moon-on-1000.webp             1000 × 1275    64.2 KB  q82  limite 120 KB ✓
+luna-moon-on-1377.webp             1377 × 1755    76.1 KB  q82  
+luna-moon-off-600.webp              600 × 765     24.5 KB  q82  
+luna-moon-off-1000.webp            1000 × 1275    44.1 KB  q82  
+luna-moon-off-1377.webp            1377 × 1755    53.2 KB  q82  
+luna-base-on-600.webp               600 × 765     15.7 KB  q82  
+luna-base-on-1000.webp             1000 × 1275    27.8 KB  q82  limite 80 KB ✓
+luna-base-on-1377.webp             1377 × 1755    34.6 KB  q82  
+luna-base-off-600.webp              600 × 765     10.5 KB  q82  
+luna-base-off-1000.webp            1000 × 1275    19.4 KB  q82  
+luna-base-off-1377.webp            1377 × 1755    23.9 KB  q82  
+luna-lamp-on-600.webp               600 × 765     52.1 KB  q82  
+luna-lamp-on-1000.webp             1000 × 1275    91.0 KB  q82  
+luna-lamp-on-1377.webp             1377 × 1755   105.5 KB  q82  
+luna-lamp-off-600.webp              600 × 765     34.4 KB  q82  
+luna-lamp-off-1000.webp            1000 × 1275    62.5 KB  q82  
+luna-lamp-off-1377.webp            1377 × 1755    72.3 KB  q82  
+
+Miniatura
+luna-thumb-160.webp                 160 × 160      6.1 KB  q82  
+
+Scene (WebP)
+luna-scene-notte-1000.webp         1000 × 1000    47.3 KB  q88  limite 160 KB ✓
+luna-scene-notte-2000.webp         2000 × 2000   217.4 KB  q88  
+luna-scene-caldo-800.webp           800 × 1000    36.4 KB  q88  limite 160 KB ✓
+luna-scene-caldo-1600.webp         1600 × 2000   196.2 KB  q88  
+luna-scene-misure-1000.webp        1000 × 1000    53.8 KB  q88  limite 160 KB ✓
+luna-scene-misure-2000.webp        2000 × 2000   252.1 KB  q88  
+luna-scene-orbita-800.webp          800 × 1000    56.8 KB  q88  limite 160 KB ✓
+luna-scene-orbita-1600.webp        1600 × 2000   227.7 KB  q88  
+luna-scene-eclissi-800.webp         800 × 1000    48.5 KB  q88  limite 160 KB ✓
+luna-scene-eclissi-1600.webp       1600 × 2000   205.6 KB  q88  
+luna-scene-natale-800.webp          800 × 1000    42.4 KB  q88  limite 160 KB ✓
+luna-scene-natale-1600.webp        1600 × 2000   205.5 KB  q88  
+
+Condivisioni
+luna-og.jpg                        1200 × 630    121.8 KB  copiata senza ricomprimere  limite 200 KB ✓
+
+Controllo dei livelli esportati
+  export 1000 px, accesa: base + luna contro lampada intera, differenza massima 23 (compressione)
+  export 1000 px, spenta: base + luna contro lampada intera, differenza massima 18 (compressione)
+
+Totale immagini luna in assets/: 2565 KB (scaricate solo quelle che la pagina usa)

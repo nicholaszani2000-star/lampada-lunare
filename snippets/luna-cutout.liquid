@@ -1,0 +1,21 @@
+{%- doc -%}
+  Un ritaglio della lampada vera (luna o base, accesa o spenta) caricato quando serve: loading="lazy".
+  Tutti i ritagli hanno la stessa tela (1377 × 1755) e si sovrappongono a 0,0. Alt vuoto: la descrizione
+  sta sul contenitore, scritta nella sezione che li mostra. Per la hero, che li carica subito, c'è luna-lamp-layer.
+
+  @param {string} file - luna-moon-off, luna-moon-on, luna-base-off, luna-base-on
+  @param {string} sizes - Attributo sizes
+  @param {string} [class] - Classi CSS del <picture>
+{%- enddoc -%}
+<picture{% if class != blank %} class="{{ class }}"{% endif %}>
+  <img
+    src="{{ file | append: '-1000.webp' | asset_url }}"
+    srcset="{{ file | append: '-600.webp' | asset_url }} 600w, {{ file | append: '-1000.webp' | asset_url }} 1000w, {{ file | append: '-1377.webp' | asset_url }} 1377w"
+    sizes="{{ sizes }}"
+    width="1000"
+    height="1275"
+    alt=""
+    loading="lazy"
+    decoding="async"
+  >
+</picture>
